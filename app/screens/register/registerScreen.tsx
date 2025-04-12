@@ -11,11 +11,12 @@ import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import type { RootStackParamList } from "../../navigation";
 import { registerUser } from "../../services/authService";
 import Toast from "react-native-toast-message";
-import { globalStyles } from "../../theme/global";
+import { themeColors } from "../../theme/colors";
 import { useNavigation } from "@react-navigation/native";
 import { AnimatedLogo } from "../../components/AnimatedLogo";
-import { Ionicons } from '@expo/vector-icons';
+import { Ionicons } from "@expo/vector-icons";
 import { registerStyles } from "./registerStyles";
+import { globalStyles } from "../../theme/global";
 
 const senhaRegex = {
   maiuscula: /[A-Z]/,
@@ -34,48 +35,49 @@ export default function RegisterScreen({ navigation }: Props) {
   const [confirmacaoSenha, setConfirmacaoSenha] = useState("");
   const [mostrarSenha, setMostrarSenha] = useState(false);
   const [mostrarConfirmarSenha, setMostrarConfirmarSenha] = useState(false);
+  const [erroCampos, setErroCampos] = useState(false);
+
   const logoRef = useRef<any>(null);
   const nav = useNavigation();
 
   useEffect(() => {
     const unsubscribe = nav.addListener("beforeRemove", (e) => {
       e.preventDefault();
-
-      if (logoRef.current?.fadeOutUp) {
-        logoRef.current.fadeOutUp(500).then(() => {
-          unsubscribe();
-          nav.dispatch(e.data.action);
-        });
-      } else {
+      logoRef.current?.animateOut(() => {
+        unsubscribe();
         nav.dispatch(e.data.action);
-      }
+      });
     });
-
     return unsubscribe;
   }, [nav]);
 
-  const validarSenha = (senha: string) => {
-    return {
-      maiuscula: senhaRegex.maiuscula.test(senha),
-      minuscula: senhaRegex.minuscula.test(senha),
-      numero: senhaRegex.numero.test(senha),
-      especial: senhaRegex.especial.test(senha),
-      tamanho: senhaRegex.tamanho.test(senha),
-    };
-  };
+  const validarSenha = (senha: string) => ({
+    maiuscula: senhaRegex.maiuscula.test(senha),
+    minuscula: senhaRegex.minuscula.test(senha),
+    numero: senhaRegex.numero.test(senha),
+    especial: senhaRegex.especial.test(senha),
+    tamanho: senhaRegex.tamanho.test(senha),
+  });
 
   const requisitos = validarSenha(senha);
 
   const handleRegister = async () => {
+    if (!nome || !email || !senha || !confirmacaoSenha) {
+      setErroCampos(true);
+      return Toast.show({
+        type: "error",
+        text1: "Preencha todos os campos obrigatórios.",
+      });
+    }
+
     if (senha !== confirmacaoSenha) {
       return Toast.show({
         type: "error",
         text1: "Senhas não coincidem",
-        text2: "Confirme sua senha corretamente.",
       });
     }
 
-    const senhaValida = Object.values(requisitos).every((item) => item);
+    const senhaValida = Object.values(requisitos).every(Boolean);
 
     if (!senhaValida) {
       return Toast.show({
@@ -86,12 +88,14 @@ export default function RegisterScreen({ navigation }: Props) {
     }
 
     try {
-      await registerUser({
+      const data = await registerUser({
         nome,
         email,
         senha,
         confirmacao_senha: confirmacaoSenha,
       });
+
+      if (!data) throw new Error("Erro inesperado");
 
       Toast.show({
         type: "success",
@@ -99,28 +103,24 @@ export default function RegisterScreen({ navigation }: Props) {
         text2: "Verifique seu e-mail para validar.",
       });
 
-      if (logoRef.current?.fadeOutUp) {
-        logoRef.current.fadeOutUp(500).then(() => {
-          navigation.navigate("ValidarEmail", { email });
-        });
-      } else {
+      logoRef.current?.fadeOutUp(500).then(() => {
         navigation.navigate("ValidarEmail", { email });
-      }
+      });
     } catch (error: any) {
       Toast.show({
         type: "error",
-        text1: "Erro",
+        text1: "Erro no cadastro",
         text2:
           error.response?.data?.detail ||
           error.message ||
-          "Erro ao cadastrar. Tente novamente.",
+          "Erro inesperado. Tente novamente.",
       });
     }
   };
 
   return (
     <LinearGradient
-      colors={["#68d1c9", "#b4f0ec", "#c695da", "#a460bf", "#931b9a"]}
+      colors={themeColors.gradient}
       style={globalStyles.backgroundGradient}
     >
       <AnimatedLogo ref={logoRef} />
@@ -128,18 +128,32 @@ export default function RegisterScreen({ navigation }: Props) {
       <Text style={globalStyles.title}>Criar Conta</Text>
 
       <TextInput
-        style={globalStyles.input}
+        style={[
+          globalStyles.input,
+          erroCampos && !nome && styles.inputError,
+        ]}
         placeholder="Nome"
         value={nome}
-        onChangeText={setNome}
+        onChangeText={(text) => {
+          setNome(text);
+          setErroCampos(false);
+        }}
       />
       <TextInput
-        style={globalStyles.input}
+        style={[
+          globalStyles.input,
+          erroCampos && !email && styles.inputError,
+        ]}
         placeholder="Email"
         value={email}
-        onChangeText={setEmail}
+        onChangeText={(text) => {
+          setEmail(text);
+          setErroCampos(false);
+        }}
         keyboardType="email-address"
+        autoCapitalize="none"
       />
+
       <View style={registerStyles.passwordContainer}>
         <TextInput
           style={registerStyles.inputSenha}
@@ -159,11 +173,21 @@ export default function RegisterScreen({ navigation }: Props) {
       </View>
 
       <View style={styles.passwordRulesContainer}>
-        <Text style={[styles.ruleItem, requisitos.maiuscula && styles.valid]}>✔ 1 letra maiúscula</Text>
-        <Text style={[styles.ruleItem, requisitos.minuscula && styles.valid]}>✔ 1 letra minúscula</Text>
-        <Text style={[styles.ruleItem, requisitos.numero && styles.valid]}>✔ 1 número</Text>
-        <Text style={[styles.ruleItem, requisitos.especial && styles.valid]}>✔ 1 caractere especial</Text>
-        <Text style={[styles.ruleItem, requisitos.tamanho && styles.valid]}>✔ Mínimo 6 caracteres</Text>
+        <Text style={[styles.ruleItem, requisitos.maiuscula && styles.valid]}>
+          ✔ 1 letra maiúscula
+        </Text>
+        <Text style={[styles.ruleItem, requisitos.minuscula && styles.valid]}>
+          ✔ 1 letra minúscula
+        </Text>
+        <Text style={[styles.ruleItem, requisitos.numero && styles.valid]}>
+          ✔ 1 número
+        </Text>
+        <Text style={[styles.ruleItem, requisitos.especial && styles.valid]}>
+          ✔ 1 caractere especial
+        </Text>
+        <Text style={[styles.ruleItem, requisitos.tamanho && styles.valid]}>
+          ✔ Mínimo 6 caracteres
+        </Text>
       </View>
 
       <View style={registerStyles.passwordContainer}>
@@ -174,7 +198,11 @@ export default function RegisterScreen({ navigation }: Props) {
           value={confirmacaoSenha}
           onChangeText={setConfirmacaoSenha}
         />
-        <TouchableOpacity onPress={() => setMostrarConfirmarSenha(!mostrarConfirmarSenha)}>
+        <TouchableOpacity
+          onPress={() =>
+            setMostrarConfirmarSenha(!mostrarConfirmarSenha)
+          }
+        >
           <Ionicons
             name={mostrarConfirmarSenha ? "eye" : "eye-off"}
             size={24}
@@ -188,7 +216,13 @@ export default function RegisterScreen({ navigation }: Props) {
         <Text style={globalStyles.buttonText}>Cadastrar</Text>
       </TouchableOpacity>
 
-      <TouchableOpacity onPress={() => navigation.navigate("Login")}>
+      <TouchableOpacity
+        onPress={() =>
+          logoRef.current?.animateOut(() => {
+            navigation.replace("Login");
+          })
+        }
+      >
         <Text style={globalStyles.link}>Já tem conta? Entrar</Text>
       </TouchableOpacity>
     </LinearGradient>
@@ -196,17 +230,21 @@ export default function RegisterScreen({ navigation }: Props) {
 }
 
 const styles = StyleSheet.create({
+  inputError: {
+    borderColor: "#ff4d4d",
+    borderWidth: 1.5,
+  },
   passwordRulesContainer: {
     marginBottom: 12,
     marginHorizontal: 16,
   },
   ruleItem: {
     fontSize: 14,
-    color: '#ddd',
+    color: "#ddd",
     marginBottom: 2,
   },
   valid: {
-    color: '#00ffb2',
-    fontWeight: 'bold',
+    color: "#00ffb2",
+    fontWeight: "bold",
   },
 });

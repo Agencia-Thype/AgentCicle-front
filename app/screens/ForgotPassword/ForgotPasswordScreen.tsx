@@ -61,9 +61,12 @@ export default function ForgotPasswordScreen({ navigation }: Props) {
 
   return (
     <LinearGradient
-      colors={['#68d1c9', '#b4f0ec', '#c695da', '#a460bf', '#931b9a']}
-      style={globalStyles.backgroundGradient}
-    >
+        colors={["#FFD7D7", "#F3B6B6", "#E0A2A2", "#C38888", "#A56C6C"]}
+        start={{ x: 0.5, y: 0 }}
+        end={{ x: 0.5, y: 1 }}
+        
+        style={globalStyles.backgroundGradient}
+      >
       <Animatable.Image
         ref={logoRef}
         animation="fadeInDown"

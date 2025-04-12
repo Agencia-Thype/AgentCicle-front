@@ -1,26 +1,26 @@
-import React, { useRef, useState, useEffect } from 'react';
-import { View, Text, TextInput, TouchableOpacity } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
-import { globalStyles } from '../../theme/global';
-import Toast from 'react-native-toast-message';
-import * as Animatable from 'react-native-animatable';
-import axios from 'axios';
-import { useNavigation, useRoute } from '@react-navigation/native';
-import type { NativeStackScreenProps } from '@react-navigation/native-stack';
-import type { RootStackParamList } from '../../navigation';
+import React, { useRef, useState, useEffect } from "react";
+import { View, Text, TextInput, TouchableOpacity } from "react-native";
+import { LinearGradient } from "expo-linear-gradient";
+import { globalStyles } from "../../theme/global";
+import Toast from "react-native-toast-message";
+import * as Animatable from "react-native-animatable";
+import axios from "axios";
+import { useNavigation, useRoute } from "@react-navigation/native";
+import type { NativeStackScreenProps } from "@react-navigation/native-stack";
+import type { RootStackParamList } from "../../navigation";
 
-type Props = NativeStackScreenProps<RootStackParamList, 'ValidarEmail'>;
+type Props = NativeStackScreenProps<RootStackParamList, "ValidarEmail">;
 
 export default function ValidarEmailScreen({ navigation }: Props) {
   const logoRef = useRef(null);
   const nav = useNavigation();
   const route = useRoute();
   const { email } = route.params as { email: string };
-  const [codigo, setCodigo] = useState('');
+  const [codigo, setCodigo] = useState("");
   const [reenviando, setReenviando] = useState(false);
 
   useEffect(() => {
-    const unsubscribe = nav.addListener('beforeRemove', (e) => {
+    const unsubscribe = nav.addListener("beforeRemove", (e) => {
       e.preventDefault();
       if (logoRef.current) {
         (logoRef.current as any).fadeOutUp(500).then(() => {
@@ -37,32 +37,32 @@ export default function ValidarEmailScreen({ navigation }: Props) {
   const handleValidarEmail = async () => {
     if (!codigo) {
       return Toast.show({
-        type: 'error',
-        text1: 'Código obrigatório',
-        text2: 'Digite o código que você recebeu por e-mail.',
+        type: "error",
+        text1: "Código obrigatório",
+        text2: "Digite o código que você recebeu por e-mail.",
       });
     }
 
     try {
-      await axios.post('http://10.0.2.2:8000/validar-email', { email, codigo });
+      await axios.post("http://10.0.2.2:8000/validar-email", { email, codigo });
 
       Toast.show({
-        type: 'success',
-        text1: 'E-mail validado com sucesso!',
+        type: "success",
+        text1: "E-mail validado com sucesso!",
       });
 
       if (logoRef.current) {
         (logoRef.current as any).fadeOutUp(500).then(() => {
-          navigation.navigate('Login');
+          navigation.navigate("Login");
         });
       } else {
-        navigation.navigate('Login');
+        navigation.navigate("Login");
       }
     } catch (error: any) {
       Toast.show({
-        type: 'error',
-        text1: 'Erro',
-        text2: error.response?.data?.detail || 'Erro ao validar e-mail.',
+        type: "error",
+        text1: "Erro",
+        text2: error.response?.data?.detail || "Erro ao validar e-mail.",
       });
     }
   };
@@ -70,17 +70,17 @@ export default function ValidarEmailScreen({ navigation }: Props) {
   const handleReenviarCodigo = async () => {
     setReenviando(true);
     try {
-      await axios.post('http://10.0.2.2:8000/enviar-codigo', { email });
+      await axios.post("http://10.0.2.2:8000/enviar-codigo", { email });
       Toast.show({
-        type: 'success',
-        text1: 'Código reenviado',
-        text2: 'Verifique sua caixa de e-mail',
+        type: "success",
+        text1: "Código reenviado",
+        text2: "Verifique sua caixa de e-mail",
       });
     } catch (error: any) {
       Toast.show({
-        type: 'error',
-        text1: 'Erro ao reenviar',
-        text2: error.response?.data?.detail || 'Tente novamente em instantes.',
+        type: "error",
+        text1: "Erro ao reenviar",
+        text2: error.response?.data?.detail || "Tente novamente em instantes.",
       });
     } finally {
       setTimeout(() => setReenviando(false), 3000); // desativa temporariamente
@@ -89,20 +89,22 @@ export default function ValidarEmailScreen({ navigation }: Props) {
 
   return (
     <LinearGradient
-      colors={['#68d1c9', '#b4f0ec', '#c695da', '#a460bf', '#931b9a']}
+      colors={["#FFD7D7", "#F3B6B6", "#E0A2A2", "#C38888", "#A56C6C"]}
+      start={{ x: 0.5, y: 0 }}
+      end={{ x: 0.5, y: 1 }}
       style={globalStyles.backgroundGradient}
     >
       <Animatable.Image
         ref={logoRef}
         animation="fadeInDown"
         duration={1000}
-        source={require('../../assets/logo.png')}
+        source={require("../../assets/logo.png")}
         style={{
           width: 100,
           height: 100,
-          alignSelf: 'center',
+          alignSelf: "center",
           marginBottom: 16,
-          shadowColor: '#000',
+          shadowColor: "#000",
           shadowOffset: { width: 0, height: 4 },
           shadowOpacity: 0.3,
           shadowRadius: 6,
@@ -114,7 +116,7 @@ export default function ValidarEmailScreen({ navigation }: Props) {
       <Text style={globalStyles.subtitle}>
         Digite o código que foi enviado para:
         {"\n"}
-        <Text style={{ fontWeight: 'bold', color: '#fff' }}>{email}</Text>
+        <Text style={{ fontWeight: "bold", color: "#fff" }}>{email}</Text>
       </Text>
 
       <TextInput
@@ -125,16 +127,16 @@ export default function ValidarEmailScreen({ navigation }: Props) {
         onChangeText={setCodigo}
       />
 
-      <TouchableOpacity style={globalStyles.button} onPress={handleValidarEmail}>
+      <TouchableOpacity
+        style={globalStyles.button}
+        onPress={handleValidarEmail}
+      >
         <Text style={globalStyles.buttonText}>Validar</Text>
       </TouchableOpacity>
 
-      <TouchableOpacity
-        onPress={handleReenviarCodigo}
-        disabled={reenviando}
-      >
+      <TouchableOpacity onPress={handleReenviarCodigo} disabled={reenviando}>
         <Text style={globalStyles.link}>
-          {reenviando ? 'Reenviando...' : 'Reenviar código'}
+          {reenviando ? "Reenviando..." : "Reenviar código"}
         </Text>
       </TouchableOpacity>
     </LinearGradient>

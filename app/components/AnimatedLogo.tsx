@@ -26,8 +26,8 @@ export const AnimatedLogo = forwardRef<any, { style?: ImageStyle }>(
         duration={1000}
         source={require("../assets/logo.png")}
         style={{
-          width: 100,
-          height: 100,
+          width: 160,
+          height: 130,
           alignSelf: "center",
           marginBottom: 16,
           shadowColor: "#000",

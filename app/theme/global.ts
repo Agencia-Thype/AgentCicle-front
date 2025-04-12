@@ -1,89 +1,127 @@
-// globalStyles.ts
-import { StyleSheet } from "react-native";
+import { StyleSheet } from 'react-native';
 
-export const gradientColors = ["#C471ED", "#F64F59", "#12c2e9"]; // sua paleta misturada 💜💖💙
+export const themeColors = {
+  gradient: [
+    '#F3ECE3', // Bege claro
+    '#E5D5CF', // Rosado neutro
+    '#C8A19C', // Rosé queimado
+    '#91766E', // Marrom rosado
+    '#6B8F84', // Verde suave
+  ] as [string, string, ...string[]],
+  button: '#6B8F84', // Verde da asa da mariposa
+  buttonText: '#FFFFFF',
+  inputBackground: '#F9F5F2',
+  inputBorder: '#C8A19C',
+  text: '#5C3B3B', // Marrom elegante
+  error: '#B00020',
+};
 
 export const globalStyles = StyleSheet.create({
   backgroundGradient: {
     flex: 1,
-    justifyContent: "center",
-    paddingHorizontal: 24,
-    paddingVertical: 40,
+    justifyContent: 'center',
+    paddingHorizontal: 16,
+    paddingVertical: 24,
   },
-  container: {
+
+  centeredContainer: {
     flex: 1,
-    padding: 24,
-    justifyContent: "center",
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 24,
   },
+
+  logo: {
+    width: 150,
+    height: 130,
+    alignSelf: 'center',
+    marginBottom: 24,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 6,
+  },
+
   title: {
-    fontSize: 28,
-    fontWeight: "bold",
-    textAlign: "center",
-    marginBottom: 32,
-    color: "#931b9a", // roxo profundo que se destaca no topo
-    textShadowColor: "rgba(255, 255, 255, 0.5)",
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 3,
+    fontSize: 22,
+    fontWeight: 'bold',
+    color: themeColors.text,
+    textAlign: 'center',
+    marginBottom: 24,
   },
 
   subtitle: {
     fontSize: 16,
-    marginBottom: 24,
-    textAlign: "center",
-    color: "#fff",
-  },
-  input: {
-    height: 48,
-    borderColor: '#dca6e3',
-    borderWidth: 1,
-    borderRadius: 12,
-    paddingHorizontal: 12,
+    color: themeColors.text,
+    textAlign: 'center',
     marginBottom: 16,
-    backgroundColor: '#fff',
+  },
+
+  input: {
+    backgroundColor: '#F3ECE3', // bege elegante
+    borderRadius: 10,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    fontSize: 16,
+    marginBottom: 14,
+    color: '#5C3B3B', // texto principal marrom
+    width: '100%',
     shadowColor: '#000',
+    shadowOpacity: 0.05,
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
+    shadowRadius: 6,
     elevation: 2,
   },
+
+  inputError: {
+    borderWidth: 1.5,
+    borderColor: themeColors.error,
+  },
+
   button: {
-  backgroundColor: '#D363B3',
-  paddingVertical: 14,
-  borderRadius: 12,
-  alignItems: 'center',
-  marginTop: 8,
-  shadowColor: '#000',
-  shadowOffset: { width: 0, height: 4 },
-  shadowOpacity: 0.2,
-  shadowRadius: 6,
-  elevation: 3,
-},
+    backgroundColor: themeColors.button,
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    borderRadius: 12,
+    alignItems: 'center',
+    width: '100%',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 6,
+    elevation: 6,
+    marginTop: 8,
+  },
+
   buttonText: {
-    color: "#fff",
-    fontWeight: "bold",
-    fontSize: 16,
+    color: themeColors.buttonText,
+    fontWeight: 'bold',
+    fontSize: 18,
   },
+
   link: {
+    color: '#5C3B3B',
+    textAlign: 'center',
     marginTop: 16,
-    color: "#fff",
-    textAlign: "center",
-    textDecorationLine: "underline",
+    textDecorationLine: 'underline',
   },
+
   registerLink: {
-    marginTop: 24,
-    color: "#FFFFFF",
-    textAlign: "center",
-    fontWeight: "bold",
-    fontSize: 14,
-    textShadowColor: "rgba(0, 0, 0, 0.4)",
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 2,
+    color: '#5C3B3B',
+    textAlign: 'center',
+    marginTop: 12,
+    fontWeight: 'bold',
   },
+
   passwordHint: {
-    fontSize: 12,
-    color: '#555',
-    marginBottom: 12,
+    fontSize: 13,
+    color: '#aaa',
+    marginBottom: 8,
     marginLeft: 4,
-    fontStyle: 'italic',
+  },
+  container: {
+    flex: 1,
+    paddingHorizontal: 16,
+    paddingTop: 24,
   },
 });

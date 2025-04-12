@@ -11,11 +11,10 @@ import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import type { RootStackParamList } from "../../navigation";
 import { login } from "../../services/authService";
 import Toast from "react-native-toast-message";
-import { globalStyles } from "../../theme/global";
+import { globalStyles, themeColors } from "../../theme/global";
 import { AnimatedLogo } from "../../components/AnimatedLogo";
-import { useNavigation } from "@react-navigation/native";
 import Ionicons from "react-native-vector-icons/Ionicons";
-
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 type Props = NativeStackScreenProps<RootStackParamList, "Login">;
 
@@ -40,6 +39,9 @@ export default function LoginScreen({ navigation }: Props) {
 
     try {
       const data = await login(email, senha);
+      if (!data) return;
+
+      await AsyncStorage.setItem("token", data.access_token);
 
       Toast.show({
         type: "success",
@@ -49,20 +51,21 @@ export default function LoginScreen({ navigation }: Props) {
       setTimeout(() => {
         navigation.navigate("Home");
       }, 1000);
-    } catch (error: any) {
+    } catch (error) {
+      console.log("Erro inesperado no login:", error);
       Toast.show({
         type: "error",
-        text1: "Erro no login",
-        text2: "E-mail ou senha inválidos",
+        text1: "Erro inesperado",
+        text2: "Tente novamente em instantes.",
       });
-      setErroEmail(true);
-      setErroSenha(true);
     }
   };
 
   return (
     <LinearGradient
-      colors={["#68d1c9", "#b4f0ec", "#c695da", "#a460bf", "#931b9a"]}
+      colors={themeColors.gradient}
+      start={{ x: 0.5, y: 0 }}
+      end={{ x: 0.5, y: 1 }}
       style={globalStyles.backgroundGradient}
     >
       <AnimatedLogo />
@@ -81,10 +84,11 @@ export default function LoginScreen({ navigation }: Props) {
         }}
       />
 
-      <View style={[globalStyles.input, styles.passwordContainer, erroSenha && styles.inputError]}>
+      <View style={[styles.passwordContainer, erroSenha && styles.inputError]}>
         <TextInput
           style={styles.passwordInput}
           placeholder="Senha"
+          placeholderTextColor="#999"
           secureTextEntry={!senhaVisivel}
           value={senha}
           onChangeText={(text) => {
@@ -96,7 +100,7 @@ export default function LoginScreen({ navigation }: Props) {
           <Ionicons
             name={senhaVisivel ? "eye-off" : "eye"}
             size={20}
-            color="#888"
+            color="#333"
           />
         </TouchableOpacity>
       </View>
@@ -128,15 +132,15 @@ const styles = StyleSheet.create({
     alignItems: "center",
     paddingHorizontal: 12,
     borderRadius: 8,
-    backgroundColor: "white",
-    marginBottom: 12,
+    backgroundColor: "#fff",
+    marginBottom: 14,
     height: 48,
-    shadowColor: "#000",
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
+    borderWidth: 1,
+    borderColor: "#e0e0e0",
   },
   passwordInput: {
     flex: 1,
-    color: "#333",
+    fontSize: 16,
+    color: "#333", // ou "black" se preferir mais forte
   },
 });
