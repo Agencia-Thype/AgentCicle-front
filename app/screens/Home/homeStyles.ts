@@ -93,11 +93,12 @@ export const homeStyles = StyleSheet.create({
   },
 
   barraContainer: {
-    height: 14,
-    width: "100%",
-    backgroundColor: "#EDE5E1",
-    borderRadius: 8,
-    overflow: "hidden",
+    height: 12,
+    backgroundColor: "#F5EFEF",
+    borderRadius: 10,
+    marginTop: 10,
+    marginBottom: 6,
+    position: "relative",
   },
 
   barraProgresso: {
@@ -137,7 +138,7 @@ export const homeStyles = StyleSheet.create({
     justifyContent: "flex-end",
     alignItems: "center",
   },
-  
+
   modalMenu: {
     backgroundColor: "#fff",
     width: "100%",

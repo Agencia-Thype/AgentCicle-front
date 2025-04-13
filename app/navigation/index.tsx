@@ -11,6 +11,7 @@ import CalendarioScreen from "../screens/Calendario/CalendarioScreen";
 import PerfilScreen from "../screens/Perfil/PerfilScreen";
 import TreinoDoDia from "../screens/Treino/TreinoDoDiaScreen";
 import VideoPlayerScreen from "../screens/VideoPlayers/VideoPlayesScreen";
+import SintomasScreen from "app/screens/Sintomas/SintomasScreen";
 
 
 
@@ -26,6 +27,7 @@ export type RootStackParamList = {
   Perfil: undefined;
   TreinoDoDia: undefined;
   VideoPlayer: { url: string };
+  Sintomas: undefined; 
 };
 
 // Stack Navigator tipado
@@ -96,6 +98,7 @@ export function Routes() {
           component={VideoPlayerScreen}
           options={{ title: "Vídeo do Exercício" }}
         />
+        <Stack.Screen name="Sintomas" component={SintomasScreen} options={{ title: "Sintomas" }} />
       </Stack.Navigator>
     </NavigationContainer>
   );
