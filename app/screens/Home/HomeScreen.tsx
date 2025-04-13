@@ -150,7 +150,80 @@ export default function HomeScreen() {
 
   return (
     <View style={{ flex: 1 }}>
-      {/* ...menu modal omitido para foco */}
+      <Modal visible={menuVisible} animationType="slide" transparent={true}>
+        <View style={homeStyles.modalOverlay}>
+          <View style={homeStyles.modalMenu}>
+            <TouchableOpacity
+              style={homeStyles.menuItem}
+              onPress={() => {
+                setMenuVisible(false);
+                navigation.navigate("Home");
+              }}
+            >
+              <MaterialIcons name="home" size={20} color="#5C3B3B" />
+              <Text style={homeStyles.menuItemText}>Início</Text>
+            </TouchableOpacity>
+  
+            <TouchableOpacity
+              style={homeStyles.menuItem}
+              onPress={() => {
+                setMenuVisible(false);
+                navigation.navigate("Perfil");
+              }}
+            >
+              <MaterialIcons name="person" size={20} color="#5C3B3B" />
+              <Text style={homeStyles.menuItemText}>Perfil</Text>
+            </TouchableOpacity>
+  
+            <TouchableOpacity
+              style={homeStyles.menuItem}
+              onPress={() => {
+                setMenuVisible(false);
+                navigation.navigate("Calendario");
+              }}
+            >
+              <MaterialIcons name="calendar-today" size={20} color="#5C3B3B" />
+              <Text style={homeStyles.menuItemText}>Calendário</Text>
+            </TouchableOpacity>
+  
+            <TouchableOpacity
+              style={homeStyles.menuItem}
+              onPress={() => {
+                setMenuVisible(false);
+                navigation.navigate("TreinoDoDia");
+              }}
+            >
+              <MaterialCommunityIcons name="dumbbell" size={20} color="#5C3B3B" />
+              <Text style={homeStyles.menuItemText}>Treino do dia</Text>
+            </TouchableOpacity>
+  
+            {/* <TouchableOpacity
+              style={homeStyles.menuItem}
+              onPress={() => {
+                setMenuVisible(false);
+                navigation.navigate("ChatIA");
+              }}
+            >
+              <MaterialCommunityIcons name="chat-processing" size={20} color="#5C3B3B" />
+              <Text style={homeStyles.menuItemText}>Assistente IA</Text>
+            </TouchableOpacity> */}
+  
+            <TouchableOpacity
+              style={homeStyles.menuItem}
+              onPress={async () => {
+                await AsyncStorage.clear();
+                setMenuVisible(false);
+                navigation.navigate("Login");
+              }}
+            >
+              <MaterialIcons name="logout" size={20} color="#A56C6C" />
+              <Text style={[homeStyles.menuItemText, { color: "#A56C6C" }]}>
+                Sair
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
 
       <LinearGradient
         colors={themeColors.gradient}
@@ -158,7 +231,27 @@ export default function HomeScreen() {
         end={{ x: 1, y: 1 }}
         style={globalStyles.backgroundGradient}
       >
-        {/* ...cabeçalho omitido */}
+        <View style={homeStyles.header}>
+                  <TouchableOpacity onPress={() => setMenuVisible(true)}>
+                    <MaterialIcons name="menu" size={28} color="#5C3B3B" />
+                  </TouchableOpacity>
+          
+                  <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+                    {trofeuUri && (
+                      <Image
+                        source={trofeuUri}
+                        style={{ width: 28, height: 28, resizeMode: "contain" }}
+                      />
+                    )}
+                    <TouchableOpacity onPress={() => navigation.navigate("Calendario")}>
+                      <MaterialCommunityIcons
+                        name="calendar-heart"
+                        size={28}
+                        color="#5C3B3B"
+                      />
+                    </TouchableOpacity>
+                  </View>
+                </View>
 
         <ScrollView contentContainerStyle={homeStyles.content}>
           <AnimatedLogo />
