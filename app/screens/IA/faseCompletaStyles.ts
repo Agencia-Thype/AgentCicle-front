@@ -22,9 +22,11 @@ export const faseCompletaStyles = StyleSheet.create({
     lineHeight: 22,
     textAlign: "justify",
     marginBottom: 16,
-   
     padding: 16,
     borderRadius: 12,
+    backgroundColor: "#fff",
+    borderColor: "#E5DAD1",
+    borderWidth: 1,
   },
   subtitulo: {
     fontSize: 16,
@@ -33,6 +35,18 @@ export const faseCompletaStyles = StyleSheet.create({
     marginBottom: 12,
     textAlign: "center",
   },
+  inputPergunta: {
+    backgroundColor: "#fff",
+    borderColor: "#E5DAD1",
+    borderWidth: 1,
+    borderRadius: 12,
+    padding: 16,
+    fontSize: 15,
+    color: "#5C3B3B",
+    minHeight: 100,
+    textAlignVertical: "top",
+    marginBottom: 12,
+  },
   respostaContainer: {
     backgroundColor: "#FFFFFF",
     padding: 16,
@@ -40,11 +54,14 @@ export const faseCompletaStyles = StyleSheet.create({
     borderColor: "#E5DAD1",
     borderWidth: 1,
     marginTop: 24,
+    flexDirection: "row",
+    gap: 10,
   },
   respostaTexto: {
     fontSize: 15,
     color: "#5C3B3B",
     lineHeight: 22,
     textAlign: "justify",
+    flex: 1,
   },
 });

@@ -44,22 +44,26 @@ export default function FaseCompletaScreen() {
     setResposta("");
 
     try {
-        const res = await api.post("/fase-atual/conversar", { pergunta });
-        setResposta(res.data?.resposta || "A IA respondeu, mas não conseguimos exibir a mensagem.");
-      } catch (err) {
-        setResposta("Erro ao obter resposta da IA.");
-      } finally {
-        setCarregando(false);  // Isso garante que pare a bolinha mesmo se der erro
-      }
-  }
+      const res = await api.post("/fase-atual/conversar", { pergunta });
+      setResposta(
+        res.data?.resposta ||
+          "A IA respondeu, mas não conseguimos exibir a mensagem."
+      );
+    } catch (err) {
+      setResposta("Erro ao obter resposta da IA.");
+    } finally {
+      setCarregando(false); // Isso garante que pare a bolinha mesmo se der erro
+    }
+  };
 
   return (
     <LinearGradient
-      colors={["#F8F4F2", "#F3ECE3"]}
+      colors={themeColors.gradient}
       start={{ x: 0.2, y: 0 }}
       end={{ x: 1, y: 1 }}
-      style={{ flex: 1 }}
+      style={globalStyles.backgroundGradient}
     >
+       
       <KeyboardAvoidingView
         behavior={Platform.OS === "ios" ? "padding" : undefined}
         style={{ flex: 1 }}
@@ -90,14 +94,14 @@ export default function FaseCompletaScreen() {
           </Text>
 
           <TextInput
-            style={[globalStyles.input, { minHeight: 80, textAlignVertical: "top" }]}
+            style={faseCompletaStyles.inputPergunta}
             placeholder="Digite sua pergunta para a IA"
             placeholderTextColor="#A58A8A"
             multiline
             numberOfLines={4}
             value={pergunta}
             onChangeText={setPergunta}
-         />
+          />
 
           <TouchableOpacity
             style={globalStyles.button}

@@ -89,7 +89,7 @@ export function Routes() {
         <Stack.Screen
           name="TreinoDoDia"
           component={TreinoDoDia}
-          options={{ title: "Treino do Dia" }}
+          options={{ headerShown: false }}
         />
         <Stack.Screen
           name="VideoPlayer"

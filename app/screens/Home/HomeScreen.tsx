@@ -27,6 +27,7 @@ import {
 } from "../../services/cicloService";
 import { api } from "app/services/api";
 import { getWeekDateRange } from "app/utils/getWeekDateRange";
+import ClasseLunarModal from "../../components/classeLunarModal";
 
 const hoje = new Date().toLocaleDateString("pt-BR", {
   weekday: "long",
@@ -48,6 +49,7 @@ export default function HomeScreen() {
   const [classeAtual, setClasseAtual] = useState<string>("");
   const [diasRestantes, setDiasRestantes] = useState<number>(0);
   const [descricao, setDescricao] = useState<string>("");
+  const [modalAberto, setModalAberto] = useState(false);
 
   const navigation =
     useNavigation<NativeStackNavigationProp<RootStackParamList>>();
@@ -206,16 +208,20 @@ export default function HomeScreen() {
               <Text style={homeStyles.menuItemText}>Treino do dia</Text>
             </TouchableOpacity>
 
-            {/* <TouchableOpacity
+            <TouchableOpacity
               style={homeStyles.menuItem}
               onPress={() => {
                 setMenuVisible(false);
-                navigation.navigate("ChatIA");
+                navigation.navigate("FaseCompletaScreen");
               }}
             >
-              <MaterialCommunityIcons name="chat-processing" size={20} color="#5C3B3B" />
+              <MaterialCommunityIcons
+                name="chat-processing"
+                size={20}
+                color="#5C3B3B"
+              />
               <Text style={homeStyles.menuItemText}>Assistente IA</Text>
-            </TouchableOpacity> */}
+            </TouchableOpacity>
 
             <TouchableOpacity
               style={homeStyles.menuItem}
@@ -247,11 +253,14 @@ export default function HomeScreen() {
 
           <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
             {trofeuUri && (
-              <Image
-                source={trofeuUri}
-                style={{ width: 28, height: 28, resizeMode: "contain" }}
-              />
+              <TouchableOpacity onPress={() => setModalAberto(true)}>
+                <Image
+                  source={trofeuUri}
+                  style={{ width: 28, height: 28, resizeMode: "contain" }}
+                />
+              </TouchableOpacity>
             )}
+
             <TouchableOpacity onPress={() => navigation.navigate("Calendario")}>
               <MaterialCommunityIcons
                 name="calendar-heart"
@@ -259,6 +268,20 @@ export default function HomeScreen() {
                 color="#5C3B3B"
               />
             </TouchableOpacity>
+
+            <ClasseLunarModal
+              visivel={modalAberto}
+              onFechar={() => setModalAberto(false)}
+              trofeuUri={trofeuUri}
+              classeAtual={"Lua Nova"}
+              descricaoClasse={"Início do despertar. É o começo da jornada."}
+              diasRestantes={12}
+              proximaPontuacao={120}
+              proximaClasse={{
+                nome: "Lua Crescente",
+                descricao: "Exploração e força para o novo ciclo.",
+              }}
+            />
           </View>
         </View>
 
