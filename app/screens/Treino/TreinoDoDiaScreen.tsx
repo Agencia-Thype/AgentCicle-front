@@ -45,15 +45,35 @@ export default function TreinoDoDiaScreen() {
         setTreino(response.data.exercicios);
         setFase(response.data.fase);
         setTipoTreino(response.data.tipo_treino);
+  
+        // ✅ Após setar o treino, chama os marcados com o tamanho correto
+        buscarMarcadosHoje(response.data.exercicios.length);
       } catch (error) {
         console.error("Erro ao buscar treino:", error);
       } finally {
         setLoading(false);
       }
     }
-
+  
     buscarTreino();
   }, []);
+  
+  async function buscarMarcadosHoje(total: number) {
+    try {
+      const response = await api.get("/treino-dia/marcados-hoje");
+      const percentualSalvo = response.data.percentual;
+      const quantidadeMarcada = Math.round((percentualSalvo / 100) * total);
+  
+      const novosChecks: { [key: number]: boolean } = {};
+      for (let i = 0; i < quantidadeMarcada; i++) {
+        novosChecks[i] = true;
+      }
+      setChecked(novosChecks);
+    } catch (error) {
+      console.error("Erro ao buscar treinos marcados:", error);
+    }
+  }
+  
 
   const toggleCheck = (index: number) => {
     setChecked((prev) => ({ ...prev, [index]: !prev[index] }));
@@ -95,12 +115,20 @@ export default function TreinoDoDiaScreen() {
         percentual,
       });
 
-      const { pontos, ja_salvo, percentual: salvoPercentual } = response.data;
+      const data = response.data;
+
+      if (!data) {
+        throw new Error("Resposta inválida do servidor.");
+      }
+
+      const { pontos, ja_salvo, percentual: salvoPercentual } = data;
 
       if (ja_salvo) {
         Alert.alert(
           "Treino já realizado",
-          `Você já concluiu esse treino hoje com ${salvoPercentual}% e ganhou ${pontos} ponto${pontos !== 1 ? "s" : ""}.`
+          `Você já concluiu esse treino hoje com ${salvoPercentual}% e ganhou ${pontos} ponto${
+            pontos !== 1 ? "s" : ""
+          }.`
         );
       } else {
         setPontosGanho(pontos);
@@ -111,7 +139,10 @@ export default function TreinoDoDiaScreen() {
     } catch (error: any) {
       console.error("Erro ao salvar progresso:", error);
       if (error.message === "Network Error") {
-        Alert.alert("Erro de conexão", "Não foi possível conectar com o servidor.");
+        Alert.alert(
+          "Erro de conexão",
+          "Não foi possível conectar com o servidor."
+        );
       } else {
         Alert.alert("Erro", "Erro ao salvar o progresso. Tente novamente.");
       }
@@ -151,13 +182,27 @@ export default function TreinoDoDiaScreen() {
               <Text style={styles.exerciseTitle}>{ex.exercicio}</Text>
             </View>
 
-            {ex.metodo && <Text style={styles.itemText}>Método: {ex.metodo}</Text>}
-            {ex.series && <Text style={styles.itemText}>Séries: {ex.series}</Text>}
-            {ex.repeticoes && <Text style={styles.itemText}>Repetições: {ex.repeticoes}</Text>}
-            {ex.descanso && <Text style={styles.itemText}>Descanso: {ex.descanso}</Text>}
-            {ex.cadencia && <Text style={styles.itemText}>Cadência: {ex.cadencia}</Text>}
-            {ex.intensidade && <Text style={styles.itemText}>Intensidade: {ex.intensidade}</Text>}
-            {ex.duracao && <Text style={styles.itemText}>Duração: {ex.duracao}</Text>}
+            {ex.metodo && (
+              <Text style={styles.itemText}>Método: {ex.metodo}</Text>
+            )}
+            {ex.series && (
+              <Text style={styles.itemText}>Séries: {ex.series}</Text>
+            )}
+            {ex.repeticoes && (
+              <Text style={styles.itemText}>Repetições: {ex.repeticoes}</Text>
+            )}
+            {ex.descanso && (
+              <Text style={styles.itemText}>Descanso: {ex.descanso}</Text>
+            )}
+            {ex.cadencia && (
+              <Text style={styles.itemText}>Cadência: {ex.cadencia}</Text>
+            )}
+            {ex.intensidade && (
+              <Text style={styles.itemText}>Intensidade: {ex.intensidade}</Text>
+            )}
+            {ex.duracao && (
+              <Text style={styles.itemText}>Duração: {ex.duracao}</Text>
+            )}
             {ex.obs && <Text style={styles.itemText}>Obs: {ex.obs}</Text>}
 
             <TouchableOpacity
@@ -165,7 +210,10 @@ export default function TreinoDoDiaScreen() {
               onPress={() =>
                 ex.link_video
                   ? navigation.navigate("VideoPlayer", { url: ex.link_video })
-                  : Alert.alert("Vídeo em breve", "Este exercício ainda não possui vídeo.")
+                  : Alert.alert(
+                      "Vídeo em breve",
+                      "Este exercício ainda não possui vídeo."
+                    )
               }
             >
               <Text style={globalStyles.buttonText}>
@@ -194,8 +242,22 @@ export default function TreinoDoDiaScreen() {
       </ScrollView>
 
       <Modal isVisible={modalVisible}>
-        <View style={{ backgroundColor: "#fff", borderRadius: 12, padding: 20, alignItems: "center" }}>
-          <Text style={{ fontWeight: "bold", fontSize: 18, color: "#5C3B3B", marginBottom: 10 }}>
+        <View
+          style={{
+            backgroundColor: "#fff",
+            borderRadius: 12,
+            padding: 20,
+            alignItems: "center",
+          }}
+        >
+          <Text
+            style={{
+              fontWeight: "bold",
+              fontSize: 18,
+              color: "#5C3B3B",
+              marginBottom: 10,
+            }}
+          >
             Progresso salvo!
           </Text>
           <Text style={{ fontSize: 16, color: "#5C3B3B", textAlign: "center" }}>
@@ -220,7 +282,10 @@ export default function TreinoDoDiaScreen() {
           <Text style={{ fontSize: 20, fontWeight: "bold", color: "#5C3B3B" }}>
             {pontosGanho} ponto{pontosGanho !== 1 ? "s" : ""}
           </Text>
-          <TouchableOpacity onPress={() => setModalVisible(false)} style={{ marginTop: 20 }}>
+          <TouchableOpacity
+            onPress={() => setModalVisible(false)}
+            style={{ marginTop: 20 }}
+          >
             <Text style={{ color: "#A56C6C", fontWeight: "bold" }}>Fechar</Text>
           </TouchableOpacity>
         </View>

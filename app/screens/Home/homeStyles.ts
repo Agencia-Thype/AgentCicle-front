@@ -53,20 +53,7 @@ export const homeStyles = StyleSheet.create({
     elevation: 3,
   },
 
-  faseTitulo: {
-    fontSize: 18,
-    fontWeight: "bold",
-    marginBottom: 4,
-    color: "#5B4A44",
-  },
-
-  faseNome: {
-    fontSize: 20,
-    fontWeight: "bold",
-    color: "#7D4F4F",
-    marginBottom: 2,
-  },
-
+  
   faseMensagem: {
     fontSize: 16,
     color: "#915858",
@@ -239,4 +226,61 @@ export const homeStyles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "600",
   },
+  faseResumo: {
+    fontSize: 14,
+    color: "#5C3B3B",
+    marginTop: 8,
+    textAlign: "center",
+    lineHeight: 20,
+  },
+  
+  botaoSaibaMais: {
+    marginTop: 10,
+    alignSelf: "center",
+  },
+  
+  textoSaibaMais: {
+    color: "#7E5C5C",
+    textDecorationLine: "underline",
+    fontWeight: "500",
+    fontSize: 14,
+  },
+  faseTitulo: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#5C3B3B",
+    marginBottom: 8,
+    textAlign: "left",
+  },
+  
+  faseNome: {
+    fontSize: 22,
+    fontWeight: "bold",
+    color: "#A56C6C",
+    textAlign: "center",
+    marginBottom: 6,
+  },
+  
+  faseDescricao: {
+    fontSize: 15,
+    color: "#4A2E2E",
+    lineHeight: 22,
+    textAlign: "justify",
+    fontWeight: "bold",    
+    padding: 6,
+    borderRadius: 8,
+  },
+  
+  saibaMaisContainer: {
+    alignItems: "flex-end",
+    marginTop: 8,
+  },
+  
+  saibaMaisBotao: {
+    fontSize: 13,
+    color: "#5C3B3B",
+    textDecorationLine: "underline",
+  },
+  
+
 });

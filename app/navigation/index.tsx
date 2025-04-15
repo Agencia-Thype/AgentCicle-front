@@ -12,8 +12,7 @@ import PerfilScreen from "../screens/Perfil/PerfilScreen";
 import TreinoDoDia from "../screens/Treino/TreinoDoDiaScreen";
 import VideoPlayerScreen from "../screens/VideoPlayers/VideoPlayesScreen";
 import SintomasScreen from "app/screens/Sintomas/SintomasScreen";
-
-
+import FaseCompletaScreen from "app/screens/IA/faseCompletaScreen";
 
 // Tipos das rotas
 export type RootStackParamList = {
@@ -27,17 +26,16 @@ export type RootStackParamList = {
   Perfil: undefined;
   TreinoDoDia: undefined;
   VideoPlayer: { url: string };
-  Sintomas: undefined; 
+  Sintomas: undefined;
+  FaseCompletaScreen: undefined;
 };
 
-// Stack Navigator tipado
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
-// Configuração de header transparente para reutilizar
 const transparentHeaderOptions = {
   headerTransparent: true,
   headerTitleStyle: { color: "#fff" },
-  headerTintColor: "#fff", // seta de voltar
+  headerTintColor: "#fff",
 };
 
 export function Routes() {
@@ -98,7 +96,16 @@ export function Routes() {
           component={VideoPlayerScreen}
           options={{ title: "Vídeo do Exercício" }}
         />
-        <Stack.Screen name="Sintomas" component={SintomasScreen} options={{ title: "Sintomas" }} />
+        <Stack.Screen
+          name="Sintomas"
+          component={SintomasScreen}
+          options={{ title: "Sintomas" }}
+        />
+        <Stack.Screen
+          name="FaseCompletaScreen"
+          component={FaseCompletaScreen}
+          options={{ headerShown: false }}
+        />
       </Stack.Navigator>
     </NavigationContainer>
   );

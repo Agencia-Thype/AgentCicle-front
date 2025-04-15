@@ -21,7 +21,10 @@ import { AnimatedLogo } from "../../components/AnimatedLogo";
 import { homeStyles } from "./homeStyles";
 import { globalStyles, themeColors } from "../../theme/global";
 import { getPerfil } from "../../services/perfilService";
-import { getFaseCiclo } from "../../services/cicloService";
+import {
+  getDetalhesFaseAtual,
+  getFaseCiclo,
+} from "../../services/cicloService";
 import { api } from "app/services/api";
 import { getWeekDateRange } from "app/utils/getWeekDateRange";
 
@@ -44,8 +47,7 @@ export default function HomeScreen() {
   const [pontuacao, setPontuacao] = useState<number>(0);
   const [classeAtual, setClasseAtual] = useState<string>("");
   const [diasRestantes, setDiasRestantes] = useState<number>(0);
-  const inicio = new Date("2025-03-31");
-  const fim = new Date("2025-04-04");
+  const [descricao, setDescricao] = useState<string>("");
 
   const navigation =
     useNavigation<NativeStackNavigationProp<RootStackParamList>>();
@@ -82,9 +84,12 @@ export default function HomeScreen() {
 
         setTrofeuUri(trofeu);
 
-        const ciclo = await getFaseCiclo();
-        setFase(ciclo.fase);
+        const ciclo = await getDetalhesFaseAtual();
+        setFase(ciclo.fase_atual);
         setMensagem(ciclo.mensagem);
+        setDescricao(ciclo.descricao || "");
+        console.log("📌 Descrição recebida:", ciclo.descricao);
+        console.log("✅ Ciclo:", ciclo);
 
         switch (ciclo.fase) {
           case "Menstruação":
@@ -163,7 +168,7 @@ export default function HomeScreen() {
               <MaterialIcons name="home" size={20} color="#5C3B3B" />
               <Text style={homeStyles.menuItemText}>Início</Text>
             </TouchableOpacity>
-  
+
             <TouchableOpacity
               style={homeStyles.menuItem}
               onPress={() => {
@@ -174,7 +179,7 @@ export default function HomeScreen() {
               <MaterialIcons name="person" size={20} color="#5C3B3B" />
               <Text style={homeStyles.menuItemText}>Perfil</Text>
             </TouchableOpacity>
-  
+
             <TouchableOpacity
               style={homeStyles.menuItem}
               onPress={() => {
@@ -185,7 +190,7 @@ export default function HomeScreen() {
               <MaterialIcons name="calendar-today" size={20} color="#5C3B3B" />
               <Text style={homeStyles.menuItemText}>Calendário</Text>
             </TouchableOpacity>
-  
+
             <TouchableOpacity
               style={homeStyles.menuItem}
               onPress={() => {
@@ -193,10 +198,14 @@ export default function HomeScreen() {
                 navigation.navigate("TreinoDoDia");
               }}
             >
-              <MaterialCommunityIcons name="dumbbell" size={20} color="#5C3B3B" />
+              <MaterialCommunityIcons
+                name="dumbbell"
+                size={20}
+                color="#5C3B3B"
+              />
               <Text style={homeStyles.menuItemText}>Treino do dia</Text>
             </TouchableOpacity>
-  
+
             {/* <TouchableOpacity
               style={homeStyles.menuItem}
               onPress={() => {
@@ -207,7 +216,7 @@ export default function HomeScreen() {
               <MaterialCommunityIcons name="chat-processing" size={20} color="#5C3B3B" />
               <Text style={homeStyles.menuItemText}>Assistente IA</Text>
             </TouchableOpacity> */}
-  
+
             <TouchableOpacity
               style={homeStyles.menuItem}
               onPress={async () => {
@@ -232,26 +241,26 @@ export default function HomeScreen() {
         style={globalStyles.backgroundGradient}
       >
         <View style={homeStyles.header}>
-                  <TouchableOpacity onPress={() => setMenuVisible(true)}>
-                    <MaterialIcons name="menu" size={28} color="#5C3B3B" />
-                  </TouchableOpacity>
-          
-                  <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
-                    {trofeuUri && (
-                      <Image
-                        source={trofeuUri}
-                        style={{ width: 28, height: 28, resizeMode: "contain" }}
-                      />
-                    )}
-                    <TouchableOpacity onPress={() => navigation.navigate("Calendario")}>
-                      <MaterialCommunityIcons
-                        name="calendar-heart"
-                        size={28}
-                        color="#5C3B3B"
-                      />
-                    </TouchableOpacity>
-                  </View>
-                </View>
+          <TouchableOpacity onPress={() => setMenuVisible(true)}>
+            <MaterialIcons name="menu" size={28} color="#5C3B3B" />
+          </TouchableOpacity>
+
+          <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+            {trofeuUri && (
+              <Image
+                source={trofeuUri}
+                style={{ width: 28, height: 28, resizeMode: "contain" }}
+              />
+            )}
+            <TouchableOpacity onPress={() => navigation.navigate("Calendario")}>
+              <MaterialCommunityIcons
+                name="calendar-heart"
+                size={28}
+                color="#5C3B3B"
+              />
+            </TouchableOpacity>
+          </View>
+        </View>
 
         <ScrollView contentContainerStyle={homeStyles.content}>
           <AnimatedLogo />
@@ -264,8 +273,19 @@ export default function HomeScreen() {
 
           <View style={homeStyles.card}>
             <Text style={homeStyles.faseTitulo}>🌙 Fase atual do ciclo</Text>
+
             <Text style={homeStyles.faseNome}>{fase}</Text>
-            <Text style={homeStyles.faseMensagem}>{mensagem}</Text>
+
+            <Text style={homeStyles.faseDescricao} numberOfLines={3}>
+              {descricao}
+            </Text>
+
+            <TouchableOpacity
+              onPress={() => navigation.navigate("FaseCompletaScreen")}
+              style={homeStyles.saibaMaisContainer}
+            >
+              <Text style={homeStyles.saibaMaisBotao}>Saiba mais →</Text>
+            </TouchableOpacity>
           </View>
 
           <View style={homeStyles.card}>
