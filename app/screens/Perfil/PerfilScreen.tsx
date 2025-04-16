@@ -5,10 +5,11 @@ import { MaterialIcons } from "@expo/vector-icons";
 import Toast from "react-native-toast-message";
 import DropDownPicker from "react-native-dropdown-picker";
 
-import { globalStyles } from "../../theme/global";
+import { globalStyles, themeColors } from "../../theme/global";
 import { perfilStyles } from "./PerfilStyles";
 import { updatePerfil, getPerfil } from "../../services/perfilService";
 import CalendarioModal from "../../components/calendario/CalendarioModal";
+import { AnimatedLogo } from "app/components/AnimatedLogo";
 
 export default function PerfilScreen() {
   const [altura, setAltura] = useState("");
@@ -98,13 +99,14 @@ export default function PerfilScreen() {
 
   return (
     <LinearGradient
-      colors={["#F3ECE3", "#C8A19C", "#91766E", "#5B4A44"]}
-      start={{ x: 0, y: 0 }}
+      colors={themeColors.gradient}
+      start={{ x: 0.2, y: 0 }}
       end={{ x: 1, y: 1 }}
       style={globalStyles.backgroundGradient}
     >
+      <AnimatedLogo />
       <View style={perfilStyles.container}>
-        <Text style={perfilStyles.headerTitle}>Meu Perfil</Text>
+      
         <Text style={perfilStyles.title}>Complete seu perfil</Text>
 
         <TextInput

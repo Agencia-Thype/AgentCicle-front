@@ -94,7 +94,7 @@ export function Routes() {
         <Stack.Screen
           name="VideoPlayer"
           component={VideoPlayerScreen}
-          options={{ title: "Vídeo do Exercício" }}
+          options={{ headerShown: false }}
         />
         <Stack.Screen
           name="Sintomas"

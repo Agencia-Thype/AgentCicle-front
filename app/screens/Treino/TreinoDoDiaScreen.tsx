@@ -50,7 +50,7 @@ export default function TreinoDoDiaScreen() {
         setTreino(response.data.exercicios);
         setFase(response.data.fase);
         setTipoTreino(response.data.tipo_treino);
-  
+
         // ✅ Após setar o treino, chama os marcados com o tamanho correto
         buscarMarcadosHoje(response.data.exercicios.length);
       } catch (error) {
@@ -59,16 +59,16 @@ export default function TreinoDoDiaScreen() {
         setLoading(false);
       }
     }
-  
+
     buscarTreino();
   }, []);
-  
+
   async function buscarMarcadosHoje(total: number) {
     try {
       const response = await api.get("/treino-dia/marcados-hoje");
       const percentualSalvo = response.data.percentual;
       const quantidadeMarcada = Math.round((percentualSalvo / 100) * total);
-  
+
       const novosChecks: { [key: number]: boolean } = {};
       for (let i = 0; i < quantidadeMarcada; i++) {
         novosChecks[i] = true;
@@ -78,7 +78,6 @@ export default function TreinoDoDiaScreen() {
       console.error("Erro ao buscar treinos marcados:", error);
     }
   }
-  
 
   const toggleCheck = (index: number) => {
     setChecked((prev) => ({ ...prev, [index]: !prev[index] }));
@@ -187,13 +186,13 @@ export default function TreinoDoDiaScreen() {
             <TouchableOpacity onPress={() => navigation.goBack()}>
               <Ionicons name="arrow-back" size={24} color="#5C3B3B" />
             </TouchableOpacity>
-  
+
             {/* 🦋 Logo animada */}
             <AnimatedLogo />
-  
+
             <Text style={globalStyles.title}>Fase: {fase}</Text>
             <Text style={globalStyles.subtitle}>Treino {tipoTreino}</Text>
-  
+
             {treino.map((ex, index) => (
               <View key={index} style={styles.card}>
                 <View style={styles.checkRow}>
@@ -204,31 +203,62 @@ export default function TreinoDoDiaScreen() {
                   />
                   <Text style={styles.exerciseTitle}>{ex.exercicio}</Text>
                 </View>
-  
-                {ex.metodo && <Text style={styles.itemText}>Método: {ex.metodo}</Text>}
-                {ex.series && <Text style={styles.itemText}>Séries: {ex.series}</Text>}
-                {ex.repeticoes && <Text style={styles.itemText}>Repetições: {ex.repeticoes}</Text>}
-                {ex.descanso && <Text style={styles.itemText}>Descanso: {ex.descanso}</Text>}
-                {ex.cadencia && <Text style={styles.itemText}>Cadência: {ex.cadencia}</Text>}
-                {ex.intensidade && <Text style={styles.itemText}>Intensidade: {ex.intensidade}</Text>}
-                {ex.duracao && <Text style={styles.itemText}>Duração: {ex.duracao}</Text>}
+
+                {ex.metodo && (
+                  <Text style={styles.itemText}>Método: {ex.metodo}</Text>
+                )}
+                {ex.series && (
+                  <Text style={styles.itemText}>Séries: {ex.series}</Text>
+                )}
+                {ex.repeticoes && (
+                  <Text style={styles.itemText}>
+                    Repetições: {ex.repeticoes}
+                  </Text>
+                )}
+                {ex.descanso && (
+                  <Text style={styles.itemText}>Descanso: {ex.descanso}</Text>
+                )}
+                {ex.cadencia && (
+                  <Text style={styles.itemText}>Cadência: {ex.cadencia}</Text>
+                )}
+                {ex.intensidade && (
+                  <Text style={styles.itemText}>
+                    Intensidade: {ex.intensidade}
+                  </Text>
+                )}
+                {ex.duracao && (
+                  <Text style={styles.itemText}>Duração: {ex.duracao}</Text>
+                )}
                 {ex.obs && <Text style={styles.itemText}>Obs: {ex.obs}</Text>}
-  
+
                 <TouchableOpacity
-                  style={[globalStyles.button, styles.videoButton]}
+                  style={[
+                    globalStyles.button,
+                    styles.videoButton,
+                    {
+                      paddingVertical: 6,
+                      paddingHorizontal: 20,
+                      alignSelf: "flex-start",
+                    },
+                  ]}
                   onPress={() =>
                     ex.link_video
-                      ? navigation.navigate("VideoPlayer", { url: ex.link_video })
-                      : Alert.alert("Vídeo em breve", "Este exercício ainda não possui vídeo.")
+                      ? navigation.navigate("VideoPlayer", {
+                          url: ex.link_video,
+                        })
+                      : Alert.alert(
+                          "Vídeo em breve",
+                          "Este exercício ainda não possui vídeo."
+                        )
                   }
                 >
-                  <Text style={globalStyles.buttonText}>
+                  <Text style={[globalStyles.buttonText, { fontSize: 14 }]}>
                     {ex.link_video ? "Ver vídeo" : "Vídeo em breve"}
                   </Text>
                 </TouchableOpacity>
               </View>
             ))}
-  
+
             <TouchableOpacity
               disabled={progressoSalvo}
               style={[
@@ -247,7 +277,7 @@ export default function TreinoDoDiaScreen() {
             </TouchableOpacity>
           </ScrollView>
         </KeyboardAvoidingView>
-  
+
         {/* 🎉 Modal de confirmação */}
         <Modal isVisible={modalVisible}>
           <View
@@ -268,7 +298,9 @@ export default function TreinoDoDiaScreen() {
             >
               Progresso salvo!
             </Text>
-            <Text style={{ fontSize: 16, color: "#5C3B3B", textAlign: "center" }}>
+            <Text
+              style={{ fontSize: 16, color: "#5C3B3B", textAlign: "center" }}
+            >
               Parabéns! Você concluiu {calcularProgresso()}% do treino e ganhou:
             </Text>
             <Animated.Image
@@ -287,18 +319,25 @@ export default function TreinoDoDiaScreen() {
                 ],
               }}
             />
-            <Text style={{ fontSize: 20, fontWeight: "bold", color: "#5C3B3B" }}>
+            <Text
+              style={{ fontSize: 20, fontWeight: "bold", color: "#5C3B3B" }}
+            >
               {pontosGanho} ponto{pontosGanho !== 1 ? "s" : ""}
             </Text>
-            <TouchableOpacity onPress={() => setModalVisible(false)} style={{ marginTop: 20 }}>
-              <Text style={{ color: "#A56C6C", fontWeight: "bold" }}>Fechar</Text>
+            <TouchableOpacity
+              onPress={() => setModalVisible(false)}
+              style={{ marginTop: 20 }}
+            >
+              <Text style={{ color: "#A56C6C", fontWeight: "bold" }}>
+                Fechar
+              </Text>
             </TouchableOpacity>
           </View>
         </Modal>
       </SafeAreaView>
     </LinearGradient>
   );
-}  
+}
 
 const styles = StyleSheet.create({
   card: {
