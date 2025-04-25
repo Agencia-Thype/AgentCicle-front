@@ -24,6 +24,10 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { LinearGradient } from "expo-linear-gradient";
 import { AnimatedLogo } from "app/components/AnimatedLogo";
 import { Ionicons } from "@expo/vector-icons";
+import LunIAModal from "app/components/LunIA/LuniaModal";
+import FloatingLuniaCoach from "app/components/LunIA/LuniaFloatingMessage";
+
+
 
 type NavigationProp = NativeStackNavigationProp<
   RootStackParamList,
@@ -42,6 +46,9 @@ export default function TreinoDoDiaScreen() {
   const [moedaAnim] = useState(new Animated.Value(0));
 
   const navigation = useNavigation<NavigationProp>();
+  const [mostrarLunia, setMostrarLunia] = useState(false);
+  const [userName, setUserName] = useState(""); // se ainda não tiver
+ 
 
   useEffect(() => {
     async function buscarTreino() {
@@ -335,6 +342,18 @@ export default function TreinoDoDiaScreen() {
           </View>
         </Modal>
       </SafeAreaView>
+      <FloatingLuniaCoach
+        userName={userName}
+        mostrarAssistente={mostrarLunia}
+        onAbrirAssistente={() => setMostrarLunia(true)}
+      />
+
+      <LunIAModal
+        visivel={mostrarLunia}
+        onFechar={() => setMostrarLunia(false)}
+        fase={fase}
+        userName={userName}
+      />
     </LinearGradient>
   );
 }

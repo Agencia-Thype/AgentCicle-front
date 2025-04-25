@@ -10,6 +10,8 @@ import { perfilStyles } from "./PerfilStyles";
 import { updatePerfil, getPerfil } from "../../services/perfilService";
 import CalendarioModal from "../../components/calendario/CalendarioModal";
 import { AnimatedLogo } from "app/components/AnimatedLogo";
+import FloatingLuniaCoach from "app/components/LunIA/LuniaFloatingMessage";
+import LunIAModal from "app/components/LunIA/LuniaModal";
 
 export default function PerfilScreen() {
   const [altura, setAltura] = useState("");
@@ -28,6 +30,9 @@ export default function PerfilScreen() {
     { label: "Condicionamento físico", value: "Condicionamento físico" },
     { label: "Saúde e bem-estar", value: "Saúde e bem-estar" },
   ]);
+  const [mostrarLunia, setMostrarLunia] = useState(false);
+  const [userName, setUserName] = useState(""); // se ainda não tiver
+  const [fase, setFase] = useState(""); // se ainda não tiver
 
   useEffect(() => {
     const carregarPerfil = async () => {
@@ -106,7 +111,6 @@ export default function PerfilScreen() {
     >
       <AnimatedLogo />
       <View style={perfilStyles.container}>
-      
         <Text style={perfilStyles.title}>Complete seu perfil</Text>
 
         <TextInput
@@ -225,6 +229,18 @@ export default function PerfilScreen() {
           </Text>
         </TouchableOpacity>
       </View>
+      <FloatingLuniaCoach
+        userName={userName}
+        mostrarAssistente={mostrarLunia}
+        onAbrirAssistente={() => setMostrarLunia(true)}
+      />
+
+      <LunIAModal
+        visivel={mostrarLunia}
+        onFechar={() => setMostrarLunia(false)}
+        fase={fase}
+        userName={userName}
+      />
     </LinearGradient>
   );
 }

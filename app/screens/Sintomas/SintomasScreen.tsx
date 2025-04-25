@@ -13,22 +13,48 @@ import { globalStyles, themeColors } from "../../theme/global";
 import { api } from "../../services/api";
 import Toast from "react-native-toast-message";
 import { useNavigation } from "@react-navigation/native";
+import { MaterialIcons } from "@expo/vector-icons";
 
 const sintomasData = {
   Humor: [
-    "😌 Calma", "😊 Feliz", "⚡ Energética", "😄 Alegre",
-    "😵 Mudanças de humor", "😠 Irritada", "😢 Triste", "😟 Ansiosa",
-    "😞 Desanimada", "😔 Culpada", "🧠 Pensamentos obsessivos",
-    "🥱 Pouca energia", "😐 Apática", "😕 Confusa", "⚠️ Muito autocrítica"
+    "😌 Calma",
+    "😊 Feliz",
+    "⚡ Energética",
+    "😄 Alegre",
+    "😵 Mudanças de humor",
+    "😠 Irritada",
+    "😢 Triste",
+    "😟 Ansiosa",
+    "😞 Desanimada",
+    "😔 Culpada",
+    "🧠 Pensamentos obsessivos",
+    "🥱 Pouca energia",
+    "😐 Apática",
+    "😕 Confusa",
+    "⚠️ Muito autocrítica",
   ],
   Sintomas: [
-    "👍 Está tudo bem", "🥴 Cólicas", "🤕 Dores no corpo",
-    "🤢 Náusea", "😣 Dores de cabeça", "💩 Intestino preso",
-    "💨 Gases", "🌡️ Febre", "👙 Seios sensíveis", "👩‍🦱 Dor nas costas",
-    "😳 Acne", "💤 Suores noturnos", "🧠 Confusão mental", "🦴 Dor nas articulações",
-    "🔥 Ardência bucal", "🍔 Apetite descontrolado", "🌙 Insônia",
-    "🤰 Dor abdominal", "🌸 Coceira vaginal", "💧 Ressecamento vaginal"
-  ]
+    "👍 Está tudo bem",
+    "🥴 Cólicas",
+    "🤕 Dores no corpo",
+    "🤢 Náusea",
+    "😣 Dores de cabeça",
+    "💩 Intestino preso",
+    "💨 Gases",
+    "🌡️ Febre",
+    "👙 Seios sensíveis",
+    "👩‍🦱 Dor nas costas",
+    "😳 Acne",
+    "💤 Suores noturnos",
+    "🧠 Confusão mental",
+    "🦴 Dor nas articulações",
+    "🔥 Ardência bucal",
+    "🍔 Apetite descontrolado",
+    "🌙 Insônia",
+    "🤰 Dor abdominal",
+    "🌸 Coceira vaginal",
+    "💧 Ressecamento vaginal",
+  ],
 };
 
 export default function SintomasScreen() {
@@ -76,7 +102,22 @@ export default function SintomasScreen() {
       end={{ x: 0.5, y: 1 }}
       style={globalStyles.backgroundGradient}
     >
-      <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: 100 }}>
+      <TouchableOpacity
+        onPress={() => navigation.goBack()}
+        style={{
+          position: "absolute",
+          top: 22,
+          left: 16,
+          zIndex: 10,
+          padding: 8,
+        }}
+      >
+        <MaterialIcons name="arrow-back" size={22} color="#5C3B3B" />
+      </TouchableOpacity>
+      <ScrollView
+        style={styles.container}
+        contentContainerStyle={{ paddingBottom: 100 }}
+      >
         <Text style={styles.header}>Como você está se sentindo?</Text>
 
         {Object.entries(sintomasData).map(([categoria, itens]) => (
@@ -86,7 +127,10 @@ export default function SintomasScreen() {
               {itens.map((item, index) => (
                 <TouchableOpacity
                   key={index}
-                  style={[styles.tag, selectedTags.has(item) && styles.tagSelected]}
+                  style={[
+                    styles.tag,
+                    selectedTags.has(item) && styles.tagSelected,
+                  ]}
                   onPress={() => toggleTag(item)}
                 >
                   <Text style={styles.tagText}>{item}</Text>
@@ -119,8 +163,11 @@ export default function SintomasScreen() {
         </View>
       </ScrollView>
 
-      {selectedTags.size > 0 && (
-        <TouchableOpacity style={styles.buttonRegistrar} onPress={registrarSintomas}>
+      {(selectedTags.size > 0 || peso.trim() !== "" || notas.trim() !== "") && (
+        <TouchableOpacity
+          style={styles.buttonRegistrar}
+          onPress={registrarSintomas}
+        >
           <Text style={styles.buttonText}>Registrar sintomas</Text>
         </TouchableOpacity>
       )}

@@ -1,31 +1,38 @@
 {
   "expo": {
-    "name": "AgentCicle-front",
-    "slug": "AgentCicle-front",
+    "name": "AgentCicle",
+    "slug": "agentcicle",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/icon.png",
+    "icon": "./assets/icon-logo.png",
     "userInterfaceStyle": "light",
     "newArchEnabled": true,
     "entryPoint": "./index",
     "splash": {
-      "image": "./assets/splash-icon.png",
+      "image": "./assets/splash-logo.png",
       "resizeMode": "contain",
-      "backgroundColor": "#ffffff"
+      "backgroundColor": "#F3ECE3"
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.agentcicle.app"
+      "bundleIdentifier": "com.agentcicle.app",
+      "buildNumber": "1.0.0"
     },
     "android": {
       "package": "com.agentcicle.app",
+      "versionCode": 1,
       "adaptiveIcon": {
-        "foregroundImage": "./assets/adaptive-icon.png",
-        "backgroundColor": "#ffffff"
+        "foregroundImage": "./assets/adaptive-icon-logo.png",
+        "backgroundColor": "#F3ECE3"
       }
     },
     "web": {
-      "favicon": "./assets/favicon.png"
+      "favicon": "./assets/favicon-logo.png"
+    },
+    "extra": {
+      "eas": {
+        "projectId": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+      }
     }
   }
 }

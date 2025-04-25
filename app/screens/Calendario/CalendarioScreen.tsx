@@ -1,16 +1,32 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { View, Text, TouchableOpacity, FlatList } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { MaterialIcons } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
 import { calendarioStyles } from "./calendarioStyles";
-import { globalStyles } from "../../theme/global";
+import { globalStyles, themeColors } from "../../theme/global";
 import { AnimatedLogo } from "../../components/AnimatedLogo";
+import { getFasePorData } from "../../utils/cicloUtils";
+import { api } from "../../services/api";
+import ResumoDiaModal from "app/components/resumoDiaModal";
+import LunIAModal from "app/components/LunIA/LuniaModal";
+import FloatingLuniaCoach from "app/components/LunIA/LuniaFloatingMessage";
+
+
 
 const meses = [
-  "Janeiro", "Fevereiro", "Março", "Abril",
-  "Maio", "Junho", "Julho", "Agosto",
-  "Setembro", "Outubro", "Novembro", "Dezembro"
+  "Janeiro",
+  "Fevereiro",
+  "Março",
+  "Abril",
+  "Maio",
+  "Junho",
+  "Julho",
+  "Agosto",
+  "Setembro",
+  "Outubro",
+  "Novembro",
+  "Dezembro",
 ];
 
 export default function CalendarioScreen() {
@@ -18,9 +34,32 @@ export default function CalendarioScreen() {
   const navigation = useNavigation();
   const [mesAtual, setMesAtual] = useState(hoje.getMonth());
   const anoAtual = hoje.getFullYear();
+  const [dataUltimaMenstruacao, setDataUltimaMenstruacao] =
+    useState<Date | null>(null);
+  const [modalResumoVisible, setModalResumoVisible] = useState(false);
+  const [resumoDia, setResumoDia] = useState<any>(null);
 
   const diasNoMes = new Date(anoAtual, mesAtual + 1, 0).getDate();
   const dias = Array.from({ length: diasNoMes }, (_, i) => i + 1);
+  const [mostrarLunia, setMostrarLunia] = useState(false);
+  const [userName, setUserName] = useState(""); // se ainda não tiver
+  const [fase, setFase] = useState(""); // se ainda não tiver
+
+  useEffect(() => {
+    async function buscarUltimaMenstruacao() {
+      try {
+        const resp = await api.get("/fase-ciclo");
+        const dataStr = resp.data?.inicio_ciclo;
+        if (dataStr) {
+          setDataUltimaMenstruacao(new Date(dataStr));
+        }
+      } catch (err) {
+        console.error("Erro ao buscar fase:", err);
+      }
+    }
+
+    buscarUltimaMenstruacao();
+  }, []);
 
   const mudarMes = (direcao: number) => {
     let novoMes = mesAtual + direcao;
@@ -29,30 +68,54 @@ export default function CalendarioScreen() {
     setMesAtual(novoMes);
   };
 
-//   useEffect(() => {
-//     const fetchFase = async () => {
-//       try {
-//         const ciclo = await getFaseCiclo();
-//         console.log('Fase atual:', ciclo.fase);
-//         // Aqui você pode aplicar a lógica pra colorir os dias do calendário
-//       } catch (error) {
-//         console.log('Erro ao buscar fase do ciclo:', error);
-//       }
-//     };
-  
-//     fetchFase();
-//   }, []);
+  const handleSelecionarDia = async (dia: number) => {
+    const dataDia = new Date(anoAtual, mesAtual, dia);
+    try {
+      const response = await api.get(
+        `/diario/resumo-do-dia?data=${dataDia.toISOString().split("T")[0]}`
+      );
+      setResumoDia({ ...response.data, data: dataDia });
+      setModalResumoVisible(true);
+    } catch (err) {
+      console.error("Erro ao buscar resumo do dia", err);
+    }
+  };
+
+  const getEstiloDia = (data: Date) => {
+    if (!dataUltimaMenstruacao) return {};
+    const fase = getFasePorData(data, dataUltimaMenstruacao, 28);
+    if (fase === "menstruacao") return calendarioStyles.diaMenstruacao;
+    if (fase === "folicular") return calendarioStyles.diaFolicular;
+    if (fase === "ovulatoria") return calendarioStyles.diaOvulatoria;
+    if (fase === "lutea") return calendarioStyles.diaLutea;
+    return {};
+  };
 
   return (
     <LinearGradient
-      colors={["#FFF0F0", "#FFD7D7", "#FDECEC"]}
+      colors={themeColors.gradient}
+      start={{ x: 0.5, y: 0 }}
+      end={{ x: 0.5, y: 1 }}
       style={globalStyles.backgroundGradient}
     >
       <View style={calendarioStyles.container}>
+        {/* 🔙 Flechinha de voltar */}
+        <TouchableOpacity
+          onPress={() => navigation.goBack()}
+          style={{
+            position: "absolute",
+            top: 22,
+            left: 16,
+            zIndex: 10,
+            padding: 8,
+          }}
+        >
+          <MaterialIcons name="arrow-back" size={22} color="#5C3B3B" />
+        </TouchableOpacity>
+
         <AnimatedLogo />
 
-        {/* Cabeçalho com mês */}
-        <View style={calendarioStyles.header}>
+        <View style={[calendarioStyles.header, { marginTop: 16 }]}>
           <TouchableOpacity onPress={() => mudarMes(-1)}>
             <MaterialIcons name="chevron-left" size={28} color="#5C3B3B" />
           </TouchableOpacity>
@@ -64,19 +127,48 @@ export default function CalendarioScreen() {
           </TouchableOpacity>
         </View>
 
-        {/* Grade de dias */}
         <FlatList
           data={dias}
           numColumns={7}
           keyExtractor={(item) => item.toString()}
-          renderItem={({ item }) => (
-            <View style={calendarioStyles.diaBox}>
-              <Text style={calendarioStyles.diaTexto}>{item}</Text>
-            </View>
-          )}
+          renderItem={({ item }) => {
+            const dataDia = new Date(anoAtual, mesAtual, item);
+            const isHoje = dataDia.toDateString() === hoje.toDateString();
+            return (
+              <TouchableOpacity
+                style={[
+                  calendarioStyles.diaBox,
+                  getEstiloDia(dataDia),
+                  isHoje && calendarioStyles.diaHoje,
+                ]}
+                onPress={() => handleSelecionarDia(item)}
+              >
+                <Text style={calendarioStyles.diaTexto}>{item}</Text>
+              </TouchableOpacity>
+            );
+          }}
           contentContainerStyle={calendarioStyles.grid}
         />
+
+        <ResumoDiaModal
+          visible={modalResumoVisible}
+          onClose={() => setModalResumoVisible(false)}
+          resumo={resumoDia}
+        />
       </View>
+
+      <FloatingLuniaCoach
+        userName={userName}
+        mostrarAssistente={mostrarLunia}
+        onAbrirAssistente={() => setMostrarLunia(true)}
+      />
+
+      <LunIAModal
+        visivel={mostrarLunia}
+        onFechar={() => setMostrarLunia(false)}
+        fase={fase}
+        userName={userName}
+      />
     </LinearGradient>
   );
 }

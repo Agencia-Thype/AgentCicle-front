@@ -20,26 +20,53 @@ export const calendarioStyles = StyleSheet.create({
   },
   grid: {
     alignItems: "center",
-    paddingHorizontal: 4,
-    gap: 6,
+    justifyContent: "center",
+    paddingHorizontal: 8,
+    gap: 4,
   },
+  
   diaBox: {
-    width: 42,
-    height: 42,
-    margin: 6,
-    borderRadius: 12,
+    width: 40,
+    height: 40,
+    marginVertical: 6,
+    marginHorizontal: 4,
+    borderRadius: 20,
     backgroundColor: "#FFF5F5",
     justifyContent: "center",
     alignItems: "center",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 3,
-    elevation: 2,
   },
   diaTexto: {
     fontSize: 16,
     color: "#5C3B3B",
     fontWeight: "bold",
+  },
+
+  // 🌑 Menstruação
+  diaMenstruacao: {
+    borderWidth: 2,
+    borderColor: "#D9534F",
+    borderStyle: "dotted",
+    backgroundColor: "#FFF5F5",
+  },
+
+  // 🌒 Folicular
+  diaFolicular: {
+    backgroundColor: "#A7D7C5",
+  },
+
+  // 🌕 Ovulatória
+  diaOvulatoria: {
+    backgroundColor: "#F4C06D",
+  },
+
+  // 🌘 Lútea
+  diaLutea: {
+    backgroundColor: "#D6B0C4",
+  },
+
+  // 📍 Hoje
+  diaHoje: {
+    borderWidth: 2,
+    borderColor: "#5C3B3B",
   },
 });

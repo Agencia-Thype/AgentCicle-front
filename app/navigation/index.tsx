@@ -13,6 +13,7 @@ import TreinoDoDia from "../screens/Treino/TreinoDoDiaScreen";
 import VideoPlayerScreen from "../screens/VideoPlayers/VideoPlayesScreen";
 import SintomasScreen from "app/screens/Sintomas/SintomasScreen";
 import FaseCompletaScreen from "app/screens/IA/faseCompletaScreen";
+import RelatorioMensalScreen from "app/screens/Relatorio/RelatorioMensalScreen";
 
 // Tipos das rotas
 export type RootStackParamList = {
@@ -28,6 +29,7 @@ export type RootStackParamList = {
   VideoPlayer: { url: string };
   Sintomas: undefined;
   FaseCompletaScreen: undefined;
+  RelatorioMensal: undefined;
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -75,7 +77,7 @@ export function Routes() {
         <Stack.Screen
           name="Calendario"
           component={CalendarioScreen}
-          options={{ title: "Calendário" }}
+          options={{ headerShown: false }}
         />
         <Stack.Screen
           name="Perfil"
@@ -99,11 +101,16 @@ export function Routes() {
         <Stack.Screen
           name="Sintomas"
           component={SintomasScreen}
-          options={{ title: "Sintomas" }}
+          options={{ headerShown: false }}
         />
         <Stack.Screen
           name="FaseCompletaScreen"
           component={FaseCompletaScreen}
+          options={{ headerShown: false }}
+        />
+        <Stack.Screen
+          name="RelatorioMensal"
+          component={RelatorioMensalScreen}
           options={{ headerShown: false }}
         />
       </Stack.Navigator>

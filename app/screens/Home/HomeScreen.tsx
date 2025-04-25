@@ -28,6 +28,10 @@ import {
 import { api } from "app/services/api";
 import { getWeekDateRange } from "app/utils/getWeekDateRange";
 import ClasseLunarModal from "../../components/classeLunarModal";
+import LuniaCoachBubble from "app/components/LuniaCoachBubble";
+import LunIAModal from "app/components/LunIA/LuniaModal";
+import LunIAFloatingMessage from "app/components/LunIA/LuniaFloatingMessage";
+import FloatingLuniaCoach from "app/components/LunIA/LuniaFloatingMessage";
 
 const hoje = new Date().toLocaleDateString("pt-BR", {
   weekday: "long",
@@ -41,7 +45,6 @@ export default function HomeScreen() {
   const [selectedSymptoms, setSelectedSymptoms] = useState<string[]>([]);
   const [userName, setUserName] = useState("");
   const [fase, setFase] = useState<string>("");
-  const [mensagem, setMensagem] = useState<string>("");
   const [progressoSemanal, setProgressoSemanal] = useState<number>(0);
   const [corProgresso, setCorProgresso] = useState("#A56C6C");
   const [trofeuUri, setTrofeuUri] = useState<any>(null);
@@ -50,7 +53,7 @@ export default function HomeScreen() {
   const [diasRestantes, setDiasRestantes] = useState<number>(0);
   const [descricao, setDescricao] = useState<string>("");
   const [modalAberto, setModalAberto] = useState(false);
-
+  const [mostrarLunia, setMostrarLunia] = useState(false);
   const navigation =
     useNavigation<NativeStackNavigationProp<RootStackParamList>>();
 
@@ -88,7 +91,6 @@ export default function HomeScreen() {
 
         const ciclo = await getDetalhesFaseAtual();
         setFase(ciclo.fase_atual);
-        setMensagem(ciclo.mensagem);
         setDescricao(ciclo.descricao || "");
         console.log("📌 Descrição recebida:", ciclo.descricao);
         console.log("✅ Ciclo:", ciclo);
@@ -220,7 +222,18 @@ export default function HomeScreen() {
                 size={20}
                 color="#5C3B3B"
               />
-              <Text style={homeStyles.menuItemText}>Assistente IA</Text>
+              <Text style={homeStyles.menuItemText}>Assistente LunIA</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={homeStyles.menuItem}
+              onPress={() => {
+                setMenuVisible(false);
+                navigation.navigate("RelatorioMensal");
+              }}
+            >
+              <MaterialIcons name="insights" size={20} color="#5C3B3B" />
+              <Text style={homeStyles.menuItemText}>Relatório do mês</Text>
             </TouchableOpacity>
 
             <TouchableOpacity
@@ -285,32 +298,20 @@ export default function HomeScreen() {
           </View>
         </View>
 
+        <FloatingLuniaCoach
+          userName={userName}
+          mostrarAssistente={mostrarLunia}
+          onAbrirAssistente={() => setMostrarLunia(true)}
+        />
+
+        <LunIAModal
+          visivel={mostrarLunia}
+          onFechar={() => setMostrarLunia(false)}
+          fase={fase}
+          userName={userName}
+        />
+
         <ScrollView contentContainerStyle={homeStyles.content}>
-          <AnimatedLogo />
-          <Text style={homeStyles.dataTexto}>{hoje}</Text>
-
-          <Text style={homeStyles.saudacao}>
-            {userName ? `Olá, ${userName} 👋` : "Olá 👋"}
-          </Text>
-          <Text style={homeStyles.subtitulo}>Como você está?</Text>
-
-          <View style={homeStyles.card}>
-            <Text style={homeStyles.faseTitulo}>🌙 Fase atual do ciclo</Text>
-
-            <Text style={homeStyles.faseNome}>{fase}</Text>
-
-            <Text style={homeStyles.faseDescricao} numberOfLines={3}>
-              {descricao}
-            </Text>
-
-            <TouchableOpacity
-              onPress={() => navigation.navigate("FaseCompletaScreen")}
-              style={homeStyles.saibaMaisContainer}
-            >
-              <Text style={homeStyles.saibaMaisBotao}>Saiba mais →</Text>
-            </TouchableOpacity>
-          </View>
-
           <View style={homeStyles.card}>
             <Text style={homeStyles.treinoTexto}>Você já treinou hoje?</Text>
             <TouchableOpacity
