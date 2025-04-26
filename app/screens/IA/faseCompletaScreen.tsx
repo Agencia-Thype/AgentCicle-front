@@ -44,7 +44,7 @@ export default function FaseCompletaScreen() {
     setResposta("");
 
     try {
-      const res = await api.post("/fase-atual/conversar", { pergunta });
+      const res = await api.post("/ia/conversar", { pergunta });
       setResposta(
         res.data?.resposta ||
           "A IA respondeu, mas não conseguimos exibir a mensagem."

@@ -57,105 +57,105 @@ export default function HomeScreen() {
   const navigation =
     useNavigation<NativeStackNavigationProp<RootStackParamList>>();
 
-  const atualizarPontuacao = async () => {
-    try {
-      const response = await api.get("/pontuacao");
-      setPontuacao(response.data.pontos_mes);
-      setClasseAtual(response.data.classe);
-      setDiasRestantes(response.data.dias_restantes);
-    } catch (error) {
-      console.log("Erro ao atualizar pontuação:", error);
-    }
-  };
-
-  useEffect(() => {
-    const fetchData = async () => {
+    const atualizarPontuacao = async () => {
       try {
-        const perfil = await getPerfil();
-        setUserName(perfil.nome);
-        await AsyncStorage.setItem("user", JSON.stringify(perfil));
-
-        const primeiraMenstruacao = new Date(perfil.data_primeira_menstruacao);
-        const hoje = new Date();
-        const meses =
-          (hoje.getFullYear() - primeiraMenstruacao.getFullYear()) * 12 +
-          (hoje.getMonth() - primeiraMenstruacao.getMonth());
-
-        let trofeu;
-        if (meses < 1) trofeu = require("../../assets/lua_nova.png");
-        else if (meses < 2) trofeu = require("../../assets/lua_crescente.png");
-        else if (meses < 3) trofeu = require("../../assets/lua_cheia.png");
-        else trofeu = require("../../assets/lua_minguante.png");
-
-        setTrofeuUri(trofeu);
-
-        const ciclo = await getDetalhesFaseAtual();
-        setFase(ciclo.fase_atual);
-        setDescricao(ciclo.descricao || "");
-        console.log("📌 Descrição recebida:", ciclo.descricao);
-        console.log("✅ Ciclo:", ciclo);
-
-        switch (ciclo.fase) {
-          case "Menstruação":
-            setCorProgresso("#A56C6C");
-            break;
-          case "Folicular":
-            setCorProgresso("#7EAA92");
-            break;
-          case "Ovulatória":
-            setCorProgresso("#F4B860");
-            break;
-          case "Lútea":
-            setCorProgresso("#B283A3");
-            break;
-        }
-
-        await atualizarPontuacao();
+        const response = await api.get("/pontuacao");
+        setPontuacao(response.data.pontos_mes);
+        setClasseAtual(response.data.classe);
+        setDiasRestantes(response.data.dias_restantes);
       } catch (error) {
-        console.log("Erro ao buscar dados:", error);
+        console.log("Erro ao atualizar pontuação:", error);
       }
     };
-
-    fetchData();
-  }, []);
-
-  useFocusEffect(
-    useCallback(() => {
-      const verificarAtualizacao = async () => {
-        const precisaAtualizar = await AsyncStorage.getItem(
-          "atualizarPontuacao"
-        );
-        if (precisaAtualizar === "true") {
-          await atualizarPontuacao();
-          await AsyncStorage.removeItem("atualizarPontuacao");
-        }
-      };
-
-      verificarAtualizacao();
-    }, [])
-  );
-
-  useEffect(() => {
-    async function buscarProgresso() {
+    
+    const buscarProgresso = async () => {
       try {
         const { inicio, fim } = getWeekDateRange();
-
         const response = await api.get("/treino-dia/progresso-semanal", {
           params: { inicio, fim },
         });
-
         console.log("✅ Progresso semanal:", response.data.media_percentual);
         setProgressoSemanal(response.data.media_percentual);
       } catch (error) {
         console.error("❌ Erro ao buscar progresso semanal:", error);
       }
-    }
-
-    buscarProgresso();
-  }, []);
-  <Text style={homeStyles.progressoPorcentagem}>
-    {progressoSemanal}% concluído
-  </Text>;
+    };
+    
+    useEffect(() => {
+      const fetchData = async () => {
+        try {
+          const perfil = await getPerfil();
+          setUserName(perfil.nome);
+          await AsyncStorage.setItem("user", JSON.stringify(perfil));
+    
+          const primeiraMenstruacao = new Date(perfil.data_primeira_menstruacao);
+          const hoje = new Date();
+          const meses =
+            (hoje.getFullYear() - primeiraMenstruacao.getFullYear()) * 12 +
+            (hoje.getMonth() - primeiraMenstruacao.getMonth());
+    
+          let trofeu;
+          if (meses < 1) trofeu = require("../../assets/lua_nova.png");
+          else if (meses < 2) trofeu = require("../../assets/lua_crescente.png");
+          else if (meses < 3) trofeu = require("../../assets/lua_cheia.png");
+          else trofeu = require("../../assets/lua_minguante.png");
+    
+          setTrofeuUri(trofeu);
+    
+          const ciclo = await getDetalhesFaseAtual();
+          setFase(ciclo.fase_atual);
+          setDescricao(ciclo.descricao || "");
+    
+          switch (ciclo.fase) {
+            case "Menstruação":
+              setCorProgresso("#A56C6C");
+              break;
+            case "Folicular":
+              setCorProgresso("#7EAA92");
+              break;
+            case "Ovulatória":
+              setCorProgresso("#F4B860");
+              break;
+            case "Lútea":
+              setCorProgresso("#B283A3");
+              break;
+          }
+    
+          await atualizarPontuacao();
+        } catch (error) {
+          console.log("Erro ao buscar dados:", error);
+        }
+      };
+    
+      fetchData();
+    }, []);
+    
+    useFocusEffect(
+      useCallback(() => {
+        const verificarAtualizacaoHome = async () => {
+          const precisaAtualizarPontuacao = await AsyncStorage.getItem("atualizarPontuacao");
+          const precisaAtualizarHome = await AsyncStorage.getItem("atualizarHome");
+    
+          if (precisaAtualizarHome === "true") {
+            // Atualiza tudo se pediu atualização geral
+            await atualizarPontuacao();
+            await buscarProgresso();
+            await AsyncStorage.removeItem("atualizarHome");
+          } else if (precisaAtualizarPontuacao === "true") {
+            // Senão, só atualiza a pontuação
+            await atualizarPontuacao();
+            await AsyncStorage.removeItem("atualizarPontuacao");
+          }
+        };
+    
+        verificarAtualizacaoHome();
+      }, [])
+    );
+    
+    useEffect(() => {
+      buscarProgresso();
+    }, []);
+    
 
   return (
     <View style={{ flex: 1 }}>
@@ -312,6 +312,23 @@ export default function HomeScreen() {
         />
 
         <ScrollView contentContainerStyle={homeStyles.content}>
+          <View style={homeStyles.card}>
+            <Text style={homeStyles.faseTitulo}>
+              🌙 Fase atual do seu ciclo
+            </Text>
+            <Text style={homeStyles.faseNome}>{fase}</Text>
+            <Text style={homeStyles.faseResumo} numberOfLines={2}>
+              {descricao}
+            </Text>
+
+            <TouchableOpacity
+              onPress={() => navigation.navigate("FaseCompletaScreen")}
+              style={homeStyles.saibaMaisBotao}
+            >
+              <Text style={homeStyles.saibaMaisTexto}>Saiba mais</Text>
+            </TouchableOpacity>
+          </View>
+
           <View style={homeStyles.card}>
             <Text style={homeStyles.treinoTexto}>Você já treinou hoje?</Text>
             <TouchableOpacity

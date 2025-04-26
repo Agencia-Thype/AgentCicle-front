@@ -37,7 +37,6 @@ export default function RelatorioMensalScreen() {
         setLoading(false);
       }
     };
-
     buscarRelatorio();
   }, []);
 
@@ -47,6 +46,10 @@ export default function RelatorioMensalScreen() {
     { nome: "ovulatoria", titulo: "🌕 Ovulatória", cor: "#F4B860" },
     { nome: "lutea", titulo: "🌘 Lútea", cor: "#B283A3" },
   ];
+
+  const percentuais = fases.map(
+    (fase) => relatorio?.[fase.nome]?.percentual_medio || 0
+  );
 
   return (
     <LinearGradient
@@ -68,116 +71,133 @@ export default function RelatorioMensalScreen() {
             fontSize: 22,
             fontWeight: "bold",
             color: "#5C3B3B",
-            marginBottom: 20,
+            marginBottom: 16,
           }}
         >
-          Relatório do Mês 🌙
+          Comparativo por fase
         </Text>
 
         {loading ? (
           <ActivityIndicator size="large" color={themeColors.button} />
         ) : (
-          fases.map((fase) => {
-            const dados = relatorio?.[fase.nome];
-            return (
-              <View
-                key={fase.nome}
-                style={{
-                  backgroundColor: "#FFF5F5",
-                  borderRadius: 16,
-                  padding: 16,
-                  marginBottom: 20,
-                }}
-              >
-                <Text
-                  style={{
-                    fontSize: 18,
-                    fontWeight: "600",
-                    marginBottom: 8,
-                    color: "#5C3B3B",
-                  }}
-                >
-                  {fase.titulo}
-                </Text>
-
-                {dados?.dias_com_treino > 0 ? (
-                  <>
-                    <Text style={{ marginBottom: 4 }}>
-                      Dias com treino: {dados.dias_com_treino}
-                    </Text>
-                    <Text style={{ marginBottom: 4 }}>
-                      Percentual médio: {dados.percentual_medio}%
-                    </Text>
-
-                    <BarChart
-                      data={{
-                        labels: Array.from(
-                          { length: dados.dias_com_treino },
-                          (_, i) => `${i + 1}`
-                        ),
-                        datasets: [
-                          {
-                            data: Array.from(
-                              { length: dados.dias_com_treino },
-                              () => dados.percentual_medio
-                            ),
-                          },
-                        ],
-                      }}
-                      width={screenWidth - 64} // margem para alinhar com padding do card
-                      height={120}
-                      yAxisSuffix="%"
-                      yAxisLabel=""
-                      fromZero
-                      withInnerLines={false}
-                      withVerticalLabels={false}
-                      chartConfig={{
-                        backgroundGradientFrom: "#FFF5F5",
-                        backgroundGradientTo: "#FFF5F5",
-                        color: () => fase.cor, // manter a cor por fase
-                        labelColor: () => "#5C3B3B",
-                        barPercentage: 0.5,
-                        decimalPlaces: 0,
-                        fillShadowGradient: fase.cor, // cor da barra
-                        fillShadowGradientOpacity: 1,  // 💡 opacidade total da barra
-                        propsForBackgroundLines: {
-                          stroke: "transparent",
-                        },
-                      }}
+          <>
+            <View
+              style={{
+                flexDirection: "row",
+                flexWrap: "wrap",
+                justifyContent: "space-between",
+              }}
+            >
+              {fases.map((fase) => {
+                const dados = relatorio?.[fase.nome];
+                return (
+                  <View
+                    key={fase.nome}
+                    style={{
+                      backgroundColor: "#FFFFFFDD",
+                      borderRadius: 16,
+                      padding: 14,
+                      width: "48%",
+                      marginBottom: 12,
+                    }}
+                  >
+                    <Text
                       style={{
-                        marginTop: 4,
-                        borderRadius: 12,
-                        alignSelf: "center",
+                        fontWeight: "bold",
+                        fontSize: 16,
+                        color: fase.cor,
                       }}
-                    />
-
-                    <Text style={{ marginTop: 8 }}>
-                      Sentimentos:{" "}
-                      {dados.sentimentos_frequentes.join(", ") || "-"}
+                    >
+                      {fase.titulo}
                     </Text>
-                  </>
-                ) : (
-                  <Text style={{ fontStyle: "italic", color: "#888" }}>
-                    Nenhum treino registrado nessa fase.
-                  </Text>
-                )}
-              </View>
-            );
-          })
-        )}
+                    {dados?.dias_com_treino > 0 ? (
+                      <>
+                        <Text style={{ marginTop: 4 }}>
+                          Dias com treino: {dados.dias_com_treino}
+                        </Text>
+                        <Text style={{ color: "#5C3B3B", fontWeight: "600" }}>
+                          Percentual médio:{" "}
+                          <Text style={{ color: fase.cor }}>
+                            {dados.percentual_medio}%
+                          </Text>
+                        </Text>
+                      </>
+                    ) : (
+                      <Text
+                        style={{
+                          fontStyle: "italic",
+                          color: "#999",
+                          marginTop: 4,
+                        }}
+                      >
+                        Nenhum treino registrado.
+                      </Text>
+                    )}
+                  </View>
+                );
+              })}
+            </View>
 
-        {relatorio && (
-          <Text
-            style={{
-              textAlign: "center",
-              marginTop: 20,
-              fontSize: 16,
-              color: "#5C3B3B",
-            }}
-          >
-            🌸 Lembre-se: cada fase tem sua beleza. Obrigada por se cuidar esse
-            mês!
-          </Text>
+            <BarChart
+              data={{
+                labels: ["Menstruação", "Folicular", "Ovulatória", "Lútea"],
+                datasets: [{ data: percentuais }],
+              }}
+              width={screenWidth - 32}
+              height={180}
+              yAxisLabel="" // 👈 Adicione isso
+              yAxisSuffix="%"
+              fromZero
+              chartConfig={{
+                backgroundGradientFrom: "#FFF",
+                backgroundGradientTo: "#FFF",
+                decimalPlaces: 0,
+                color: () => "#B283A3",
+                labelColor: () => "#5C3B3B",
+                fillShadowGradient: "#B283A3",
+                fillShadowGradientOpacity: 1,
+              }}
+              style={{
+                marginTop: 20,
+                borderRadius: 12,
+                alignSelf: "center",
+              }}
+            />
+
+            {/* Sentimentos mais frequentes */}
+            <Text
+              style={{ marginTop: 20, fontWeight: "600", color: "#5C3B3B" }}
+            >
+              Sentimentos mais frequentes
+            </Text>
+            <Text style={{ fontSize: 16, marginTop: 6 }}>
+              🥺 Cansada 🧘‍♀️ Calma 😠 Irritada
+            </Text>
+
+            {/* Mensagem motivacional */}
+            <View
+              style={{
+                backgroundColor: "#fff8f8",
+                borderRadius: 16,
+                padding: 16,
+                marginTop: 24,
+              }}
+            >
+              <Text
+                style={{ fontWeight: "600", fontSize: 14, color: "#5C3B3B" }}
+              >
+                Você esteve mais ativa na fase{" "}
+                <Text style={{ fontWeight: "bold", color: "#7EAA92" }}>
+                  Folicular
+                </Text>{" "}
+                este mês, com <Text style={{ fontWeight: "bold" }}>90%</Text> de
+                treinos concluídos e sentimentos como{" "}
+                <Text style={{ fontWeight: "bold" }}>calma</Text> e{" "}
+                <Text style={{ fontWeight: "bold" }}>alívio</Text>. Continue
+                assim! 🌸
+              </Text>
+            </View>
+          </>
         )}
       </ScrollView>
     </LinearGradient>

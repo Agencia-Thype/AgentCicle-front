@@ -24,7 +24,8 @@
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon-logo.png",
         "backgroundColor": "#F3ECE3"
-      }
+      },
+      "permissions": ["VIBRATE", "READ_EXTERNAL_STORAGE"]
     },
     "web": {
       "favicon": "./assets/favicon-logo.png"

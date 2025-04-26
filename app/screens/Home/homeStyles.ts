@@ -101,14 +101,14 @@ export const homeStyles = StyleSheet.create({
   },
 
   addButton: {
-    backgroundColor: "#91766E",
+    backgroundColor: "#5B4A44",
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
     paddingVertical: 12,
     paddingHorizontal: 20,
     borderRadius: 30,
-    marginTop: 20,
+    marginTop: 4,
     elevation: 2,
   },
 
@@ -249,20 +249,19 @@ export const homeStyles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "600",
     color: "#5C3B3B",
-    marginBottom: 8,
+    marginBottom: 4,
     textAlign: "left",
   },
   
   faseNome: {
-    fontSize: 22,
+    fontSize: 18,
     fontWeight: "bold",
     color: "#A56C6C",
-    textAlign: "center",
-    marginBottom: 6,
+    textAlign: "center",   
   },
   
   faseDescricao: {
-    fontSize: 15,
+    fontSize: 14,
     color: "#4A2E2E",
     lineHeight: 22,
     textAlign: "justify",
@@ -273,14 +272,24 @@ export const homeStyles = StyleSheet.create({
   
   saibaMaisContainer: {
     alignItems: "flex-end",
-    marginTop: 8,
+    
   },
   
   saibaMaisBotao: {
-    fontSize: 13,
-    color: "#5C3B3B",
-    textDecorationLine: "underline",
+    alignSelf: "flex-end",
+    marginTop: 8,
+    backgroundColor: "#A2BBA1",
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 8,
   },
+   
+  saibaMaisTexto: {
+    color: "#fff",
+    fontWeight: "500",
+    fontSize: 14,
+  },
+  
   
 
 });

@@ -7,7 +7,6 @@ import {
   ActivityIndicator,
   StyleSheet,
   Alert,
-  Image,
   Animated,
   KeyboardAvoidingView,
   Platform,
@@ -26,13 +25,16 @@ import { AnimatedLogo } from "app/components/AnimatedLogo";
 import { Ionicons } from "@expo/vector-icons";
 import LunIAModal from "app/components/LunIA/LuniaModal";
 import FloatingLuniaCoach from "app/components/LunIA/LuniaFloatingMessage";
+import { TemporizadorModal } from "./TemporizadorModal/temporizadorModal";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
-
-
-type NavigationProp = NativeStackNavigationProp<
-  RootStackParamList,
-  "TreinoDoDia"
->;
+type NavigationProp = NativeStackNavigationProp<RootStackParamList, "TreinoDoDia">;
+type ExercicioTemporizador = {
+  nome: string;
+  series: number;
+  duracao?: string;
+  descanso?: string;
+};
 
 export default function TreinoDoDiaScreen() {
   const [fase, setFase] = useState("");
@@ -44,11 +46,12 @@ export default function TreinoDoDiaScreen() {
   const [modalVisible, setModalVisible] = useState(false);
   const [pontosGanho, setPontosGanho] = useState(0);
   const [moedaAnim] = useState(new Animated.Value(0));
-
+  const [duracaoTotal, setDuracaoTotal] = useState<number>(0);
+  const [mostrarTemporizadorExercicio, setMostrarTemporizadorExercicio] = useState(false);
+  const [exercicioSelecionado, setExercicioSelecionado] = useState<ExercicioTemporizador | null>(null);
   const navigation = useNavigation<NavigationProp>();
   const [mostrarLunia, setMostrarLunia] = useState(false);
-  const [userName, setUserName] = useState(""); // se ainda não tiver
- 
+  const [userName, setUserName] = useState("");
 
   useEffect(() => {
     async function buscarTreino() {
@@ -57,8 +60,7 @@ export default function TreinoDoDiaScreen() {
         setTreino(response.data.exercicios);
         setFase(response.data.fase);
         setTipoTreino(response.data.tipo_treino);
-
-        // ✅ Após setar o treino, chama os marcados com o tamanho correto
+        calcularDuracaoTotal(response.data.exercicios);
         buscarMarcadosHoje(response.data.exercicios.length);
       } catch (error) {
         console.error("Erro ao buscar treino:", error);
@@ -66,16 +68,27 @@ export default function TreinoDoDiaScreen() {
         setLoading(false);
       }
     }
-
     buscarTreino();
   }, []);
+
+  const calcularDuracaoTotal = (exercicios: TreinoExercicio[]) => {
+    let totalMin = 0;
+    for (const ex of exercicios) {
+      const match = ex.duracao?.match(/(\d+)-?(\d+)?/);
+      if (match) {
+        const min = parseInt(match[1]);
+        const max = match[2] ? parseInt(match[2]) : min;
+        totalMin += (min + max) / 2;
+      }
+    }
+    setDuracaoTotal(Math.round(totalMin));
+  };
 
   async function buscarMarcadosHoje(total: number) {
     try {
       const response = await api.get("/treino-dia/marcados-hoje");
       const percentualSalvo = response.data.percentual;
       const quantidadeMarcada = Math.round((percentualSalvo / 100) * total);
-
       const novosChecks: { [key: number]: boolean } = {};
       for (let i = 0; i < quantidadeMarcada; i++) {
         novosChecks[i] = true;
@@ -99,10 +112,7 @@ export default function TreinoDoDiaScreen() {
   const animarMoeda = () => {
     setModalVisible(true);
     moedaAnim.setValue(0);
-    Animated.spring(moedaAnim, {
-      toValue: 1,
-      useNativeDriver: true,
-    }).start();
+    Animated.spring(moedaAnim, { toValue: 1, useNativeDriver: true }).start();
   };
 
   const salvarProgresso = async () => {
@@ -110,53 +120,30 @@ export default function TreinoDoDiaScreen() {
       Alert.alert("Erro", "Fase ou tipo de treino não encontrado.");
       return;
     }
-
     const percentual = calcularProgresso();
     if (percentual === 0) {
-      return Alert.alert(
-        "Ops!",
-        "Você ainda não marcou nenhum exercício como feito."
-      );
+      return Alert.alert("Ops!", "Você ainda não marcou nenhum exercício como feito.");
     }
-
     try {
       const response = await api.post("/treino-dia/concluir", {
         fase,
         tipo_treino: tipoTreino,
         percentual,
       });
-
       const data = response.data;
-
-      if (!data) {
-        throw new Error("Resposta inválida do servidor.");
-      }
-
+      if (!data) throw new Error("Resposta inválida do servidor.");
       const { pontos, ja_salvo, percentual: salvoPercentual } = data;
-
       if (ja_salvo) {
-        Alert.alert(
-          "Treino já realizado",
-          `Você já concluiu esse treino hoje com ${salvoPercentual}% e ganhou ${pontos} ponto${
-            pontos !== 1 ? "s" : ""
-          }.`
-        );
+        Alert.alert("Treino já realizado", `Você já concluiu esse treino hoje com ${salvoPercentual}% e ganhou ${pontos} ponto${pontos !== 1 ? "s" : ""}.`);
       } else {
         setPontosGanho(pontos);
         animarMoeda();
+        await AsyncStorage.setItem("atualizarHome", "true");
       }
-
       setProgressoSalvo(true);
     } catch (error: any) {
       console.error("Erro ao salvar progresso:", error);
-      if (error.message === "Network Error") {
-        Alert.alert(
-          "Erro de conexão",
-          "Não foi possível conectar com o servidor."
-        );
-      } else {
-        Alert.alert("Erro", "Erro ao salvar o progresso. Tente novamente.");
-      }
+      Alert.alert("Erro", error.message === "Network Error" ? "Erro de conexão." : "Erro ao salvar progresso.");
     }
   };
 
@@ -169,36 +156,21 @@ export default function TreinoDoDiaScreen() {
   }
 
   return (
-    <LinearGradient
-      colors={themeColors.gradient}
-      start={{ x: 0.2, y: 0 }}
-      end={{ x: 1, y: 1 }}
-      style={{ flex: 1 }}
-    >
+    <LinearGradient colors={themeColors.gradient} start={{ x: 0.2, y: 0 }} end={{ x: 1, y: 1 }} style={{ flex: 1 }}>
       <SafeAreaView style={{ flex: 1 }}>
-        <KeyboardAvoidingView
-          behavior={Platform.OS === "ios" ? "padding" : undefined}
-          style={{ flex: 1 }}
-        >
-          <ScrollView
-            contentContainerStyle={{
-              flexGrow: 1,
-              padding: 24,
-              paddingBottom: 80,
-            }}
-            showsVerticalScrollIndicator={false}
-            keyboardShouldPersistTaps="handled"
-          >
-            {/* 🔙 Botão de voltar */}
+        <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : undefined} style={{ flex: 1 }}>
+          <ScrollView contentContainerStyle={{ flexGrow: 1, padding: 24, paddingBottom: 80 }} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
             <TouchableOpacity onPress={() => navigation.goBack()}>
               <Ionicons name="arrow-back" size={24} color="#5C3B3B" />
             </TouchableOpacity>
 
-            {/* 🦋 Logo animada */}
             <AnimatedLogo />
 
             <Text style={globalStyles.title}>Fase: {fase}</Text>
             <Text style={globalStyles.subtitle}>Treino {tipoTreino}</Text>
+            <Text style={{ color: "#5C3B3B", fontWeight: "600", marginTop: 4, marginBottom: 12 }}>
+              🕒 Tempo estimado: {duracaoTotal} minutos
+            </Text>
 
             {treino.map((ex, index) => (
               <View key={index} style={styles.card}>
@@ -209,60 +181,29 @@ export default function TreinoDoDiaScreen() {
                     color={checked[index] ? "#A56C6C" : undefined}
                   />
                   <Text style={styles.exerciseTitle}>{ex.exercicio}</Text>
+
+                  <TouchableOpacity
+                    onPress={() => {
+                      setExercicioSelecionado({
+                        nome: ex.exercicio,
+                        series: Number(ex.series || "1"),
+                        duracao: ex.duracao,
+                        descanso: ex.descanso,
+                      });
+                      setMostrarTemporizadorExercicio(true);
+                    }}
+                    style={styles.timerButton}
+                  >
+                    <Ionicons name="timer-outline" size={22} color="#5C3B3B" />
+                  </TouchableOpacity>
                 </View>
 
-                {ex.metodo && (
-                  <Text style={styles.itemText}>Método: {ex.metodo}</Text>
-                )}
-                {ex.series && (
-                  <Text style={styles.itemText}>Séries: {ex.series}</Text>
-                )}
-                {ex.repeticoes && (
-                  <Text style={styles.itemText}>
-                    Repetições: {ex.repeticoes}
-                  </Text>
-                )}
-                {ex.descanso && (
-                  <Text style={styles.itemText}>Descanso: {ex.descanso}</Text>
-                )}
-                {ex.cadencia && (
-                  <Text style={styles.itemText}>Cadência: {ex.cadencia}</Text>
-                )}
-                {ex.intensidade && (
-                  <Text style={styles.itemText}>
-                    Intensidade: {ex.intensidade}
-                  </Text>
-                )}
-                {ex.duracao && (
-                  <Text style={styles.itemText}>Duração: {ex.duracao}</Text>
-                )}
+                {ex.metodo && <Text style={styles.itemText}>Método: {ex.metodo}</Text>}
+                {ex.series && <Text style={styles.itemText}>Séries: {ex.series}</Text>}
+                {ex.repeticoes && <Text style={styles.itemText}>Repetições: {ex.repeticoes}</Text>}
+                {ex.descanso && <Text style={styles.itemText}>Descanso: {ex.descanso}</Text>}
+                {ex.duracao && <Text style={styles.itemText}>Duração: {ex.duracao}</Text>}
                 {ex.obs && <Text style={styles.itemText}>Obs: {ex.obs}</Text>}
-
-                <TouchableOpacity
-                  style={[
-                    globalStyles.button,
-                    styles.videoButton,
-                    {
-                      paddingVertical: 6,
-                      paddingHorizontal: 20,
-                      alignSelf: "flex-start",
-                    },
-                  ]}
-                  onPress={() =>
-                    ex.link_video
-                      ? navigation.navigate("VideoPlayer", {
-                          url: ex.link_video,
-                        })
-                      : Alert.alert(
-                          "Vídeo em breve",
-                          "Este exercício ainda não possui vídeo."
-                        )
-                  }
-                >
-                  <Text style={[globalStyles.buttonText, { fontSize: 14 }]}>
-                    {ex.link_video ? "Ver vídeo" : "Vídeo em breve"}
-                  </Text>
-                </TouchableOpacity>
               </View>
             ))}
 
@@ -285,29 +226,12 @@ export default function TreinoDoDiaScreen() {
           </ScrollView>
         </KeyboardAvoidingView>
 
-        {/* 🎉 Modal de confirmação */}
         <Modal isVisible={modalVisible}>
-          <View
-            style={{
-              backgroundColor: "#fff",
-              borderRadius: 12,
-              padding: 20,
-              alignItems: "center",
-            }}
-          >
-            <Text
-              style={{
-                fontWeight: "bold",
-                fontSize: 18,
-                color: "#5C3B3B",
-                marginBottom: 10,
-              }}
-            >
+          <View style={{ backgroundColor: "#fff", borderRadius: 12, padding: 20, alignItems: "center" }}>
+            <Text style={{ fontWeight: "bold", fontSize: 18, color: "#5C3B3B", marginBottom: 10 }}>
               Progresso salvo!
             </Text>
-            <Text
-              style={{ fontSize: 16, color: "#5C3B3B", textAlign: "center" }}
-            >
+            <Text style={{ fontSize: 16, color: "#5C3B3B", textAlign: "center" }}>
               Parabéns! Você concluiu {calcularProgresso()}% do treino e ganhou:
             </Text>
             <Animated.Image
@@ -316,44 +240,43 @@ export default function TreinoDoDiaScreen() {
                 width: 60,
                 height: 60,
                 marginVertical: 16,
-                transform: [
-                  {
-                    scale: moedaAnim.interpolate({
-                      inputRange: [0, 1],
-                      outputRange: [0.1, 1],
-                    }),
-                  },
-                ],
+                transform: [{ scale: moedaAnim.interpolate({ inputRange: [0, 1], outputRange: [0.1, 1] }) }],
               }}
             />
-            <Text
-              style={{ fontSize: 20, fontWeight: "bold", color: "#5C3B3B" }}
-            >
+            <Text style={{ fontSize: 20, fontWeight: "bold", color: "#5C3B3B" }}>
               {pontosGanho} ponto{pontosGanho !== 1 ? "s" : ""}
             </Text>
-            <TouchableOpacity
-              onPress={() => setModalVisible(false)}
-              style={{ marginTop: 20 }}
-            >
-              <Text style={{ color: "#A56C6C", fontWeight: "bold" }}>
-                Fechar
-              </Text>
+            <TouchableOpacity onPress={() => setModalVisible(false)} style={{ marginTop: 20 }}>
+              <Text style={{ color: "#A56C6C", fontWeight: "bold" }}>Fechar</Text>
             </TouchableOpacity>
           </View>
         </Modal>
-      </SafeAreaView>
-      <FloatingLuniaCoach
-        userName={userName}
-        mostrarAssistente={mostrarLunia}
-        onAbrirAssistente={() => setMostrarLunia(true)}
-      />
 
-      <LunIAModal
-        visivel={mostrarLunia}
-        onFechar={() => setMostrarLunia(false)}
-        fase={fase}
-        userName={userName}
-      />
+        {exercicioSelecionado && mostrarTemporizadorExercicio && (
+          <TemporizadorModal
+            nome={exercicioSelecionado.nome}
+            series={Number(exercicioSelecionado.series)}
+            duracao={exercicioSelecionado.duracao ?? ""}
+            descanso={exercicioSelecionado.descanso ?? ""}
+            visible={mostrarTemporizadorExercicio}
+            onNext={() => {
+              setMostrarTemporizadorExercicio(false);
+              setExercicioSelecionado(null);
+            }}
+            onExit={() => {
+              setMostrarTemporizadorExercicio(false);
+              setExercicioSelecionado(null);
+            }}
+          />
+        )}
+
+        <FloatingLuniaCoach
+          userName={userName}
+          mostrarAssistente={mostrarLunia}
+          onAbrirAssistente={() => setMostrarLunia(true)}
+        />
+        <LunIAModal visivel={mostrarLunia} onFechar={() => setMostrarLunia(false)} fase={fase} userName={userName} />
+      </SafeAreaView>
     </LinearGradient>
   );
 }
@@ -381,12 +304,13 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: "#5C3B3B",
   },
+  timerButton: {
+    marginLeft: "auto",
+    padding: 8,
+    borderRadius: 8,
+  },
   itemText: {
     color: "#333",
     marginBottom: 2,
-  },
-  videoButton: {
-    marginTop: 12,
-    alignSelf: "flex-start",
   },
 });
