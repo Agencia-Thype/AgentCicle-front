@@ -27,11 +27,20 @@ export async function registerUser(data: {
     return response.data;
   } catch (error: any) {
     console.log('Erro no cadastro:', error);
-    Toast.show({
-      type: 'error',
-      text1: 'Erro no cadastro',
-      text2: error?.response?.data?.detail || 'Verifique os dados e tente novamente.',
-    });
+    
+    if (error.message === 'Network Error') {
+      Toast.show({
+        type: 'error',
+        text1: 'Erro de conexão',
+        text2: 'Verifique sua conexão com a internet ou se o servidor está disponível.',
+      });
+    } else {
+      Toast.show({
+        type: 'error',
+        text1: 'Erro no cadastro',
+        text2: error?.response?.data?.detail || 'Verifique os dados e tente novamente.',
+      });
+    }
     return null;
   }
 }

@@ -1,4 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
 import { View, Text, StyleSheet, Animated, Easing, TouchableOpacity, Image } from "react-native";
 import { api } from "app/services/api";
 
@@ -6,6 +8,24 @@ interface Props {
   userName: string;
   onAbrirAssistente: () => void;
   mostrarAssistente?: boolean;
+}
+
+export async function buscarBalaoIA() {
+  
+  const token = await AsyncStorage.getItem('auth_token');
+  
+  
+  if (!token) {
+    return null;
+  }
+  
+  try {
+    const response = await api.get('/api/balao-ia'); // Ajuste para o endpoint correto
+    return response.data;
+  } catch (error) {
+    console.error("(NOBRIDGE) ERROR Erro ao buscar balão da IA", error);
+    return null;
+  }
 }
 
 export default function FloatingLuniaCoach({ userName, onAbrirAssistente, mostrarAssistente }: Props) {
