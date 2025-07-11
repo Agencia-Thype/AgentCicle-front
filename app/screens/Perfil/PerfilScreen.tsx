@@ -1,19 +1,38 @@
-import React, { useState, useEffect } from "react";
-import { View, Text, TextInput, TouchableOpacity } from "react-native";
+import React, { useState, useEffect, useCallback } from "react";
+import {
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  Alert,
+  BackHandler,
+} from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { MaterialIcons } from "@expo/vector-icons";
 import Toast from "react-native-toast-message";
 import DropDownPicker from "react-native-dropdown-picker";
+import { useFocusEffect } from "@react-navigation/native";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import type { NativeStackScreenProps } from "@react-navigation/native-stack";
+import type { RootStackParamList } from "../../navigation";
+import type { EventArg } from "@react-navigation/native";
 
 import { globalStyles, themeColors } from "../../theme/global";
 import { perfilStyles } from "./PerfilStyles";
-import { updatePerfil, getPerfil } from "../../services/perfilService";
+import {
+  updatePerfil,
+  getPerfil,
+  sincronizarFase,
+} from "../../services/perfilService";
 import CalendarioModal from "../../components/calendario/CalendarioModal";
 import { AnimatedLogo } from "app/components/AnimatedLogo";
 import FloatingLuniaCoach from "app/components/LunIA/LuniaFloatingMessage";
 import LunIAModal from "app/components/LunIA/LuniaModal";
+import { useFaseLunar } from "../../hooks/useFaseLunar";
 
-export default function PerfilScreen() {
+type PerfilScreenProps = NativeStackScreenProps<RootStackParamList, "Perfil">;
+
+export default function PerfilScreen({ navigation }: PerfilScreenProps) {
   const [altura, setAltura] = useState("");
   const [peso, setPeso] = useState("");
   const [objetivo, setObjetivo] = useState("");
@@ -21,6 +40,10 @@ export default function PerfilScreen() {
   const [duracaoCiclo, setDuracaoCiclo] = useState("28");
   const [imc, setImc] = useState<number | null>(null);
   const [showCalendarioModal, setShowCalendarioModal] = useState(false);
+  const [isPrimeiroAcesso, setIsPrimeiroAcesso] = useState(false);
+
+  // Usando o hook de fase lunar
+  const { fase, mensagem, recarregar: atualizarFaseLunar } = useFaseLunar();
 
   const [open, setOpen] = useState(false);
   const [itensObjetivo, setItensObjetivo] = useState([
@@ -32,7 +55,47 @@ export default function PerfilScreen() {
   ]);
   const [mostrarLunia, setMostrarLunia] = useState(false);
   const [userName, setUserName] = useState(""); // se ainda não tiver
-  const [fase, setFase] = useState(""); // se ainda não tiver
+  // A variável fase agora vem do hook useFaseLunar
+
+  // Verificar se é primeiro acesso
+  useEffect(() => {
+    const verificarPrimeiroAcesso = async () => {
+      try {
+        const primeiroAcesso = await AsyncStorage.getItem("primeiro_acesso");
+        setIsPrimeiroAcesso(primeiroAcesso === "true");
+      } catch (error) {
+        console.log("Erro ao verificar primeiro acesso:", error);
+      }
+    };
+
+    verificarPrimeiroAcesso();
+  }, []);
+
+  // Bloquear botão voltar no Android durante primeiro acesso
+  useFocusEffect(
+    useCallback(() => {
+      const onBackPress = () => {
+        if (isPrimeiroAcesso) {
+          alertaPreenchimentoObrigatorio();
+          return true; // Impede o comportamento padrão de voltar
+        }
+        return false; // Permite o comportamento padrão de voltar
+      };
+
+      BackHandler.addEventListener("hardwareBackPress", onBackPress);
+      return () =>
+        BackHandler.removeEventListener("hardwareBackPress", onBackPress);
+    }, [isPrimeiroAcesso])
+  );
+
+  // Alerta de preenchimento obrigatório
+  const alertaPreenchimentoObrigatorio = () => {
+    Alert.alert(
+      "Completar perfil obrigatório",
+      "Você precisa preencher e salvar seu perfil antes de continuar usando o aplicativo.",
+      [{ text: "Entendi", style: "default" }]
+    );
+  };
 
   useEffect(() => {
     const carregarPerfil = async () => {
@@ -84,12 +147,34 @@ export default function PerfilScreen() {
         data_menstruacao: dataMenstruacao.toISOString().split("T")[0],
         duracao_ciclo: parseInt(duracaoCiclo),
       };
+      const result = await updatePerfil(payload);
 
-      await updatePerfil(payload);
-      Toast.show({
-        type: "success",
-        text1: "Perfil atualizado com sucesso!",
-      });
+      // Atualiza a fase lunar usando o hook após atualização do perfil
+      await atualizarFaseLunar();
+
+      // Se for primeiro acesso, marcar como concluído e redirecionar para Home
+      if (isPrimeiroAcesso) {
+        await AsyncStorage.setItem("primeiro_acesso", "false");
+
+        Toast.show({
+          type: "success",
+          text1: "Perfil salvo com sucesso!",
+          text2: "Bem-vinda ao AgentCicle!",
+        });
+
+        // Redirecionar para a Home após salvar o perfil
+        setTimeout(() => {
+          navigation.reset({
+            index: 0,
+            routes: [{ name: "Home" }],
+          });
+        }, 1500); // Pequeno delay para que o Toast seja visível
+      } else {
+        Toast.show({
+          type: "success",
+          text1: "Perfil atualizado com sucesso!",
+        });
+      }
     } catch (error) {
       console.log("Erro ao atualizar perfil:", error);
       Toast.show({
@@ -102,6 +187,30 @@ export default function PerfilScreen() {
   const formatarData = (data: Date) =>
     data.toLocaleDateString("pt-BR", { timeZone: "UTC" });
 
+  // Impedir navegação para outras telas durante primeiro acesso
+  useEffect(() => {
+    if (isPrimeiroAcesso) {
+      const unsubscribe = navigation.addListener(
+        "beforeRemove",
+        (e: EventArg<"beforeRemove", true, { action: any }>) => {
+          // Permitir apenas navegação para a Home após salvar
+          if (
+            e.data.action.type === "NAVIGATE" &&
+            e.data.action.payload?.name === "Home"
+          ) {
+            return;
+          }
+
+          // Prevenir navegação para qualquer outra tela
+          e.preventDefault();
+          alertaPreenchimentoObrigatorio();
+        }
+      );
+
+      return unsubscribe;
+    }
+  }, [navigation, isPrimeiroAcesso]);
+
   return (
     <LinearGradient
       colors={themeColors.gradient}
@@ -109,8 +218,18 @@ export default function PerfilScreen() {
       end={{ x: 1, y: 1 }}
       style={globalStyles.backgroundGradient}
     >
-      <AnimatedLogo />
+      <View style={{ marginTop: 60 }}>
+        <AnimatedLogo />
+      </View>
       <View style={perfilStyles.container}>
+        {isPrimeiroAcesso && (
+          <View style={perfilStyles.primeiroAcessoAviso}>
+            <Text style={perfilStyles.avisoTexto}>
+              Complete seu perfil para continuar
+            </Text>
+          </View>
+        )}
+
         <Text style={perfilStyles.title}>Complete seu perfil</Text>
 
         <TextInput
@@ -229,18 +348,23 @@ export default function PerfilScreen() {
           </Text>
         </TouchableOpacity>
       </View>
-      <FloatingLuniaCoach
-        userName={userName}
-        mostrarAssistente={mostrarLunia}
-        onAbrirAssistente={() => setMostrarLunia(true)}
-      />
 
-      <LunIAModal
-        visivel={mostrarLunia}
-        onFechar={() => setMostrarLunia(false)}
-        fase={fase}
-        userName={userName}
-      />
+      {!isPrimeiroAcesso && (
+        <FloatingLuniaCoach
+          userName={userName}
+          mostrarAssistente={mostrarLunia}
+          onAbrirAssistente={() => setMostrarLunia(true)}
+        />
+      )}
+
+      {!isPrimeiroAcesso && (
+        <LunIAModal
+          visivel={mostrarLunia}
+          onFechar={() => setMostrarLunia(false)}
+          fase={fase}
+          userName={userName}
+        />
+      )}
     </LinearGradient>
   );
 }

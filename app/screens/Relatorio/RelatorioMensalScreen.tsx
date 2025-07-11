@@ -42,9 +42,9 @@ export default function RelatorioMensalScreen() {
 
   const fases = [
     { nome: "menstruacao", titulo: "🌑 Menstruação", cor: "#A56C6C" },
-    { nome: "folicular", titulo: "🌒 Folicular", cor: "#7EAA92" },
+    { nome: "folicular", titulo: "🌘 Folicular", cor: "#7EAA92" },
     { nome: "ovulatoria", titulo: "🌕 Ovulatória", cor: "#F4B860" },
-    { nome: "lutea", titulo: "🌘 Lútea", cor: "#B283A3" },
+    { nome: "lutea", titulo: "🌒 Lútea", cor: "#B283A3" },
   ];
 
   const percentuais = fases.map(

@@ -4,7 +4,8 @@ export const perfilStyles = StyleSheet.create({
   container: {
     flex: 1,
     padding: 24,
-    justifyContent: "center",
+    justifyContent: "flex-start",
+    paddingTop: 20,
   },
   headerTitle: {
     fontSize: 24,
@@ -112,5 +113,19 @@ export const perfilStyles = StyleSheet.create({
     backgroundColor: "#FFF5F5",
     padding: 10,
     borderRadius: 10,
+  },
+  primeiroAcessoAviso: {
+    backgroundColor: "#FFC0CB80",
+    padding: 10,
+    borderRadius: 8,
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: "#FF6B8E",
+  },
+  avisoTexto: {
+    color: "#5C3B3B",
+    textAlign: "center",
+    fontWeight: "bold",
+    fontSize: 14,
   },
 });

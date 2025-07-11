@@ -3,7 +3,7 @@ import React, { forwardRef, useImperativeHandle, useRef } from "react";
 import * as Animatable from "react-native-animatable";
 import { ImageStyle } from "react-native";
 
-export const AnimatedLogo = forwardRef<any, { style?: ImageStyle }>(
+export const    AnimatedLogo = forwardRef<any, { style?: ImageStyle }>(
   (props, ref) => {
     const internalRef = useRef<any>(null);
 

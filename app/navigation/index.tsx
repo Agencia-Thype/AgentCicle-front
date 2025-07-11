@@ -1,6 +1,7 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { NavigationContainer } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import HomeScreen from "../screens/Home/HomeScreen";
 import ForgotPasswordScreen from "../screens/ForgotPassword/ForgotPasswordScreen";
 import LoginScreen from "../screens/login/loginScreen";
@@ -11,15 +12,23 @@ import CalendarioScreen from "../screens/Calendario/CalendarioScreen";
 import PerfilScreen from "../screens/Perfil/PerfilScreen";
 import TreinoDoDia from "../screens/Treino/TreinoDoDiaScreen";
 import VideoPlayerScreen from "../screens/VideoPlayers/VideoPlayesScreen";
-import SintomasScreen from "app/screens/Sintomas/SintomasScreen";
-import FaseCompletaScreen from "app/screens/IA/faseCompletaScreen";
-import RelatorioMensalScreen from "app/screens/Relatorio/RelatorioMensalScreen";
+import SintomasScreen from "../screens/Sintomas/SintomasScreen";
+import FaseCompletaScreen from "../screens/IA/faseCompletaScreen";
+import RelatorioMensalScreen from "../screens/Relatorio/RelatorioMensalScreen";
+import DiagnosticoScreen from "../screens/Diagnostico/DiagnosticoScreen";
+import { withPremiumCheck } from "../utils/withPremiumCheck";
 
 // Tipos das rotas
 export type RootStackParamList = {
   Login: undefined;
   Register: undefined;
-  Home: undefined;
+  Home:
+    | {
+        showTrialBanner?: boolean;
+        justLoggedIn?: boolean;
+        forceStatusCheck?: boolean;
+      }
+    | undefined;
   ForgotPassword: undefined;
   ValidarCodigo: { email: string };
   ValidarEmail: { email: string };
@@ -30,6 +39,7 @@ export type RootStackParamList = {
   Sintomas: undefined;
   FaseCompletaScreen: undefined;
   RelatorioMensal: undefined;
+  Diagnostico: undefined;
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -41,9 +51,43 @@ const transparentHeaderOptions = {
 };
 
 export function Routes() {
+  // Determinar a tela inicial baseada na autenticação
+  const [initialRouteName, setInitialRouteName] =
+    useState<keyof RootStackParamList>("Login");
+  const [isReady, setIsReady] = useState(false);
+
+  // Verificar autenticação ao iniciar
+  useEffect(() => {
+    const checkAuth = async () => {
+      try {
+        const token = await AsyncStorage.getItem("auth_token");
+
+        if (token) {
+          console.log("Token encontrado, iniciando na Home");
+          setInitialRouteName("Home");
+        } else {
+          console.log("Nenhum token encontrado, iniciando no Login");
+          setInitialRouteName("Login");
+        }
+      } catch (error) {
+        console.error("Erro ao verificar token:", error);
+        setInitialRouteName("Login");
+      } finally {
+        setIsReady(true);
+      }
+    };
+
+    checkAuth();
+  }, []);
+
+  // Mostrar nada enquanto verifica autenticação
+  if (!isReady) {
+    return null;
+  }
+
   return (
     <NavigationContainer>
-      <Stack.Navigator initialRouteName="Login">
+      <Stack.Navigator initialRouteName={initialRouteName}>
         <Stack.Screen
           name="Login"
           component={LoginScreen}
@@ -67,12 +111,12 @@ export function Routes() {
         <Stack.Screen
           name="ValidarCodigo"
           component={ValidarCodigoScreen}
-          options={{ title: "Validar Código", ...transparentHeaderOptions }}
+          options={{ headerShown: false }}
         />
         <Stack.Screen
           name="ValidarEmail"
           component={ValidarEmailScreen}
-          options={{ title: "Validar E-mail" }}
+          options={{ headerShown: false }}
         />
         <Stack.Screen
           name="Calendario"
@@ -105,15 +149,22 @@ export function Routes() {
         />
         <Stack.Screen
           name="FaseCompletaScreen"
-          component={FaseCompletaScreen}
+          component={withPremiumCheck(FaseCompletaScreen)}
           options={{ headerShown: false }}
         />
         <Stack.Screen
           name="RelatorioMensal"
-          component={RelatorioMensalScreen}
+          component={withPremiumCheck(RelatorioMensalScreen)}
+          options={{ headerShown: false }}
+        />
+        <Stack.Screen
+          name="Diagnostico"
+          component={DiagnosticoScreen}
           options={{ headerShown: false }}
         />
       </Stack.Navigator>
     </NavigationContainer>
   );
 }
+
+export default withPremiumCheck(Routes);

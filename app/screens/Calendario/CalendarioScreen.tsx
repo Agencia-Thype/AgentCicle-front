@@ -12,8 +12,6 @@ import ResumoDiaModal from "app/components/resumoDiaModal";
 import LunIAModal from "app/components/LunIA/LuniaModal";
 import FloatingLuniaCoach from "app/components/LunIA/LuniaFloatingMessage";
 
-
-
 const meses = [
   "Janeiro",
   "Fevereiro",
@@ -42,8 +40,8 @@ export default function CalendarioScreen() {
   const diasNoMes = new Date(anoAtual, mesAtual + 1, 0).getDate();
   const dias = Array.from({ length: diasNoMes }, (_, i) => i + 1);
   const [mostrarLunia, setMostrarLunia] = useState(false);
-  const [userName, setUserName] = useState(""); // se ainda não tiver
-  const [fase, setFase] = useState(""); // se ainda não tiver
+  const [userName, setUserName] = useState("Usuário"); // valor padrão para evitar string vazia
+  const [fase, setFase] = useState("folicular"); // valor padrão para evitar string vazia
 
   useEffect(() => {
     async function buscarUltimaMenstruacao() {
@@ -104,7 +102,7 @@ export default function CalendarioScreen() {
           onPress={() => navigation.goBack()}
           style={{
             position: "absolute",
-            top: 22,
+            top: 50,
             left: 16,
             zIndex: 10,
             padding: 8,

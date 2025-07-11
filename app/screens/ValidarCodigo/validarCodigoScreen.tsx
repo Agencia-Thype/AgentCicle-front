@@ -3,6 +3,7 @@ import { View, Text, TextInput, TouchableOpacity } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import Toast from "react-native-toast-message";
 import axios from "axios";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import type { RootStackParamList } from "../../navigation";
 import { globalStyles } from "../../theme/global";
@@ -16,6 +17,7 @@ export default function ValidarCodigoScreen({ route, navigation }: Props) {
   const [codigo, setCodigo] = useState("");
   const [novaSenha, setNovaSenha] = useState("");
   const [confirmacaoSenha, setConfirmacaoSenha] = useState("");
+  const [isPrimeiroAcesso, setIsPrimeiroAcesso] = useState(true); // Assumir primeiro acesso por padrão
 
   const logoRef = useRef(null);
   const nav = useNavigation();
@@ -54,12 +56,21 @@ export default function ValidarCodigoScreen({ route, navigation }: Props) {
     }
 
     try {
-      await axios.post("http://10.0.2.2:8000/redefinir-senha", {
+      // Assumindo que o endpoint retorna também um token de autenticação
+      const response = await axios.post("http://10.0.2.2:8000/redefinir-senha", {
         email,
         codigo,
         nova_senha: novaSenha,
         confirmacao_senha: confirmacaoSenha,
       });
+
+      // Armazenar o token de autenticação (se disponível na resposta)
+      if (response.data && response.data.access_token) {
+        await AsyncStorage.setItem('auth_token', response.data.access_token);
+        
+        // Marcar como primeiro acesso
+        await AsyncStorage.setItem('primeiro_acesso', 'true');
+      }
 
       Toast.show({
         type: "success",
@@ -68,10 +79,26 @@ export default function ValidarCodigoScreen({ route, navigation }: Props) {
 
       if (logoRef.current) {
         (logoRef.current as any).fadeOutUp(500).then(() => {
-          navigation.navigate("Login");
+          // Se for primeiro acesso, direciona para o perfil
+          if (isPrimeiroAcesso) {
+            navigation.reset({
+              index: 0,
+              routes: [{ name: "Perfil" }],
+            });
+          } else {
+            navigation.navigate("Login");
+          }
         });
       } else {
-        navigation.navigate("Login");
+        // Se for primeiro acesso, direciona para o perfil
+        if (isPrimeiroAcesso) {
+          navigation.reset({
+            index: 0,
+            routes: [{ name: "Perfil" }],
+          });
+        } else {
+          navigation.navigate("Login");
+        }
       }
     } catch (error: any) {
       Toast.show({

@@ -1,4 +1,4 @@
-import { StyleSheet } from "react-native";
+import { StyleSheet, Platform, StatusBar } from "react-native";
 
 export const homeStyles = StyleSheet.create({
   header: {
@@ -6,12 +6,16 @@ export const homeStyles = StyleSheet.create({
     justifyContent: "space-between",
     alignItems: "center",
     paddingHorizontal: 16,
-    paddingTop: 8,
-    paddingBottom: 12,
+    paddingTop: 40,
+    paddingBottom: 8,
+    zIndex: 1001,
+    position: "relative",
+    backgroundColor: "transparent",
+    marginTop: 5,
   },
-
   content: {
     paddingHorizontal: 20,
+    paddingTop: 16,
     paddingBottom: 24,
     alignItems: "center",
   },
@@ -39,12 +43,11 @@ export const homeStyles = StyleSheet.create({
     textAlign: "center",
     marginBottom: 16,
   },
-
   card: {
     backgroundColor: "#F9F5F2",
-    padding: 20,
+    padding: 16,
     borderRadius: 16,
-    marginVertical: 12,
+    marginVertical: 8,
     width: "100%",
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
@@ -53,7 +56,6 @@ export const homeStyles = StyleSheet.create({
     elevation: 3,
   },
 
-  
   faseMensagem: {
     fontSize: 16,
     color: "#915858",
@@ -99,17 +101,26 @@ export const homeStyles = StyleSheet.create({
     color: "#5C3B3B",
     textAlign: "right",
   },
-
   addButton: {
     backgroundColor: "#5B4A44",
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    paddingVertical: 12,
+    paddingVertical: Platform.OS === "ios" ? 14 : 12,
     paddingHorizontal: 20,
     borderRadius: 30,
     marginTop: 4,
-    elevation: 2,
+    ...Platform.select({
+      ios: {
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.15,
+        shadowRadius: 3,
+      },
+      android: {
+        elevation: 2,
+      },
+    }),
   },
 
   addButtonText: {
@@ -118,12 +129,12 @@ export const homeStyles = StyleSheet.create({
     marginLeft: 8,
     fontSize: 16,
   },
-
   modalOverlay: {
     flex: 1,
     backgroundColor: "rgba(0, 0, 0, 0.3)",
     justifyContent: "flex-end",
     alignItems: "center",
+    zIndex: 10000,
   },
 
   modalMenu: {
@@ -132,8 +143,18 @@ export const homeStyles = StyleSheet.create({
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
     padding: 20,
-    paddingBottom: 40,
-    elevation: 5,
+    paddingBottom: Platform.OS === "ios" ? 50 : 40, // Mais espaço no iOS para o indicador
+    ...Platform.select({
+      ios: {
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: -5 },
+        shadowOpacity: 0.2,
+        shadowRadius: 6,
+      },
+      android: {
+        elevation: 5,
+      },
+    }),
   },
   menuItem: {
     flexDirection: "row",
@@ -233,12 +254,12 @@ export const homeStyles = StyleSheet.create({
     textAlign: "center",
     lineHeight: 20,
   },
-  
+
   botaoSaibaMais: {
     marginTop: 10,
     alignSelf: "center",
   },
-  
+
   textoSaibaMais: {
     color: "#7E5C5C",
     textDecorationLine: "underline",
@@ -252,29 +273,28 @@ export const homeStyles = StyleSheet.create({
     marginBottom: 4,
     textAlign: "left",
   },
-  
+
   faseNome: {
     fontSize: 18,
     fontWeight: "bold",
     color: "#A56C6C",
-    textAlign: "center",   
+    textAlign: "center",
   },
-  
+
   faseDescricao: {
     fontSize: 14,
     color: "#4A2E2E",
     lineHeight: 22,
     textAlign: "justify",
-    fontWeight: "bold",    
+    fontWeight: "bold",
     padding: 6,
     borderRadius: 8,
   },
-  
+
   saibaMaisContainer: {
     alignItems: "flex-end",
-    
   },
-  
+
   saibaMaisBotao: {
     alignSelf: "flex-end",
     marginTop: 8,
@@ -283,13 +303,25 @@ export const homeStyles = StyleSheet.create({
     paddingVertical: 2,
     borderRadius: 8,
   },
-   
   saibaMaisTexto: {
     color: "#fff",
     fontWeight: "500",
     fontSize: 14,
   },
-  
-  
 
+  recarregarBotao: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    marginTop: 12,
+    alignSelf: "center",
+    padding: 6,
+  },
+
+  recarregarTexto: {
+    color: "#A56C6C",
+    fontSize: 12,
+    marginLeft: 4,
+    fontWeight: "500",
+  },
 });

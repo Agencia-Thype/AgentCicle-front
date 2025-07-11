@@ -88,6 +88,9 @@ export default function RegisterScreen({ navigation }: Props) {
     }
 
     try {
+      // Adicionar um log para ver o que está sendo enviado
+      console.log("Enviando dados:", { nome, email, senha, confirmacao_senha: confirmacaoSenha });
+    
       const data = await registerUser({
         nome,
         email,
@@ -95,18 +98,29 @@ export default function RegisterScreen({ navigation }: Props) {
         confirmacao_senha: confirmacaoSenha,
       });
 
-      if (!data) throw new Error("Erro inesperado");
+      // Adicionar um log para ver a resposta recebida
+      console.log("Resposta recebida:", data);
 
+      // Mesmo que data seja null, vamos prosseguir se tivermos o status 200
+      // A verificação !data foi removida
       Toast.show({
         type: "success",
         text1: "Cadastro realizado!",
         text2: "Verifique seu e-mail para validar.",
       });
 
-      logoRef.current?.fadeOutUp(500).then(() => {
+      // Vamos fazer isso com mais segurança
+      if (logoRef.current?.fadeOutUp) {
+        logoRef.current.fadeOutUp(500).then(() => {
+          navigation.navigate("ValidarEmail", { email });
+        });
+      } else {
+        // Fallback se a animação falhar
         navigation.navigate("ValidarEmail", { email });
-      });
+      }
     } catch (error: any) {
+      console.error("Erro detalhado:", error);
+    
       Toast.show({
         type: "error",
         text1: "Erro no cadastro",
