@@ -1,0 +1,13 @@
+{
+  "presets": [
+    ["babel-preset-expo", { "jsxRuntime": "automatic" }],
+    ["@babel/preset-react", { "runtime": "automatic" }],
+    "@babel/preset-typescript"
+  ],
+  "env": {
+    "test": {
+      "plugins": ["@babel/plugin-transform-modules-commonjs"]
+    }
+  },
+  "plugins": []
+}

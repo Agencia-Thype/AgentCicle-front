@@ -59,10 +59,28 @@ export async function login(
       // Tratamento específico para erro 500 no login
       if (error.response.status === 500) {
         console.error("Erro 500 em /login:", error.response.data);
+
+        // Verificar tipo de erro para dar feedback mais específico
+        const erroDetail = error.response.data?.detail || '';
+        let mensagemUsuario = "Erro interno no servidor. Tente novamente mais tarde.";
+        let mensagemDetalhada = "";
+
+        if (__DEV__) {
+          // Em desenvolvimento, mostra detalhes do erro
+          mensagemDetalhada = erroDetail;
+        } else {
+          // Em produção, mensagens mais amigáveis
+          if (erroDetail.includes('database') || erroDetail.includes('connection')) {
+            mensagemUsuario = "Erro de conexão com o banco de dados. Tente novamente em alguns instantes.";
+          } else if (erroDetail.includes('email') || erroDetail.includes('smtp')) {
+            mensagemUsuario = "Erro no serviço de email. Seu login foi processado, mas houve um problema ao enviar notificações.";
+          }
+        }
+
         Toast.show({
           type: "error",
-          text1: "Erro interno no servidor",
-          text2: "Tente novamente mais tarde ou contate o suporte.",
+          text1: "Erro no servidor",
+          text2: mensagemDetalhada || mensagemUsuario,
         });
       } else {
         Toast.show({

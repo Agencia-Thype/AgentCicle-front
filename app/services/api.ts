@@ -34,7 +34,13 @@ const base64ToUtf8 = (base64: string): string => {
 
 // Definir a URL base da API com base no ambiente e plataforma
 const getBaseURL = () => {
-  // Esta função agora retorna a URL mais apropriada com base na plataforma
+  // Verifica se existe variável de ambiente configurada
+  const customUrl = process.env.EXPO_PUBLIC_API_URL;
+  if (customUrl) {
+    return customUrl;
+  }
+
+  // Esta função retorna a URL mais apropriada com base na plataforma
   if (Platform.OS === "android") {
     // Para emuladores Android, a URL correta geralmente é 10.0.2.2 (equivalente a localhost na máquina host)
     return "http://10.0.2.2:8000";
@@ -43,15 +49,14 @@ const getBaseURL = () => {
     return "http://localhost:8000";
   }
 
-  // Para dispositivos físicos (use o IP real da sua máquina)
-  // Você pode substituir este IP pelo IP real da sua máquina
-  return "http://192.168.0.144:8000";
+  // Para dispositivos físicos - tenta variável de ambiente ou localhost como fallback
+  return "http://localhost:8000";
 };
 
 // Criar instância da API
 export const api = axios.create({
   baseURL: getBaseURL(),
-  timeout: 10000, // 10 segundos de timeout
+  timeout: 30000, // 30 segundos de timeout (aumentado de 10s)
   // Adicionar headers comuns
   headers: {
     "Content-Type": "application/json",
@@ -289,33 +294,6 @@ api.interceptors.request.use(
   },
   (error) => {
     console.error("Erro na requisição:", error);
-    return Promise.reject(error);
-  }
-);
-
-// Interceptor para tratar respostas e erros
-api.interceptors.response.use(
-  (response) => {
-    console.log(`Resposta ${response.status} para ${response.config.url}`);
-    return response;
-  },
-  (error) => {
-    if (error.response) {
-      console.error(
-        `Erro ${error.response.status} em ${error.config?.url}:`,
-        error.response.data
-      );
-
-      // Tratar erro de autenticação
-      if (error.response.status === 401) {
-        console.warn("Erro de autenticação - token pode ter expirado");
-        // Aqui você pode adicionar lógica para redirecionar para a tela de login
-      }
-    } else if (error.request) {
-      console.error("Sem resposta do servidor:", error.request);
-    } else {
-      console.error("Erro de configuração:", error.message);
-    }
     return Promise.reject(error);
   }
 );

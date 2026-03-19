@@ -16,48 +16,41 @@ function AppContent() {
   const { verificarStatus, status, podeUsarApp, ativarAssinatura, loading } =
     useAssinatura();
   const { isVisible, setIsVisible, message, showModal } = usePremiumModal();
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
 
-  // Verificar o status na inicialização do app apenas se o usuário já estiver logado
+  // Verificar autenticação e status de forma combinada (evita múltiplas chamadas)
   useEffect(() => {
-    const checkAuthAndStatus = async () => {
+    const initializeApp = async () => {
       try {
-        // Primeiro verificar se o token existe
+        // Primeiro verifica se o token existe
         const token = await AsyncStorage.getItem("auth_token");
-        if (token) {
-          // Só verificar status se o usuário estiver logado
-          await verificarStatus();
-          console.log("Verificação de status realizada após confirmar token");
+        const hasToken = !!token;
+
+        setIsAuthenticated(hasToken);
+        console.log(
+          "Estado de autenticação:",
+          hasToken ? "Autenticado" : "Não autenticado"
+        );
+
+        // Só verificar status de assinatura se o usuário estiver logado
+        if (hasToken) {
+          try {
+            await verificarStatus();
+            console.log("Verificação de status realizada após confirmar token");
+          } catch (error) {
+            console.warn("Erro ao verificar status de assinatura:", error);
+            // Continua mesmo com erro - pode usar cache
+          }
         } else {
           console.log("Usuário não está logado, pulando verificação de status");
         }
       } catch (error) {
-        console.error("Erro ao verificar autenticação:", error);
-      }
-    };
-
-    checkAuthAndStatus();
-  }, []);
-
-  // Mostrar tela de upgrade em diferentes cenários
-  const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
-
-  // Verificar se o usuário está autenticado
-  useEffect(() => {
-    const checkAuthentication = async () => {
-      try {
-        const token = await AsyncStorage.getItem("auth_token");
-        setIsAuthenticated(!!token);
-        console.log(
-          "Estado de autenticação:",
-          !!token ? "Autenticado" : "Não autenticado"
-        );
-      } catch (error) {
-        console.error("Erro ao verificar autenticação:", error);
+        console.error("Erro ao inicializar app:", error);
         setIsAuthenticated(false);
       }
     };
 
-    checkAuthentication();
+    initializeApp();
   }, []);
 
   // Apenas mostrar a tela de upgrade se tivermos certeza que o usuário está autenticado

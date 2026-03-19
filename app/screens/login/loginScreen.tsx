@@ -31,7 +31,18 @@ export default function LoginScreen({ navigation }: Props) {
   // Acessando o contexto de assinatura
   const { verificarStatus } = useAssinatura();
 
+  // Função para validar formato de email
+  const isValidEmail = (email: string): boolean => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
+  };
+
   const handleLogin = async () => {
+    // Resetar erros
+    setErroEmail(false);
+    setErroSenha(false);
+
+    // Validar campos obrigatórios
     if (!email || !senha) {
       Toast.show({
         type: "error",
@@ -40,6 +51,17 @@ export default function LoginScreen({ navigation }: Props) {
       });
       setErroEmail(true);
       setErroSenha(true);
+      return;
+    }
+
+    // Validar formato de email
+    if (!isValidEmail(email)) {
+      Toast.show({
+        type: "error",
+        text1: "E-mail inválido",
+        text2: "Por favor, insira um e-mail válido.",
+      });
+      setErroEmail(true);
       return;
     }
 

@@ -30,15 +30,24 @@ export const assinaturaService = {
   verificarStatus: async (): Promise<AssinaturaStatus> => {
     try {
       console.log(
-        "[AssinaturaService] Chamando endpoint /assinatura/status..."
+        "[AssinaturaService] Chamando endpoint de status de assinatura..."
       );
 
-      // Adicionando timestamp à URL para evitar cache do navegador/dispositivo
-      const cacheBuster = new Date().getTime();
-      // Usar o endpoint otimizado para login quando disponível
-      // Se não está disponível, usar o endpoint padrão
-      const endpoint = "/assinatura/status-login";
-      const response = await api.get(`${endpoint}?_t=${cacheBuster}`);
+      // Tenta usar o endpoint otimizado primeiro
+      let response;
+      try {
+        response = await api.get("/assinatura/status-login");
+        console.log("[AssinaturaService] Usando endpoint otimizado /assinatura/status-login");
+      } catch (endpointError: any) {
+        // Se o endpoint otimizado não existir (404), cai para o antigo
+        if (endpointError.response?.status === 404) {
+          console.warn("[AssinaturaService] Endpoint otimizado não disponível, usando /assinatura/status");
+          response = await api.get("/assinatura/status");
+        } else {
+          // Se for outro erro, propaga
+          throw endpointError;
+        }
+      }
 
       if (response.status !== 200) {
         throw new Error(
