@@ -20,7 +20,7 @@ import { RootStackParamList } from "../../navigation";
 import { TreinoExercicio } from "../../interface/TreinoDoDiaInterface";
 import { api } from "../../services/api";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { LinearGradient } from "expo-linear-gradient";
+import AppBackground from "../../components/AppBackground";
 import { AnimatedLogo } from "app/components/AnimatedLogo";
 import { Ionicons } from "@expo/vector-icons";
 import LunIAModal from "app/components/LunIA/LuniaModal";
@@ -156,12 +156,12 @@ export default function TreinoDoDiaScreen() {
   }
 
   return (
-    <LinearGradient colors={themeColors.gradient} start={{ x: 0.2, y: 0 }} end={{ x: 1, y: 1 }} style={{ flex: 1 }}>
+    <AppBackground>
       <SafeAreaView style={{ flex: 1 }}>
         <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : undefined} style={{ flex: 1 }}>
           <ScrollView contentContainerStyle={{ flexGrow: 1, padding: 24, paddingBottom: 80 }} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
-            <TouchableOpacity onPress={() => navigation.goBack()}>
-              <Ionicons name="arrow-back" size={24} color="#5C3B3B" />
+            <TouchableOpacity onPress={() => navigation.goBack()} style={{ backgroundColor: "rgba(146,96,206,0.3)", borderRadius: 20, padding: 8, alignSelf: "flex-start", marginBottom: 8 }}>
+              <Ionicons name="arrow-back" size={24} color="#EED0FC" />
             </TouchableOpacity>
 
             <AnimatedLogo />
@@ -228,10 +228,10 @@ export default function TreinoDoDiaScreen() {
 
         <Modal isVisible={modalVisible}>
           <View style={{ backgroundColor: "#fff", borderRadius: 12, padding: 20, alignItems: "center" }}>
-            <Text style={{ fontWeight: "bold", fontSize: 18, color: "#5C3B3B", marginBottom: 10 }}>
+            <Text style={{ fontWeight: "bold", fontSize: 18, color: "#3F1C65", marginBottom: 10 }}>
               Progresso salvo!
             </Text>
-            <Text style={{ fontSize: 16, color: "#5C3B3B", textAlign: "center" }}>
+            <Text style={{ fontSize: 16, color: "#3F1C65", textAlign: "center" }}>
               Parabéns! Você concluiu {calcularProgresso()}% do treino e ganhou:
             </Text>
             <Animated.Image
@@ -277,13 +277,15 @@ export default function TreinoDoDiaScreen() {
         />
         <LunIAModal visivel={mostrarLunia} onFechar={() => setMostrarLunia(false)} fase={fase} userName={userName} />
       </SafeAreaView>
-    </LinearGradient>
+    </AppBackground>
   );
 }
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: "#fff",
+    backgroundColor: "rgba(63,28,101,0.75)",
+    borderWidth: 1,
+    borderColor: "rgba(146,96,206,0.4)",
     borderRadius: 12,
     padding: 16,
     marginBottom: 16,
@@ -302,7 +304,7 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     marginLeft: 8,
     fontSize: 16,
-    color: "#5C3B3B",
+    color: "#EED0FC",
   },
   timerButton: {
     marginLeft: "auto",
@@ -310,7 +312,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
   },
   itemText: {
-    color: "#333",
+    color: "#EED0FC",
     marginBottom: 2,
   },
 });

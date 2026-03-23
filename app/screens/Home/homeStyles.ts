@@ -1,4 +1,4 @@
-import { StyleSheet, Platform, StatusBar } from "react-native";
+import { StyleSheet, Platform } from "react-native";
 
 export const homeStyles = StyleSheet.create({
   header: {
@@ -23,7 +23,7 @@ export const homeStyles = StyleSheet.create({
   dataTexto: {
     fontSize: 16,
     fontWeight: "500",
-    color: "#5B4A44",
+    color: "#EED0FC",
     textAlign: "center",
     marginBottom: 6,
     textTransform: "capitalize",
@@ -32,40 +32,43 @@ export const homeStyles = StyleSheet.create({
   saudacao: {
     fontSize: 22,
     fontWeight: "bold",
-    color: "#5B4A44",
+    color: "#FFFAC3",
     textAlign: "center",
     marginBottom: 6,
   },
 
   subtitulo: {
     fontSize: 16,
-    color: "#7E6464",
+    color: "#EED0FC",
     textAlign: "center",
     marginBottom: 16,
   },
   card: {
-    backgroundColor: "#F9F5F2",
+    backgroundColor: "rgba(63, 28, 101, 0.75)",
     padding: 16,
     borderRadius: 16,
     marginVertical: 8,
     width: "100%",
+    borderWidth: 1,
+    borderColor: "rgba(146, 96, 206, 0.4)",
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
+    shadowOpacity: 0.3,
     shadowRadius: 4,
     elevation: 3,
   },
 
   faseMensagem: {
     fontSize: 16,
-    color: "#915858",
+    color: "#EED0FC",
   },
 
   treinoTexto: {
     fontSize: 16,
     marginBottom: 12,
-    color: "#5B4A44",
+    color: "#FFFAC3",
     textAlign: "center",
+    fontWeight: "600",
   },
 
   progressoContainer: {
@@ -77,13 +80,13 @@ export const homeStyles = StyleSheet.create({
   progressoTexto: {
     fontSize: 16,
     fontWeight: "bold",
-    color: "#5C3B3B",
+    color: "#FFFAC3",
     marginBottom: 8,
   },
 
   barraContainer: {
     height: 12,
-    backgroundColor: "#F5EFEF",
+    backgroundColor: "rgba(255, 255, 255, 0.15)",
     borderRadius: 10,
     marginTop: 10,
     marginBottom: 6,
@@ -98,11 +101,11 @@ export const homeStyles = StyleSheet.create({
   progressoPorcentagem: {
     marginTop: 4,
     fontSize: 14,
-    color: "#5C3B3B",
+    color: "#EED0FC",
     textAlign: "right",
   },
   addButton: {
-    backgroundColor: "#5B4A44",
+    backgroundColor: "#9260CE",
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
@@ -110,17 +113,11 @@ export const homeStyles = StyleSheet.create({
     paddingHorizontal: 20,
     borderRadius: 30,
     marginTop: 4,
-    ...Platform.select({
-      ios: {
-        shadowColor: "#000",
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.15,
-        shadowRadius: 3,
-      },
-      android: {
-        elevation: 2,
-      },
-    }),
+    shadowColor: "#9260CE",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.5,
+    shadowRadius: 6,
+    elevation: 6,
   },
 
   addButtonText: {
@@ -131,30 +128,26 @@ export const homeStyles = StyleSheet.create({
   },
   modalOverlay: {
     flex: 1,
-    backgroundColor: "rgba(0, 0, 0, 0.3)",
+    backgroundColor: "rgba(0, 0, 0, 0.6)",
     justifyContent: "flex-end",
     alignItems: "center",
     zIndex: 10000,
   },
 
   modalMenu: {
-    backgroundColor: "#fff",
+    backgroundColor: "#3F1C65",
     width: "100%",
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
     padding: 20,
-    paddingBottom: Platform.OS === "ios" ? 50 : 40, // Mais espaço no iOS para o indicador
-    ...Platform.select({
-      ios: {
-        shadowColor: "#000",
-        shadowOffset: { width: 0, height: -5 },
-        shadowOpacity: 0.2,
-        shadowRadius: 6,
-      },
-      android: {
-        elevation: 5,
-      },
-    }),
+    paddingBottom: Platform.OS === "ios" ? 50 : 40,
+    borderTopWidth: 1,
+    borderColor: "rgba(146, 96, 206, 0.5)",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: -5 },
+    shadowOpacity: 0.4,
+    shadowRadius: 6,
+    elevation: 5,
   },
   menuItem: {
     flexDirection: "row",
@@ -165,49 +158,51 @@ export const homeStyles = StyleSheet.create({
   menuItemText: {
     marginLeft: 12,
     fontSize: 16,
-    color: "#5C3B3B",
+    color: "#EED0FC",
   },
 
   modalContainer: {
     flex: 1,
-    backgroundColor: "rgba(0,0,0,0.4)",
+    backgroundColor: "rgba(0,0,0,0.5)",
     justifyContent: "center",
     alignItems: "center",
   },
 
   modalContent: {
-    backgroundColor: "#fff",
+    backgroundColor: "#3F1C65",
     padding: 24,
     borderRadius: 16,
     width: "85%",
+    borderWidth: 1,
+    borderColor: "rgba(146, 96, 206, 0.4)",
   },
 
   modalTitle: {
     fontSize: 18,
     fontWeight: "bold",
     marginBottom: 12,
-    color: "#5B4A44",
+    color: "#FFFAC3",
   },
 
   symptomItem: {
     paddingVertical: 10,
     paddingHorizontal: 16,
-    backgroundColor: "#F5E7E7",
+    backgroundColor: "rgba(146, 96, 206, 0.3)",
     borderRadius: 10,
     marginVertical: 6,
   },
 
   selectedSymptom: {
-    backgroundColor: "#C8A19C",
+    backgroundColor: "#9260CE",
   },
 
   symptomText: {
     fontSize: 16,
-    color: "#5B4A44",
+    color: "#EED0FC",
   },
 
   modalButton: {
-    backgroundColor: "#91766E",
+    backgroundColor: "#9260CE",
     paddingVertical: 12,
     borderRadius: 10,
     marginTop: 16,
@@ -233,7 +228,7 @@ export const homeStyles = StyleSheet.create({
   trofeuTexto: {
     marginTop: 4,
     fontSize: 14,
-    color: "#5B4A44",
+    color: "#FFFAC3",
     fontWeight: "600",
   },
   moedaContainer: {
@@ -243,13 +238,13 @@ export const homeStyles = StyleSheet.create({
     marginTop: 8,
   },
   moedaTexto: {
-    color: "#5C3B3B",
+    color: "#FFFAC3",
     fontSize: 16,
     fontWeight: "600",
   },
   faseResumo: {
     fontSize: 14,
-    color: "#5C3B3B",
+    color: "#EED0FC",
     marginTop: 8,
     textAlign: "center",
     lineHeight: 20,
@@ -261,7 +256,7 @@ export const homeStyles = StyleSheet.create({
   },
 
   textoSaibaMais: {
-    color: "#7E5C5C",
+    color: "#FFFAC3",
     textDecorationLine: "underline",
     fontWeight: "500",
     fontSize: 14,
@@ -269,7 +264,7 @@ export const homeStyles = StyleSheet.create({
   faseTitulo: {
     fontSize: 16,
     fontWeight: "600",
-    color: "#5C3B3B",
+    color: "#FFFAC3",
     marginBottom: 4,
     textAlign: "left",
   },
@@ -277,13 +272,13 @@ export const homeStyles = StyleSheet.create({
   faseNome: {
     fontSize: 18,
     fontWeight: "bold",
-    color: "#A56C6C",
+    color: "#B1D686",
     textAlign: "center",
   },
 
   faseDescricao: {
     fontSize: 14,
-    color: "#4A2E2E",
+    color: "#EED0FC",
     lineHeight: 22,
     textAlign: "justify",
     fontWeight: "bold",
@@ -298,9 +293,9 @@ export const homeStyles = StyleSheet.create({
   saibaMaisBotao: {
     alignSelf: "flex-end",
     marginTop: 8,
-    backgroundColor: "#A2BBA1",
-    paddingHorizontal: 8,
-    paddingVertical: 2,
+    backgroundColor: "#9260CE",
+    paddingHorizontal: 10,
+    paddingVertical: 4,
     borderRadius: 8,
   },
   saibaMaisTexto: {
@@ -319,7 +314,7 @@ export const homeStyles = StyleSheet.create({
   },
 
   recarregarTexto: {
-    color: "#A56C6C",
+    color: "#EED0FC",
     fontSize: 12,
     marginLeft: 4,
     fontWeight: "500",

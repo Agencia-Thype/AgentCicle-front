@@ -15,7 +15,7 @@ import {
 import ConexaoHelper from "../../utils/conexaoHelper";
 import { useNavigation } from "@react-navigation/native";
 import { globalStyles, themeColors } from "../../theme/global";
-import { LinearGradient } from "expo-linear-gradient";
+import AppBackground from "../../components/AppBackground";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useAuth } from "../../contexts/AuthContext";
 
@@ -641,12 +641,7 @@ export default function DiagnosticoScreen() {
   }, []);
 
   return (
-    <LinearGradient
-      colors={themeColors.gradient}
-      start={{ x: 0.2, y: 0 }}
-      end={{ x: 1, y: 1 }}
-      style={globalStyles.backgroundGradient}
-    >
+    <AppBackground>
       <View style={styles.container}>
         <Text style={styles.titulo}>Diagnóstico de Conexão</Text>
 
@@ -721,7 +716,7 @@ export default function DiagnosticoScreen() {
           </TouchableOpacity>
         </View>
       </View>
-    </LinearGradient>
+    </AppBackground>
   );
 }
 

@@ -1,25 +1,21 @@
-// app/screens/register/registerStyles.ts
 import { StyleSheet } from "react-native";
 
 export const registerStyles = StyleSheet.create({
   passwordContainer: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "#fff",
+    backgroundColor: "rgba(255, 255, 255, 0.1)",
     borderRadius: 10,
     paddingHorizontal: 12,
     marginBottom: 12,
-    height: 48,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 2,
+    height: 50,
+    borderWidth: 1,
+    borderColor: "rgba(146, 96, 206, 0.6)",
   },
   inputSenha: {
     flex: 1,
     fontSize: 16,
-    color: "#333",
+    color: "#EED0FC",
   },
   iconEye: {
     marginLeft: 8,

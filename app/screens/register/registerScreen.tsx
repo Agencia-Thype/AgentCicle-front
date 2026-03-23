@@ -6,17 +6,16 @@ import {
   TouchableOpacity,
   StyleSheet,
 } from "react-native";
-import { LinearGradient } from "expo-linear-gradient";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import type { RootStackParamList } from "../../navigation";
 import { registerUser } from "../../services/authService";
 import Toast from "react-native-toast-message";
-import { themeColors } from "../../theme/colors";
 import { useNavigation } from "@react-navigation/native";
 import { AnimatedLogo } from "../../components/AnimatedLogo";
 import { Ionicons } from "@expo/vector-icons";
 import { registerStyles } from "./registerStyles";
 import { globalStyles } from "../../theme/global";
+import AppBackground from "../../components/AppBackground";
 
 const senhaRegex = {
   maiuscula: /[A-Z]/,
@@ -133,10 +132,7 @@ export default function RegisterScreen({ navigation }: Props) {
   };
 
   return (
-    <LinearGradient
-      colors={themeColors.gradient}
-      style={globalStyles.backgroundGradient}
-    >
+    <AppBackground style={globalStyles.backgroundGradient}>
       <AnimatedLogo ref={logoRef} />
 
       <Text style={globalStyles.title}>Criar Conta</Text>
@@ -239,7 +235,7 @@ export default function RegisterScreen({ navigation }: Props) {
       >
         <Text style={globalStyles.link}>Já tem conta? Entrar</Text>
       </TouchableOpacity>
-    </LinearGradient>
+    </AppBackground>
   );
 }
 

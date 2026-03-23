@@ -13,7 +13,7 @@ import { Video, ResizeMode } from "expo-av";
 import { RouteProp, useRoute, useNavigation } from "@react-navigation/native";
 import { RootStackParamList } from "../../navigation";
 import { globalStyles, themeColors } from "../../theme/global";
-import { LinearGradient } from "expo-linear-gradient";
+import AppBackground from "../../components/AppBackground";
 import { Ionicons } from "@expo/vector-icons";
 import { AnimatedLogo } from "../../components/AnimatedLogo";
 
@@ -26,12 +26,7 @@ export default function VideoPlayerScreen() {
 
   if (!url) {
     return (
-      <LinearGradient
-        colors={themeColors.gradient}
-        start={{ x: 0.2, y: 0 }}
-        end={{ x: 1, y: 1 }}
-        style={globalStyles.backgroundGradient}
-      >
+      <AppBackground>
         <KeyboardAvoidingView
           behavior={Platform.OS === "ios" ? "padding" : undefined}
           style={{ flex: 1 }}
@@ -45,8 +40,8 @@ export default function VideoPlayerScreen() {
             showsVerticalScrollIndicator={false}
             keyboardShouldPersistTaps="handled"
           >
-            <TouchableOpacity onPress={() => navigation.goBack()}>
-              <Ionicons name="arrow-back" size={24} color="#5C3B3B" />
+            <TouchableOpacity onPress={() => navigation.goBack()} style={{ backgroundColor: "rgba(146,96,206,0.3)", borderRadius: 20, padding: 8, alignSelf: "flex-start" }}>
+              <Ionicons name="arrow-back" size={24} color="#EED0FC" />
             </TouchableOpacity>
 
             <AnimatedLogo />
@@ -59,17 +54,12 @@ export default function VideoPlayerScreen() {
             </View>
           </ScrollView>
         </KeyboardAvoidingView>
-      </LinearGradient>
+      </AppBackground>
     );
   }
 
   return (
-    <LinearGradient
-      colors={themeColors.gradient}
-      start={{ x: 0.2, y: 0 }}
-      end={{ x: 1, y: 1 }}
-      style={globalStyles.backgroundGradient}
-    >
+    <AppBackground>
       <KeyboardAvoidingView
         behavior={Platform.OS === "ios" ? "padding" : undefined}
         style={{ flex: 1 }}
@@ -86,9 +76,9 @@ export default function VideoPlayerScreen() {
         >
           <TouchableOpacity
             onPress={() => navigation.goBack()}
-            style={{ marginBottom: 12 }}
+            style={{ marginBottom: 12, backgroundColor: "rgba(146,96,206,0.3)", borderRadius: 20, padding: 8, alignSelf: "flex-start" }}
           >
-            <Ionicons name="arrow-back" size={24} color="#5C3B3B" />
+            <Ionicons name="arrow-back" size={24} color="#EED0FC" />
           </TouchableOpacity>
 
           <AnimatedLogo />
@@ -111,7 +101,7 @@ export default function VideoPlayerScreen() {
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
-    </LinearGradient>
+    </AppBackground>
   );
 }
 

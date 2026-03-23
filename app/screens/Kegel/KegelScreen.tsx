@@ -10,7 +10,7 @@ import {
   Modal,
   Animated,
 } from "react-native";
-import { LinearGradient } from "expo-linear-gradient";
+import AppBackground from "../../components/AppBackground";
 import { Ionicons } from "@expo/vector-icons";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { globalStyles, themeColors } from "../../theme/global";
@@ -183,18 +183,18 @@ export default function KegelScreen() {
 
   if (loading) {
     return (
-      <LinearGradient colors={themeColors.gradient} start={{ x: 0.2, y: 0 }} end={{ x: 1, y: 1 }} style={{ flex: 1 }}>
+      <AppBackground>
         <SafeAreaView style={{ flex: 1 }}>
           <View style={globalStyles.centeredContainer}>
-            <ActivityIndicator size="large" color="#A56C6C" />
+            <ActivityIndicator size="large" color="#9260CE" />
           </View>
         </SafeAreaView>
-      </LinearGradient>
+      </AppBackground>
     );
   }
 
   return (
-    <LinearGradient colors={themeColors.gradient} start={{ x: 0.2, y: 0 }} end={{ x: 1, y: 1 }} style={{ flex: 1 }}>
+    <AppBackground>
       <SafeAreaView style={{ flex: 1 }}>
         <ScrollView contentContainerStyle={{ flexGrow: 1, padding: 24, paddingBottom: 80 }} showsVerticalScrollIndicator={false}>
           {/* Header */}
@@ -437,7 +437,7 @@ export default function KegelScreen() {
           />
         )}
       </SafeAreaView>
-    </LinearGradient>
+    </AppBackground>
   );
 }
 

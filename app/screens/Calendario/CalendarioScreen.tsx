@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { View, Text, TouchableOpacity, FlatList } from "react-native";
-import { LinearGradient } from "expo-linear-gradient";
+import AppBackground from "../../components/AppBackground";
 import { MaterialIcons } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
 import { calendarioStyles } from "./calendarioStyles";
@@ -90,14 +90,8 @@ export default function CalendarioScreen() {
   };
 
   return (
-    <LinearGradient
-      colors={themeColors.gradient}
-      start={{ x: 0.5, y: 0 }}
-      end={{ x: 0.5, y: 1 }}
-      style={globalStyles.backgroundGradient}
-    >
+    <AppBackground>
       <View style={calendarioStyles.container}>
-        {/* 🔙 Flechinha de voltar */}
         <TouchableOpacity
           onPress={() => navigation.goBack()}
           style={{
@@ -105,23 +99,25 @@ export default function CalendarioScreen() {
             top: 50,
             left: 16,
             zIndex: 10,
+            backgroundColor: "rgba(146,96,206,0.3)",
+            borderRadius: 20,
             padding: 8,
           }}
         >
-          <MaterialIcons name="arrow-back" size={22} color="#5C3B3B" />
+          <MaterialIcons name="arrow-back" size={22} color="#EED0FC" />
         </TouchableOpacity>
 
         <AnimatedLogo />
 
         <View style={[calendarioStyles.header, { marginTop: 16 }]}>
           <TouchableOpacity onPress={() => mudarMes(-1)}>
-            <MaterialIcons name="chevron-left" size={28} color="#5C3B3B" />
+            <MaterialIcons name="chevron-left" size={28} color="#EED0FC" />
           </TouchableOpacity>
           <Text style={calendarioStyles.headerText}>
             {meses[mesAtual]} {anoAtual}
           </Text>
           <TouchableOpacity onPress={() => mudarMes(1)}>
-            <MaterialIcons name="chevron-right" size={28} color="#5C3B3B" />
+            <MaterialIcons name="chevron-right" size={28} color="#EED0FC" />
           </TouchableOpacity>
         </View>
 
@@ -167,6 +163,6 @@ export default function CalendarioScreen() {
         fase={fase}
         userName={userName}
       />
-    </LinearGradient>
+    </AppBackground>
   );
 }

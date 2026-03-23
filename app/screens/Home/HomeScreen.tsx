@@ -12,12 +12,12 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { LinearGradient } from "expo-linear-gradient";
 import {
   MaterialIcons,
   FontAwesome,
   MaterialCommunityIcons,
 } from "@expo/vector-icons";
+import AppBackground from "../../components/AppBackground";
 import {
   useNavigation,
   useFocusEffect,
@@ -341,7 +341,7 @@ export default function HomeScreen({ route }: Props) {
                 navigation.navigate("Home");
               }}
             >
-              <MaterialIcons name="home" size={20} color="#5C3B3B" />
+              <MaterialIcons name="home" size={20} color="#EED0FC" />
               <Text style={homeStyles.menuItemText}>Início</Text>
             </TouchableOpacity>
             <TouchableOpacity
@@ -351,7 +351,7 @@ export default function HomeScreen({ route }: Props) {
                 navigation.navigate("Perfil");
               }}
             >
-              <MaterialIcons name="person" size={20} color="#5C3B3B" />
+              <MaterialIcons name="person" size={20} color="#EED0FC" />
               <Text style={homeStyles.menuItemText}>Perfil</Text>
             </TouchableOpacity>
             <TouchableOpacity
@@ -361,7 +361,7 @@ export default function HomeScreen({ route }: Props) {
                 navigation.navigate("Calendario");
               }}
             >
-              <MaterialIcons name="calendar-today" size={20} color="#5C3B3B" />
+              <MaterialIcons name="calendar-today" size={20} color="#EED0FC" />
               <Text style={homeStyles.menuItemText}>Calendário</Text>
             </TouchableOpacity>
             <TouchableOpacity
@@ -371,11 +371,7 @@ export default function HomeScreen({ route }: Props) {
                 navigation.navigate("TreinoDoDia");
               }}
             >
-              <MaterialCommunityIcons
-                name="dumbbell"
-                size={20}
-                color="#5C3B3B"
-              />
+              <MaterialCommunityIcons name="dumbbell" size={20} color="#EED0FC" />
               <Text style={homeStyles.menuItemText}>Treino do dia</Text>
             </TouchableOpacity>
             <TouchableOpacity
@@ -385,12 +381,8 @@ export default function HomeScreen({ route }: Props) {
                 navigation.navigate("FaseCompletaScreen");
               }}
             >
-              <MaterialCommunityIcons
-                name="chat-processing"
-                size={20}
-                color="#5C3B3B"
-              />
-              <Text style={homeStyles.menuItemText}>Assistente LunIA</Text>
+              <MaterialCommunityIcons name="chat-processing" size={20} color="#EED0FC" />
+              <Text style={homeStyles.menuItemText}>Assistente Lunia</Text>
             </TouchableOpacity>
             <TouchableOpacity
               style={homeStyles.menuItem}
@@ -399,7 +391,7 @@ export default function HomeScreen({ route }: Props) {
                 navigation.navigate("RelatorioMensal");
               }}
             >
-              <MaterialIcons name="insights" size={20} color="#5C3B3B" />
+              <MaterialIcons name="insights" size={20} color="#EED0FC" />
               <Text style={homeStyles.menuItemText}>Relatório do mês</Text>
             </TouchableOpacity>
             <TouchableOpacity
@@ -410,27 +402,22 @@ export default function HomeScreen({ route }: Props) {
                 navigation.navigate("Login");
               }}
             >
-              <MaterialIcons name="logout" size={20} color="#A56C6C" />
-              <Text style={[homeStyles.menuItemText, { color: "#A56C6C" }]}>
+              <MaterialIcons name="logout" size={20} color="#ff6b6b" />
+              <Text style={[homeStyles.menuItemText, { color: "#ff6b6b" }]}>
                 Sair
               </Text>
             </TouchableOpacity>
           </View>
         </View>
       </Modal>
-      <LinearGradient
-        colors={themeColors.gradient}
-        start={{ x: 0.2, y: 0 }}
-        end={{ x: 1, y: 1 }}
-        style={globalStyles.backgroundGradient}
-      >
+      <AppBackground>
         <SafeAreaView style={{ flex: 1 }} edges={["left", "right", "bottom"]}>
           <View style={homeStyles.header}>
             <TouchableOpacity
               onPress={() => setMenuVisible(true)}
               style={{ zIndex: 1000, padding: 4 }}
             >
-              <MaterialIcons name="menu" size={28} color="#5C3B3B" />
+              <MaterialIcons name="menu" size={28} color="#EED0FC" />
             </TouchableOpacity>
 
             <View
@@ -460,7 +447,7 @@ export default function HomeScreen({ route }: Props) {
                 <MaterialCommunityIcons
                   name="calendar-heart"
                   size={28}
-                  color="#5C3B3B"
+                  color="#EED0FC"
                 />
               </TouchableOpacity>
 
@@ -492,7 +479,7 @@ export default function HomeScreen({ route }: Props) {
               {carregando ? (
                 <ActivityIndicator
                   size="small"
-                  color="#A56C6C"
+                  color="#9260CE"
                   style={{ marginVertical: 10 }}
                 />
               ) : (
@@ -557,14 +544,14 @@ export default function HomeScreen({ route }: Props) {
                   ]}
                 />
                 <Image
-                  source={require("../../assets/logo.png")}
+                  source={require("../../assets/moeda.png")}
                   style={{
                     position: "absolute",
                     left: `${Math.min(progressoSemanal, 100)}%`,
-                    top: -12,
-                    width: 40,
-                    height: 40,
-                    transform: [{ translateX: -20 }],
+                    top: -14,
+                    width: 28,
+                    height: 28,
+                    transform: [{ translateX: -14 }],
                     zIndex: 99,
                   }}
                 />
@@ -619,8 +606,8 @@ export default function HomeScreen({ route }: Props) {
             </View>
           </ScrollView>
         </SafeAreaView>
-      </LinearGradient>
-      {/* Componente flutuante da LunIA - fora do gradient para evitar sobreposições */}
+      </AppBackground>
+      {/* Componente flutuante da Lunia - fora do fundo para evitar sobreposições */}
       <FloatingLuniaCoach
         userName={userName}
         mostrarAssistente={mostrarLunia}

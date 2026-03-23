@@ -10,7 +10,6 @@ import {
 import { Audio } from "expo-av";
 import { AnimatedCircularProgress } from "react-native-circular-progress";
 import { Ionicons } from "@expo/vector-icons";
-import { LinearGradient } from "expo-linear-gradient";
 
 interface FaseKegel {
   tipo: string;
@@ -254,7 +253,7 @@ export function KegelTemporizadorModal({
     return (
       <Modal visible={visible} transparent animationType="fade">
         <View style={styles.modalOverlay}>
-          <LinearGradient colors={["#A56C6C", "#8B5A5A"]} style={styles.completedContainer}>
+          <View style={[styles.completedContainer, { backgroundColor: "#3F1C65" }]}>
             <View style={styles.completedContent}>
               <Ionicons name="checkmark-circle" size={80} color="#fff" />
               <Text style={styles.completedTitle}>Exercício Concluído!</Text>
@@ -268,7 +267,7 @@ export function KegelTemporizadorModal({
                 <Text style={styles.completedCloseButtonText}>Fechar</Text>
               </TouchableOpacity>
             </View>
-          </LinearGradient>
+          </View>
         </View>
       </Modal>
     );

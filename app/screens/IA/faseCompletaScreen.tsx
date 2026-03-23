@@ -12,7 +12,7 @@ import {
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { Ionicons } from "@expo/vector-icons";
-import { LinearGradient } from "expo-linear-gradient";
+import AppBackground from "../../components/AppBackground";
 import { AnimatedLogo } from "../../components/AnimatedLogo";
 import { api } from "../../services/api";
 import { faseCompletaStyles } from "./faseCompletaStyles";
@@ -78,12 +78,7 @@ export default function FaseCompletaScreen() {
   };
 
   return (
-    <LinearGradient
-      colors={themeColors.gradient}
-      start={{ x: 0.2, y: 0 }}
-      end={{ x: 1, y: 1 }}
-      style={globalStyles.backgroundGradient}
-    >
+    <AppBackground>
       <KeyboardAvoidingView
         behavior={Platform.OS === "ios" ? "padding" : undefined}
         style={{ flex: 1 }}
@@ -94,7 +89,7 @@ export default function FaseCompletaScreen() {
           style={faseCompletaStyles.botaoVoltar}
           activeOpacity={0.7} // Adiciona feedback visual quando pressionado
         >
-          <Ionicons name="arrow-back" size={28} color="#5C3B3B" />
+          <Ionicons name="arrow-back" size={28} color="#EED0FC" />
         </TouchableOpacity>
         <ScrollView
           contentContainerStyle={{
@@ -135,7 +130,7 @@ export default function FaseCompletaScreen() {
               Perguntar para a IA
             </Text>
           </TouchableOpacity>
-          {carregando && <ActivityIndicator size="small" color="#A56C6C" />}
+          {carregando && <ActivityIndicator size="small" color="#9260CE" />}
           {resposta !== "" && (
             <View style={faseCompletaStyles.respostaContainer}>
               <Text style={faseCompletaStyles.respostaTexto}>{resposta}</Text>
@@ -143,6 +138,6 @@ export default function FaseCompletaScreen() {
           )}
         </ScrollView>
       </KeyboardAvoidingView>
-    </LinearGradient>
+    </AppBackground>
   );
 }

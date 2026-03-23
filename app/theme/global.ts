@@ -2,18 +2,30 @@ import { StyleSheet, Platform } from "react-native";
 
 export const themeColors = {
   gradient: [
-    "#F3ECE3", // Bege claro
-    "#E5D5CF", // Rosado neutro
-    "#C8A19C", // Rosé queimado
-    "#91766E", // Marrom rosado
-    "#6B8F84", // Verde suave
+    "#1A0733",
+    "#3F1C65",
+    "#9260CE",
+    "#EED0FC",
   ] as [string, string, ...string[]],
-  button: "#6B8F84", // Verde da asa da mariposa
+  background: "#1A0733",
+  button: "#9260CE",
+  buttonSecondary: "#A4D562",
   buttonText: "#FFFFFF",
-  inputBackground: "#F9F5F2",
-  inputBorder: "#C8A19C",
-  text: "#5C3B3B", // Marrom elegante
-  error: "#B00020",
+  inputBackground: "rgba(255, 255, 255, 0.12)",
+  inputBorder: "#9260CE",
+  inputText: "#EED0FC",
+  text: "#EED0FC",
+  textTitle: "#FFFAC3",
+  textDark: "#1A0733",
+  accent: "#A4D562",
+  accentYellow: "#FFFAC3",
+  lilac: "#EED0FC",
+  purple: "#9260CE",
+  violet: "#3F1C65",
+  darkPurple: "#1A0733",
+  card: "rgba(63, 28, 101, 0.7)",
+  cardBorder: "rgba(146, 96, 206, 0.4)",
+  error: "#ff6b6b",
 };
 
 export const globalStyles = StyleSheet.create({
@@ -45,7 +57,7 @@ export const globalStyles = StyleSheet.create({
   title: {
     fontSize: Platform.OS === "ios" ? 22 : 20,
     fontWeight: "bold",
-    color: themeColors.text,
+    color: themeColors.textTitle,
     textAlign: "center",
     marginBottom: 24,
   },
@@ -58,19 +70,16 @@ export const globalStyles = StyleSheet.create({
   },
 
   input: {
-    backgroundColor: "#F3ECE3", // bege elegante
+    backgroundColor: "rgba(255, 255, 255, 0.12)",
     borderRadius: 10,
     paddingHorizontal: 16,
     paddingVertical: 12,
     fontSize: 16,
     marginBottom: 14,
-    color: "#5C3B3B", // texto principal marrom
+    color: "#EED0FC",
     width: "100%",
-    shadowColor: "#000",
-    shadowOpacity: 0.05,
-    shadowOffset: { width: 0, height: 2 },
-    shadowRadius: 6,
-    elevation: 2,
+    borderWidth: 1,
+    borderColor: "rgba(146, 96, 206, 0.5)",
   },
 
   inputError: {
@@ -85,9 +94,9 @@ export const globalStyles = StyleSheet.create({
     borderRadius: 12,
     alignItems: "center",
     width: "100%",
-    shadowColor: "#000",
+    shadowColor: "#9260CE",
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.15,
+    shadowOpacity: 0.4,
     shadowRadius: 6,
     elevation: 6,
     marginTop: 8,
@@ -100,14 +109,14 @@ export const globalStyles = StyleSheet.create({
   },
 
   link: {
-    color: "#5C3B3B",
+    color: "#EED0FC",
     textAlign: "center",
     marginTop: 16,
     textDecorationLine: "underline",
   },
 
   registerLink: {
-    color: "#5C3B3B",
+    color: "#FFFAC3",
     textAlign: "center",
     marginTop: 12,
     fontWeight: "bold",
@@ -115,7 +124,7 @@ export const globalStyles = StyleSheet.create({
 
   passwordHint: {
     fontSize: 13,
-    color: "#aaa",
+    color: "#EED0FC",
     marginBottom: 8,
     marginLeft: 4,
   },

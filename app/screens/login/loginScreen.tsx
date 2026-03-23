@@ -7,7 +7,6 @@ import {
   StyleSheet,
   ActivityIndicator,
 } from "react-native";
-import { LinearGradient } from "expo-linear-gradient";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import type { RootStackParamList } from "../../navigation";
 import { login } from "../../services/authService";
@@ -17,6 +16,7 @@ import { AnimatedLogo } from "../../components/AnimatedLogo";
 import Ionicons from "react-native-vector-icons/Ionicons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useAssinatura } from "../../contexts/AssinaturaContext";
+import AppBackground from "../../components/AppBackground";
 
 type Props = NativeStackScreenProps<RootStackParamList, "Login">;
 
@@ -28,21 +28,17 @@ export default function LoginScreen({ navigation }: Props) {
   const [erroSenha, setErroSenha] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
-  // Acessando o contexto de assinatura
   const { verificarStatus } = useAssinatura();
 
-  // Função para validar formato de email
   const isValidEmail = (email: string): boolean => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     return emailRegex.test(email);
   };
 
   const handleLogin = async () => {
-    // Resetar erros
     setErroEmail(false);
     setErroSenha(false);
 
-    // Validar campos obrigatórios
     if (!email || !senha) {
       Toast.show({
         type: "error",
@@ -54,7 +50,6 @@ export default function LoginScreen({ navigation }: Props) {
       return;
     }
 
-    // Validar formato de email
     if (!isValidEmail(email)) {
       Toast.show({
         type: "error",
@@ -70,62 +65,24 @@ export default function LoginScreen({ navigation }: Props) {
       const data = await login(email, senha);
       if (!data) return;
 
-      // Armazenando com a chave auth_token que o interceptor espera
       await AsyncStorage.setItem("auth_token", data.access_token);
 
-      // Verificação mais detalhada do token para debug
-      console.log(
-        "Token armazenado:",
-        data.access_token.substring(0, 10) + "..."
-      );
-      console.log("Tamanho do token:", data.access_token.length);
-
-      // Verificar se o token tem partes JWT válidas (header.payload.signature)
-      const tokenParts = data.access_token.split(".");
-      if (tokenParts.length !== 3) {
-        console.warn(
-          "AVISO: Token não parece ser um JWT válido (não tem 3 partes)"
-        );
-      }
-
-      // Mostrar feedback imediato ao usuário
       Toast.show({
         type: "success",
         text1: "Login realizado com sucesso!",
       });
 
-      // Verificar status de assinatura do usuário após login bem-sucedido
       try {
-        // Espera um momento para o token ser processado pelo interceptor
         await new Promise((resolve) => setTimeout(resolve, 1000));
-
-        console.log(
-          "[LoginScreen] Iniciando verificação de status após login..."
-        );
-
-        // Verifica o status de assinatura (sempre forçando no login)
-        // Este é o momento estratégico mais importante para verificar o status
-        await verificarStatus(true); // true = força verificação da API
-        console.log("[LoginScreen] Verificação de status concluída após login");
-
-        // Definir um parâmetro para informar a Home que acabamos de fazer login
-        // e ela deve mostrar o banner de trial se necessário
+        await verificarStatus(true);
         navigation.navigate("Home", {
           showTrialBanner: true,
           justLoggedIn: true,
         });
       } catch (statusError) {
-        console.error(
-          "Erro ao verificar status de assinatura após login:",
-          statusError
-        );
-
-        // Mesmo com erro, redireciona para a home
-        // O app tentará verificar o status novamente na próxima inicialização
         navigation.navigate("Home", { justLoggedIn: true });
       }
     } catch (error) {
-      console.log("Erro inesperado no login:", error);
       Toast.show({
         type: "error",
         text1: "Erro inesperado",
@@ -137,12 +94,7 @@ export default function LoginScreen({ navigation }: Props) {
   };
 
   return (
-    <LinearGradient
-      colors={themeColors.gradient}
-      start={{ x: 0.5, y: 0 }}
-      end={{ x: 0.5, y: 1 }}
-      style={globalStyles.backgroundGradient}
-    >
+    <AppBackground>
       <View style={styles.container}>
         <View style={styles.logoContainer}>
           <AnimatedLogo style={styles.logo} />
@@ -154,6 +106,7 @@ export default function LoginScreen({ navigation }: Props) {
           <TextInput
             style={[styles.input, erroEmail && styles.inputError]}
             placeholder="Email"
+            placeholderTextColor="rgba(238, 208, 252, 0.6)"
             keyboardType="email-address"
             autoCapitalize="none"
             value={email}
@@ -169,7 +122,7 @@ export default function LoginScreen({ navigation }: Props) {
             <TextInput
               style={styles.passwordInput}
               placeholder="Senha"
-              placeholderTextColor="#999"
+              placeholderTextColor="rgba(238, 208, 252, 0.6)"
               secureTextEntry={!senhaVisivel}
               value={senha}
               onChangeText={(text) => {
@@ -181,7 +134,7 @@ export default function LoginScreen({ navigation }: Props) {
               <Ionicons
                 name={senhaVisivel ? "eye-off" : "eye"}
                 size={20}
-                color="#333"
+                color="#EED0FC"
               />
             </TouchableOpacity>
           </View>
@@ -215,7 +168,7 @@ export default function LoginScreen({ navigation }: Props) {
           </TouchableOpacity>
         </View>
       </View>
-    </LinearGradient>
+    </AppBackground>
   );
 }
 
@@ -239,7 +192,7 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 24,
     fontWeight: "bold",
-    color: "#5C3B3B",
+    color: "#FFFAC3",
     textAlign: "center",
     marginBottom: 30,
   },
@@ -249,54 +202,59 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   input: {
-    backgroundColor: "#fff",
-    borderRadius: 8,
+    backgroundColor: "rgba(255, 255, 255, 0.1)",
+    borderRadius: 10,
     paddingHorizontal: 16,
     paddingVertical: 14,
     fontSize: 16,
     marginBottom: 16,
-    color: "#5C3B3B",
+    color: "#EED0FC",
     width: "100%",
     borderWidth: 1,
-    borderColor: "#e0e0e0",
+    borderColor: "rgba(146, 96, 206, 0.6)",
   },
   inputError: {
-    borderColor: "#ff4d4d",
+    borderColor: "#ff6b6b",
     borderWidth: 1.5,
   },
   passwordContainer: {
     flexDirection: "row",
     alignItems: "center",
     paddingHorizontal: 12,
-    borderRadius: 8,
-    backgroundColor: "#fff",
+    borderRadius: 10,
+    backgroundColor: "rgba(255, 255, 255, 0.1)",
     marginBottom: 14,
-    height: 48,
+    height: 50,
     borderWidth: 1,
-    borderColor: "#e0e0e0",
+    borderColor: "rgba(146, 96, 206, 0.6)",
     width: "100%",
   },
   passwordInput: {
     flex: 1,
     fontSize: 16,
-    color: "#333",
+    color: "#EED0FC",
   },
   loginButton: {
-    backgroundColor: "#7EAA92",
+    backgroundColor: "#9260CE",
     paddingVertical: 14,
     paddingHorizontal: 16,
-    borderRadius: 8,
+    borderRadius: 10,
     alignItems: "center",
     width: "100%",
     marginTop: 8,
     marginBottom: 16,
+    shadowColor: "#9260CE",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.5,
+    shadowRadius: 8,
+    elevation: 6,
   },
   buttonDisabled: {
     opacity: 0.7,
   },
   loginButtonText: {
     color: "#FFFFFF",
-    fontWeight: "600",
+    fontWeight: "700",
     fontSize: 16,
   },
   linkContainer: {
@@ -304,7 +262,7 @@ const styles = StyleSheet.create({
     marginVertical: 12,
   },
   link: {
-    color: "#5C3B3B",
+    color: "#EED0FC",
     fontSize: 14,
     textDecorationLine: "underline",
   },
@@ -313,7 +271,7 @@ const styles = StyleSheet.create({
     marginTop: 20,
   },
   registerLink: {
-    color: "#5C3B3B",
+    color: "#FFFAC3",
     fontSize: 14,
     textAlign: "center",
   },

@@ -7,7 +7,7 @@ import {
   Alert,
   BackHandler,
 } from "react-native";
-import { LinearGradient } from "expo-linear-gradient";
+import AppBackground from "../../components/AppBackground";
 import { MaterialIcons } from "@expo/vector-icons";
 import Toast from "react-native-toast-message";
 import DropDownPicker from "react-native-dropdown-picker";
@@ -212,12 +212,7 @@ export default function PerfilScreen({ navigation }: PerfilScreenProps) {
   }, [navigation, isPrimeiroAcesso]);
 
   return (
-    <LinearGradient
-      colors={themeColors.gradient}
-      start={{ x: 0.2, y: 0 }}
-      end={{ x: 1, y: 1 }}
-      style={globalStyles.backgroundGradient}
-    >
+    <AppBackground>
       <View style={{ marginTop: 60 }}>
         <AnimatedLogo />
       </View>
@@ -365,6 +360,6 @@ export default function PerfilScreen({ navigation }: PerfilScreenProps) {
           userName={userName}
         />
       )}
-    </LinearGradient>
+    </AppBackground>
   );
 }

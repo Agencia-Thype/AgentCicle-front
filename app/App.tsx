@@ -10,59 +10,39 @@ import {
 import PremiumModal from "./components/PremiumModal";
 import { usePremiumModal } from "./utils/premiumModalController";
 import UpgradeScreen from "./components/UpgradeScreen";
+import { useFonts } from "expo-font";
+import { LobsterTwo_400Regular, LobsterTwo_700Bold } from "@expo-google-fonts/lobster-two";
+import { View, ActivityIndicator } from "react-native";
 
-// Componente principal que consome o contexto de assinatura
 function AppContent() {
   const { verificarStatus, status, podeUsarApp, ativarAssinatura, loading } =
     useAssinatura();
   const { isVisible, setIsVisible, message, showModal } = usePremiumModal();
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
 
-  // Verificar autenticação e status de forma combinada (evita múltiplas chamadas)
   useEffect(() => {
     const initializeApp = async () => {
       try {
-        // Primeiro verifica se o token existe
         const token = await AsyncStorage.getItem("auth_token");
         const hasToken = !!token;
-
         setIsAuthenticated(hasToken);
-        console.log(
-          "Estado de autenticação:",
-          hasToken ? "Autenticado" : "Não autenticado"
-        );
-
-        // Só verificar status de assinatura se o usuário estiver logado
         if (hasToken) {
           try {
             await verificarStatus();
-            console.log("Verificação de status realizada após confirmar token");
           } catch (error) {
             console.warn("Erro ao verificar status de assinatura:", error);
-            // Continua mesmo com erro - pode usar cache
           }
-        } else {
-          console.log("Usuário não está logado, pulando verificação de status");
         }
       } catch (error) {
         console.error("Erro ao inicializar app:", error);
         setIsAuthenticated(false);
       }
     };
-
     initializeApp();
   }, []);
 
-  // Apenas mostrar a tela de upgrade se tivermos certeza que o usuário está autenticado
   if (status && isAuthenticated === true) {
-    console.log(
-      "Status atual da assinatura (usuário autenticado):",
-      JSON.stringify(status)
-    );
-
-    // Caso 1: Usuário autenticado não pode usar o app (trial expirado sem assinatura)
     if (!podeUsarApp || (!status.trialAtivo && !status.assinaturaAtiva)) {
-      console.log("Exibindo tela de upgrade - acesso bloqueado");
       return (
         <UpgradeScreen
           onUpgrade={() => ativarAssinatura(1)}
@@ -71,21 +51,8 @@ function AppContent() {
         />
       );
     }
-
-    // Caso 2: Trial está quase expirando (restam 2 dias ou menos)
-    // Opcional: Mostrar tela não-bloqueante para incentivar assinatura quando trial está acabando
-    if (status.trialAtivo && status.diasRestantesTrial <= 2) {
-      console.log(
-        "Trial está acabando:",
-        status.diasRestantesTrial,
-        "dias restantes"
-      );
-      // Se quiser implementar uma tela não-bloqueante para alertar o usuário,
-      // pode ser feito aqui, ou usar apenas o banner na Home
-    }
   }
 
-  // Modal de premium (mostrado quando tenta acessar recursos premium)
   const handleUpgrade = async () => {
     setIsVisible(false);
     try {
@@ -96,7 +63,6 @@ function AppContent() {
         text2: "Você agora tem acesso a todos os recursos premium.",
       });
     } catch (error) {
-      console.error("Erro ao ativar assinatura:", error);
       Toast.show({
         type: "error",
         text1: "Falha ao ativar assinatura",
@@ -122,6 +88,19 @@ function AppContent() {
 import { AuthProvider, useAuth } from "./contexts/AuthContext";
 
 export default function App() {
+  const [fontsLoaded] = useFonts({
+    LobsterTwo_400Regular,
+    LobsterTwo_700Bold,
+  });
+
+  if (!fontsLoaded) {
+    return (
+      <View style={{ flex: 1, backgroundColor: "#1A0733", justifyContent: "center", alignItems: "center" }}>
+        <ActivityIndicator color="#9260CE" size="large" />
+      </View>
+    );
+  }
+
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <AuthProvider>
@@ -133,12 +112,10 @@ export default function App() {
   );
 }
 
-// Componente que verifica autenticação antes de renderizar o conteúdo
 function AuthenticatedApp() {
   const { isAuthenticated, isLoading, checkAuthState } = useAuth();
   const [initialized, setInitialized] = useState(false);
 
-  // Verificar estado de autenticação ao iniciar
   useEffect(() => {
     const init = async () => {
       await checkAuthState();
@@ -147,11 +124,9 @@ function AuthenticatedApp() {
     init();
   }, []);
 
-  // Enquanto verifica autenticação, não mostrar nada
   if (!initialized || isLoading) {
     return null;
   }
 
-  // Uma vez inicializado, renderizar o conteúdo apropriado
   return <AppContent />;
 }

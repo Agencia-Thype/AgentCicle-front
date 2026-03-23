@@ -16,7 +16,8 @@ export const calendarioStyles = StyleSheet.create({
   headerText: {
     fontSize: 20,
     fontWeight: "bold",
-    color: "#5C3B3B",
+    color: "#FFFAC3",
+    fontFamily: "LobsterTwo_700Bold",
   },
   grid: {
     alignItems: "center",
@@ -24,49 +25,46 @@ export const calendarioStyles = StyleSheet.create({
     paddingHorizontal: 8,
     gap: 4,
   },
-  
   diaBox: {
     width: 40,
     height: 40,
     marginVertical: 6,
     marginHorizontal: 4,
     borderRadius: 20,
-    backgroundColor: "#FFF5F5",
+    backgroundColor: "rgba(63, 28, 101, 0.6)",
     justifyContent: "center",
     alignItems: "center",
+    borderWidth: 1,
+    borderColor: "rgba(146, 96, 206, 0.3)",
   },
   diaTexto: {
     fontSize: 16,
-    color: "#5C3B3B",
+    color: "#EED0FC",
     fontWeight: "bold",
   },
-
-  // 🌑 Menstruação
   diaMenstruacao: {
     borderWidth: 2,
-    borderColor: "#D9534F",
+    borderColor: "#ff6b6b",
     borderStyle: "dotted",
-    backgroundColor: "#FFF5F5",
+    backgroundColor: "rgba(255, 107, 107, 0.2)",
   },
-
-  // 🌒 Folicular
   diaFolicular: {
-    backgroundColor: "#A7D7C5",
+    backgroundColor: "rgba(177, 214, 134, 0.4)",
+    borderColor: "#B1D686",
+    borderWidth: 1,
   },
-
-  // 🌕 Ovulatória
   diaOvulatoria: {
-    backgroundColor: "#F4C06D",
+    backgroundColor: "rgba(255, 250, 195, 0.4)",
+    borderColor: "#FFFAC3",
+    borderWidth: 1,
   },
-
-  // 🌘 Lútea
   diaLutea: {
-    backgroundColor: "#D6B0C4",
+    backgroundColor: "rgba(238, 208, 252, 0.3)",
+    borderColor: "#EED0FC",
+    borderWidth: 1,
   },
-
-  // 📍 Hoje
   diaHoje: {
     borderWidth: 2,
-    borderColor: "#5C3B3B",
+    borderColor: "#FFFAC3",
   },
 });

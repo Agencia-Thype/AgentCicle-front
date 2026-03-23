@@ -1,13 +1,12 @@
 import React, { useRef, useState, useEffect } from "react";
-import { View, Text, TextInput, TouchableOpacity } from "react-native";
-import { LinearGradient } from "expo-linear-gradient";
-import { globalStyles } from "../../theme/global";
+import { View, Text, TextInput, TouchableOpacity, StyleSheet } from "react-native";
 import Toast from "react-native-toast-message";
 import * as Animatable from "react-native-animatable";
 import axios from "axios";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import type { RootStackParamList } from "../../navigation";
+import AppBackground from "../../components/AppBackground";
 
 type Props = NativeStackScreenProps<RootStackParamList, "ValidarEmail">;
 
@@ -23,47 +22,22 @@ export default function ValidarEmailScreen({ navigation }: Props) {
     const unsubscribe = nav.addListener("beforeRemove", (e) => {
       e.preventDefault();
       if (logoRef.current) {
-        (logoRef.current as any).fadeOutUp(500).then(() => {
-          unsubscribe();
-          nav.dispatch(e.data.action);
-        });
-      } else {
-        nav.dispatch(e.data.action);
-      }
+        (logoRef.current as any).fadeOutUp(500).then(() => { unsubscribe(); nav.dispatch(e.data.action); });
+      } else { nav.dispatch(e.data.action); }
     });
     return unsubscribe;
   }, [nav]);
 
   const handleValidarEmail = async () => {
-    if (!codigo) {
-      return Toast.show({
-        type: "error",
-        text1: "Código obrigatório",
-        text2: "Digite o código que você recebeu por e-mail.",
-      });
-    }
-
+    if (!codigo) return Toast.show({ type: "error", text1: "Código obrigatório" });
     try {
       await axios.post("http://10.0.2.2:8000/validar-email", { email, codigo });
-
-      Toast.show({
-        type: "success",
-        text1: "E-mail validado com sucesso!",
-      });
-
+      Toast.show({ type: "success", text1: "E-mail validado com sucesso!" });
       if (logoRef.current) {
-        (logoRef.current as any).fadeOutUp(500).then(() => {
-          navigation.navigate("Login");
-        });
-      } else {
-        navigation.navigate("Login");
-      }
+        (logoRef.current as any).fadeOutUp(500).then(() => navigation.navigate("Login"));
+      } else navigation.navigate("Login");
     } catch (error: any) {
-      Toast.show({
-        type: "error",
-        text1: "Erro",
-        text2: error.response?.data?.detail || "Erro ao validar e-mail.",
-      });
+      Toast.show({ type: "error", text1: "Erro", text2: error.response?.data?.detail || "Erro ao validar e-mail." });
     }
   };
 
@@ -71,74 +45,42 @@ export default function ValidarEmailScreen({ navigation }: Props) {
     setReenviando(true);
     try {
       await axios.post("http://10.0.2.2:8000/enviar-codigo", { email });
-      Toast.show({
-        type: "success",
-        text1: "Código reenviado",
-        text2: "Verifique sua caixa de e-mail",
-      });
+      Toast.show({ type: "success", text1: "Código reenviado" });
     } catch (error: any) {
-      Toast.show({
-        type: "error",
-        text1: "Erro ao reenviar",
-        text2: error.response?.data?.detail || "Tente novamente em instantes.",
-      });
+      Toast.show({ type: "error", text1: "Erro ao reenviar" });
     } finally {
-      setTimeout(() => setReenviando(false), 3000); // desativa temporariamente
+      setTimeout(() => setReenviando(false), 3000);
     }
   };
 
   return (
-    <LinearGradient
-      colors={["#FFD7D7", "#F3B6B6", "#E0A2A2", "#C38888", "#A56C6C"]}
-      start={{ x: 0.5, y: 0 }}
-      end={{ x: 0.5, y: 1 }}
-      style={globalStyles.backgroundGradient}
-    >
-      <Animatable.Image
-        ref={logoRef}
-        animation="fadeInDown"
-        duration={1000}
-        source={require("../../assets/logo.png")}
-        style={{
-          width: 100,
-          height: 100,
-          alignSelf: "center",
-          marginBottom: 16,
-          shadowColor: "#000",
-          shadowOffset: { width: 0, height: 4 },
-          shadowOpacity: 0.3,
-          shadowRadius: 6,
-        }}
-        resizeMode="contain"
-      />
-
-      <Text style={globalStyles.title}>Validar E-mail</Text>
-      <Text style={globalStyles.subtitle}>
-        Digite o código que foi enviado para:
-        {"\n"}
-        <Text style={{ fontWeight: "bold", color: "#fff" }}>{email}</Text>
-      </Text>
-
-      <TextInput
-        style={globalStyles.input}
-        placeholder="Código de verificação"
-        keyboardType="numeric"
-        value={codigo}
-        onChangeText={setCodigo}
-      />
-
-      <TouchableOpacity
-        style={globalStyles.button}
-        onPress={handleValidarEmail}
-      >
-        <Text style={globalStyles.buttonText}>Validar</Text>
-      </TouchableOpacity>
-
-      <TouchableOpacity onPress={handleReenviarCodigo} disabled={reenviando}>
-        <Text style={globalStyles.link}>
-          {reenviando ? "Reenviando..." : "Reenviar código"}
+    <AppBackground>
+      <View style={styles.container}>
+        <Animatable.Image ref={logoRef} animation="fadeInDown" duration={1000} source={require("../../assets/logo.png")} style={styles.logo} resizeMode="contain" />
+        <Text style={styles.title}>Validar E-mail</Text>
+        <Text style={styles.subtitle}>
+          Digite o código enviado para:{"\n"}
+          <Text style={{ fontWeight: "bold", color: "#FFFAC3" }}>{email}</Text>
         </Text>
-      </TouchableOpacity>
-    </LinearGradient>
+        <TextInput style={styles.input} placeholder="Código de verificação" placeholderTextColor="rgba(238,208,252,0.6)" keyboardType="numeric" value={codigo} onChangeText={setCodigo} />
+        <TouchableOpacity style={styles.button} onPress={handleValidarEmail}>
+          <Text style={styles.buttonText}>Validar</Text>
+        </TouchableOpacity>
+        <TouchableOpacity onPress={handleReenviarCodigo} disabled={reenviando}>
+          <Text style={styles.link}>{reenviando ? "Reenviando..." : "Reenviar código"}</Text>
+        </TouchableOpacity>
+      </View>
+    </AppBackground>
   );
 }
+
+const styles = StyleSheet.create({
+  container: { flex: 1, justifyContent: "center", paddingHorizontal: 24 },
+  logo: { width: 100, height: 100, alignSelf: "center", marginBottom: 16 },
+  title: { fontSize: 26, fontWeight: "bold", color: "#FFFAC3", textAlign: "center", marginBottom: 8, fontFamily: "LobsterTwo_700Bold" },
+  subtitle: { fontSize: 14, color: "#EED0FC", textAlign: "center", marginBottom: 24 },
+  input: { backgroundColor: "rgba(255,255,255,0.1)", borderRadius: 10, paddingHorizontal: 16, paddingVertical: 14, fontSize: 16, marginBottom: 14, color: "#EED0FC", borderWidth: 1, borderColor: "rgba(146,96,206,0.6)" },
+  button: { backgroundColor: "#9260CE", paddingVertical: 14, borderRadius: 10, alignItems: "center", marginTop: 8, marginBottom: 16, shadowColor: "#9260CE", shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.5, shadowRadius: 8, elevation: 6 },
+  buttonText: { color: "#fff", fontWeight: "700", fontSize: 16 },
+  link: { color: "#EED0FC", textAlign: "center", marginTop: 12, textDecorationLine: "underline" },
+});

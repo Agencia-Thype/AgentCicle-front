@@ -12,7 +12,8 @@ AgentCicle is a React Native / Expo mobile application focused on women's health
 - **State Management**: React Context API
 - **Storage**: AsyncStorage for local data
 - **Networking**: Axios for API calls
-- **UI**: expo-linear-gradient, react-native-animatable, react-native-svg
+- **UI**: AppBackground (ImageBackground com bg-roxo.png), react-native-animatable, react-native-svg
+- **Fonts**: Lobster Two (LobsterTwo_400Regular e LobsterTwo_700Bold) via @expo-google-fonts/lobster-two
 
 ## Project Structure
 
