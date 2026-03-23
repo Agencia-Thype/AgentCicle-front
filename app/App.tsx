@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
+import { SafeAreaProvider } from "react-native-safe-area-context";
 import Toast from "react-native-toast-message";
 import { Routes } from "./navigation";
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -103,11 +104,13 @@ export default function App() {
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
-      <AuthProvider>
-        <AssinaturaProvider>
-          <AuthenticatedApp />
-        </AssinaturaProvider>
-      </AuthProvider>
+      <SafeAreaProvider>
+        <AuthProvider>
+          <AssinaturaProvider>
+            <AuthenticatedApp />
+          </AssinaturaProvider>
+        </AuthProvider>
+      </SafeAreaProvider>
     </GestureHandlerRootView>
   );
 }

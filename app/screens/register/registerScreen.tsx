@@ -5,6 +5,9 @@ import {
   TextInput,
   TouchableOpacity,
   StyleSheet,
+  KeyboardAvoidingView,
+  ScrollView,
+  Platform,
 } from "react-native";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import type { RootStackParamList } from "../../navigation";
@@ -133,6 +136,15 @@ export default function RegisterScreen({ navigation }: Props) {
 
   return (
     <AppBackground style={globalStyles.backgroundGradient}>
+      <KeyboardAvoidingView
+        behavior={Platform.OS === "ios" ? "padding" : undefined}
+        style={{ flex: 1 }}
+      >
+        <ScrollView
+          contentContainerStyle={{ flexGrow: 1, paddingBottom: 40 }}
+          keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
+        >
       <AnimatedLogo ref={logoRef} />
 
       <Text style={globalStyles.title}>Criar Conta</Text>
@@ -235,6 +247,8 @@ export default function RegisterScreen({ navigation }: Props) {
       >
         <Text style={globalStyles.link}>Já tem conta? Entrar</Text>
       </TouchableOpacity>
+        </ScrollView>
+      </KeyboardAvoidingView>
     </AppBackground>
   );
 }

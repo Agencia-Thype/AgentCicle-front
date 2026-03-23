@@ -6,6 +6,9 @@ import {
   TouchableOpacity,
   StyleSheet,
   ActivityIndicator,
+  KeyboardAvoidingView,
+  ScrollView,
+  Platform,
 } from "react-native";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import type { RootStackParamList } from "../../navigation";
@@ -95,6 +98,15 @@ export default function LoginScreen({ navigation }: Props) {
 
   return (
     <AppBackground>
+      <KeyboardAvoidingView
+        behavior={Platform.OS === "ios" ? "padding" : undefined}
+        style={{ flex: 1 }}
+      >
+        <ScrollView
+          contentContainerStyle={{ flexGrow: 1 }}
+          keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
+        >
       <View style={styles.container}>
         <View style={styles.logoContainer}>
           <AnimatedLogo style={styles.logo} />
@@ -168,6 +180,8 @@ export default function LoginScreen({ navigation }: Props) {
           </TouchableOpacity>
         </View>
       </View>
+        </ScrollView>
+      </KeyboardAvoidingView>
     </AppBackground>
   );
 }
