@@ -16,6 +16,7 @@ import SintomasScreen from "../screens/Sintomas/SintomasScreen";
 import FaseCompletaScreen from "../screens/IA/faseCompletaScreen";
 import RelatorioMensalScreen from "../screens/Relatorio/RelatorioMensalScreen";
 import DiagnosticoScreen from "../screens/Diagnostico/DiagnosticoScreen";
+import KegelScreen from "../screens/Kegel/KegelScreen";
 import { withPremiumCheck } from "../utils/withPremiumCheck";
 
 // Tipos das rotas
@@ -40,6 +41,7 @@ export type RootStackParamList = {
   FaseCompletaScreen: undefined;
   RelatorioMensal: undefined;
   Diagnostico: undefined;
+  Kegel: undefined;
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -160,6 +162,11 @@ export function Routes() {
         <Stack.Screen
           name="Diagnostico"
           component={DiagnosticoScreen}
+          options={{ headerShown: false }}
+        />
+        <Stack.Screen
+          name="Kegel"
+          component={KegelScreen}
           options={{ headerShown: false }}
         />
       </Stack.Navigator>

@@ -533,6 +533,15 @@ export default function HomeScreen({ route }: Props) {
               </TouchableOpacity>
             </View>
             <View style={homeStyles.card}>
+              <Text style={homeStyles.treinoTexto}>Exercícios de Kegel</Text>
+              <TouchableOpacity
+                style={[globalStyles.button, { backgroundColor: "#91766E" }]}
+                onPress={() => navigation.navigate("Kegel")}
+              >
+                <Text style={globalStyles.buttonText}>Praticar Kegel</Text>
+              </TouchableOpacity>
+            </View>
+            <View style={homeStyles.card}>
               <Text style={homeStyles.progressoTexto}>
                 📊 Progresso da semana
               </Text>
