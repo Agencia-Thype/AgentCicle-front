@@ -246,7 +246,7 @@ export default function KegelScreen() {
                       <Ionicons name="checkmark-circle" size={24} color="#4caf50" style={styles.completedIcon} />
                     )}
                     <Text style={styles.exercicioTitle}>{exercicio.nome}</Text>
-                  </Text>
+                  </View>
                   <TouchableOpacity
                     style={styles.playButton}
                     onPress={() => iniciarExercicio(exercicio)}
@@ -304,7 +304,8 @@ export default function KegelScreen() {
                 ))}
               </View>
             </View>
-          ))}
+          );
+        })}
         </ScrollView>
 
         {/* Modal de Seleção de Nível */}
