@@ -1,9 +1,10 @@
 import { StyleSheet } from "react-native";
+import { palette } from "../../../theme/colors";
 
 export const temporizadorStyles = StyleSheet.create({
   modalBackground: {
     flex: 1,
-    backgroundColor: "#FFFFFF",
+    backgroundColor: palette.white,
     alignItems: "center",
     justifyContent: "center",
     padding: 24,
@@ -16,7 +17,7 @@ export const temporizadorStyles = StyleSheet.create({
   exerciseName: {
     fontSize: 22,
     fontWeight: "bold",
-    color: "#91766E",
+    color: palette.purple,
     marginBottom: 4,
   },
   repetitionCount: {
@@ -31,7 +32,7 @@ export const temporizadorStyles = StyleSheet.create({
   },
   phaseTextCentered: {
     fontSize: 18,
-    color: "#5C3B3B",
+    color: palette.textPrimary,
     marginTop: 16,
     fontWeight: "500",
   },
@@ -46,7 +47,7 @@ export const temporizadorStyles = StyleSheet.create({
   circleButton: {
     width: 56,
     height: 56,
-    backgroundColor: "#C8A19C",
+    backgroundColor: palette.purpleLight,
     borderRadius: 28,
     alignItems: "center",
     justifyContent: "center",
@@ -68,24 +69,24 @@ export const temporizadorStyles = StyleSheet.create({
   },
   inputLabel: {
     fontSize: 14,
-    color: "#5C3B3B",
+    color: palette.textPrimary,
     marginBottom: 6,
   },
   timeInput: {
     width: 90,
     height: 42,
-    borderColor: "#C8A19C",
+    borderColor: palette.purpleLight,
     borderWidth: 1.5,
     borderRadius: 12,
     textAlign: "center",
     fontSize: 16,
     color: "#000",
-    backgroundColor: "#F3ECE3",
+    backgroundColor: palette.glass,
   },
   botaoSalvar: {
     marginTop: 24,
     flexDirection: "row",
-    backgroundColor: "#91766E",
+    backgroundColor: palette.purple,
     paddingVertical: 12,
     paddingHorizontal: 30,
     borderRadius: 30,
@@ -100,7 +101,7 @@ export const temporizadorStyles = StyleSheet.create({
     elevation: 3,
   },
   botaoSalvarTexto: {
-    color: "#FFFFFF",
+    color: palette.white,
     fontSize: 18,
     fontWeight: "bold",
   },

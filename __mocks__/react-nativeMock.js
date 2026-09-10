@@ -14,7 +14,7 @@ module.exports = {
   },
   Platform: {
     OS: 'web',
-    select: (obj: any) => obj.web,
+    select: (obj) => (obj.web !== undefined ? obj.web : obj.default),
   },
 
   // API Components
@@ -34,7 +34,7 @@ module.exports = {
 
   // Dimensions
   Dimensions: {
-    get: (dim: string) => ({
+    get: (dim) => ({
       width: 375,
       height: 667,
       scale: 1,
@@ -43,37 +43,37 @@ module.exports = {
 
   // PixelRatio
   PixelRatio: {
-    getPixelSizeForLayoutSize: (size: number) => size,
+    getPixelSizeForLayoutSize: (size) => size,
     get: () => 1,
-    roundToNearestPixel: (size: number) => size,
+    roundToNearestPixel: (size) => size,
   },
 
   // Animated
   Animated: {
     Value: class Value {
-      constructor(value: number) { this._value = value; }
-      setValue(value: number) { this._value = value; }
+      constructor(value) { this._value = value; }
+      setValue(value) { this._value = value; }
       getValue() { return this._value; }
     },
-    timing: () => ({ start: (cb: any) => cb && cb({ finished: true }) }),
-    spring: () => ({ start: (cb: any) => cb && cb({ finished: true }) }),
-    decay: () => ({ start: (cb: any) => cb && cb({ finished: true }) }),
-    sequence: () => ({ start: (cb: any) => cb && cb({ finished: true }) }),
-    parallel: () => ({ start: (cb: any) => cb && cb({ finished: true }) }),
-    delay: () => ({ start: (cb: any) => cb && cb({ finished: true }) }),
+    timing: () => ({ start: (cb) => cb && cb({ finished: true }) }),
+    spring: () => ({ start: (cb) => cb && cb({ finished: true }) }),
+    decay: () => ({ start: (cb) => cb && cb({ finished: true }) }),
+    sequence: () => ({ start: (cb) => cb && cb({ finished: true }) }),
+    parallel: () => ({ start: (cb) => cb && cb({ finished: true }) }),
+    delay: () => ({ start: (cb) => cb && cb({ finished: true }) }),
   },
 
   // Easing
   Easing: {
-    linear: (t: number) => t,
-    ease: (t: number) => t,
-    quad: (t: number) => t,
-    cubic: (t: number) => t,
+    linear: (t) => t,
+    ease: (t) => t,
+    quad: (t) => t,
+    cubic: (t) => t,
   },
 
   // InteractionManager
   InteractionManager: {
-    runAfterInteractions: (cb: any) => setTimeout(() => cb(), 0),
+    runAfterInteractions: (cb) => setTimeout(() => cb(), 0),
   },
 
   // Keyboard
@@ -84,7 +84,7 @@ module.exports = {
 
   // Linking
   Linking: {
-    openURL: (url: string) => Promise.resolve(),
+    openURL: (url) => Promise.resolve(),
     addEventListener: () => ({ remove: () => {} }),
     removeEventListener: () => {},
   },

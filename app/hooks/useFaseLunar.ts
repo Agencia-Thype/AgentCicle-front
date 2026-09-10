@@ -12,6 +12,8 @@ interface FaseLunarData {
   deCache: boolean;
   carregando: boolean;
   erro: string | null;
+  /** Conta ainda sem data da menstruação/duração do ciclo salvas. */
+  perfilIncompleto: boolean;
 }
 
 interface FaseLunarCache {
@@ -38,6 +40,7 @@ export function useFaseLunar() {
     deCache: false,
     carregando: true,
     erro: null,
+    perfilIncompleto: false,
   });
 
   const lastCheckRef = useRef<number>(0);
@@ -67,6 +70,7 @@ export function useFaseLunar() {
                 deCache: true,
                 carregando: false,
                 erro: null,
+                perfilIncompleto: false,
               });
               return;
             }
@@ -81,19 +85,22 @@ export function useFaseLunar() {
 
       const dados = await sincronizarFase();
 
-      // Salvar no cache
-      const agora = Date.now();
-      await AsyncStorage.setItem(
-        "fase_lunar_cache",
-        JSON.stringify({
-          data: {
-            fase: dados.fase,
-            mensagem: dados.mensagem,
-          },
-          timestamp: agora,
-          expireAt: agora + CACHE_DURATION,
-        })
-      );
+      // Perfil sem dados do ciclo não vai para o cache: a próxima carga deve
+      // buscar de novo, já com a fase calculada.
+      if (!dados.perfil_incompleto) {
+        const agora = Date.now();
+        await AsyncStorage.setItem(
+          "fase_lunar_cache",
+          JSON.stringify({
+            data: {
+              fase: dados.fase,
+              mensagem: dados.mensagem,
+            },
+            timestamp: agora,
+            expireAt: agora + CACHE_DURATION,
+          })
+        );
+      }
 
       setFaseLunar({
         fase: dados.fase,
@@ -101,6 +108,7 @@ export function useFaseLunar() {
         deCache: !!dados.de_cache,
         carregando: false,
         erro: null,
+        perfilIncompleto: !!dados.perfil_incompleto,
       });
 
       // Atualiza timestamp da última verificação

@@ -1,32 +1,8 @@
 import { StyleSheet, Platform } from "react-native";
+import { palette, themeColors, spacing, radius } from "./colors";
+import { fonts } from "./fonts";
 
-export const themeColors = {
-  gradient: [
-    "#1A0733",
-    "#3F1C65",
-    "#9260CE",
-    "#EED0FC",
-  ] as [string, string, ...string[]],
-  background: "#1A0733",
-  button: "#9260CE",
-  buttonSecondary: "#A4D562",
-  buttonText: "#FFFFFF",
-  inputBackground: "rgba(255, 255, 255, 0.12)",
-  inputBorder: "#9260CE",
-  inputText: "#EED0FC",
-  text: "#EED0FC",
-  textTitle: "#FFFAC3",
-  textDark: "#1A0733",
-  accent: "#A4D562",
-  accentYellow: "#FFFAC3",
-  lilac: "#EED0FC",
-  purple: "#9260CE",
-  violet: "#3F1C65",
-  darkPurple: "#1A0733",
-  card: "rgba(63, 28, 101, 0.7)",
-  cardBorder: "rgba(146, 96, 206, 0.4)",
-  error: "#ff6b6b",
-};
+export { themeColors, palette, spacing, radius };
 
 export const globalStyles = StyleSheet.create({
   backgroundGradient: {
@@ -41,96 +17,105 @@ export const globalStyles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    paddingHorizontal: 24,
+    paddingHorizontal: spacing.lg,
+  },
+
+  container: {
+    flex: 1,
+    paddingHorizontal: spacing.md,
+    paddingTop: spacing.lg,
   },
 
   logo: {
-    width: 150,
-    height: 130,
+    width: 140,
+    height: 120,
     alignSelf: "center",
-    marginBottom: 24,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 6,
+    marginBottom: spacing.lg,
   },
+
   title: {
-    fontSize: Platform.OS === "ios" ? 22 : 20,
-    fontWeight: "bold",
-    color: themeColors.textTitle,
+    fontFamily: fonts.title,
+    fontSize: Platform.OS === "ios" ? 30 : 28,
+    lineHeight: Platform.OS === "ios" ? 38 : 36,
+    color: palette.purpleDark,
     textAlign: "center",
-    marginBottom: 24,
+    letterSpacing: -0.3,
+    marginBottom: spacing.lg,
   },
 
   subtitle: {
-    fontSize: Platform.OS === "ios" ? 16 : 14,
-    color: themeColors.text,
+    fontFamily: fonts.body,
+    fontSize: Platform.OS === "ios" ? 15 : 14,
+    color: palette.textSecondary,
     textAlign: "center",
-    marginBottom: 16,
+    marginBottom: spacing.md,
   },
 
   input: {
-    backgroundColor: "rgba(255, 255, 255, 0.12)",
-    borderRadius: 10,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    fontSize: 16,
-    marginBottom: 14,
-    color: "#EED0FC",
+    fontFamily: fonts.body,
+    backgroundColor: palette.glass,
+    borderRadius: radius.md,
+    paddingHorizontal: spacing.md,
+    paddingVertical: 15,
+    fontSize: 15,
+    marginBottom: spacing.md,
+    color: palette.textPrimary,
     width: "100%",
     borderWidth: 1,
-    borderColor: "rgba(146, 96, 206, 0.5)",
+    borderColor: palette.glassBorder,
   },
 
   inputError: {
     borderWidth: 1.5,
-    borderColor: themeColors.error,
+    borderColor: palette.error,
   },
 
   button: {
-    backgroundColor: themeColors.button,
-    paddingVertical: 14,
-    paddingHorizontal: 16,
-    borderRadius: 12,
+    backgroundColor: palette.purpleDark,
+    paddingVertical: 16,
+    paddingHorizontal: spacing.md,
+    borderRadius: radius.pill,
     alignItems: "center",
     width: "100%",
-    shadowColor: "#9260CE",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.4,
-    shadowRadius: 6,
-    elevation: 6,
-    marginTop: 8,
+    marginTop: spacing.xs,
   },
 
   buttonText: {
-    color: themeColors.buttonText,
-    fontWeight: "bold",
-    fontSize: 18,
+    fontFamily: fonts.bodyMedium,
+    color: palette.textOnDark,
+    fontSize: 15,
+    letterSpacing: 0.2,
   },
 
   link: {
-    color: "#EED0FC",
+    fontFamily: fonts.body,
+    color: palette.textSecondary,
     textAlign: "center",
-    marginTop: 16,
-    textDecorationLine: "underline",
+    marginTop: spacing.md,
   },
 
   registerLink: {
-    color: "#FFFAC3",
+    fontFamily: fonts.bodyMedium,
+    color: palette.purple,
     textAlign: "center",
-    marginTop: 12,
-    fontWeight: "bold",
+    marginTop: spacing.sm,
   },
 
   passwordHint: {
-    fontSize: 13,
-    color: "#EED0FC",
-    marginBottom: 8,
+    fontFamily: fonts.body,
+    fontSize: 12,
+    color: palette.textMuted,
+    marginBottom: spacing.sm,
     marginLeft: 4,
   },
-  container: {
-    flex: 1,
-    paddingHorizontal: 16,
-    paddingTop: 24,
+
+  card: {
+    backgroundColor: palette.glass,
+    borderRadius: radius.lg,
+    borderWidth: 1,
+    borderColor: palette.glassBorder,
+    padding: spacing.md,
+    marginVertical: spacing.sm,
+    width: "100%",
   },
 });

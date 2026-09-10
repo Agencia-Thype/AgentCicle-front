@@ -1,0 +1,323 @@
+{
+  "iniciante": [
+    {
+      "id": "kegel_ini_ex1",
+      "nome": "Exercício 1: Resistência + Agilidade",
+      "nivel": "iniciante",
+      "objetivo": "resistência + agilidade",
+      "series": 3,
+      "descanso_segundos": 30,
+      "instrucoes": [
+        {
+          "repeticoes": 5,
+          "fases": [
+            {
+              "tipo": "contracao",
+              "duracao_segundos": 4.0,
+              "instrucao": "Contraia"
+            },
+            {
+              "tipo": "manter",
+              "duracao_segundos": 4.0,
+              "instrucao": "Mantenha a contração"
+            },
+            {
+              "tipo": "relaxamento",
+              "duracao_segundos": 5.0,
+              "instrucao": "Relaxe completamente"
+            }
+          ]
+        },
+        {
+          "repeticoes": 12,
+          "fases": [
+            {
+              "tipo": "contracao",
+              "duracao_segundos": 1.5,
+              "instrucao": "Contraia"
+            },
+            {
+              "tipo": "soltar",
+              "duracao_segundos": 1.5,
+              "instrucao": "Solta"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "kegel_ini_ex2",
+      "nome": "Exercício 2: Resistência + Hipertrofia",
+      "nivel": "iniciante",
+      "objetivo": "resistência + hipertrofia",
+      "series": 3,
+      "descanso_segundos": 30,
+      "instrucoes": [
+        {
+          "repeticoes": 8,
+          "fases": [
+            {
+              "tipo": "contracao",
+              "duracao_segundos": 3.0,
+              "instrucao": "Contraia"
+            },
+            {
+              "tipo": "manter",
+              "duracao_segundos": 3.0,
+              "instrucao": "Mantenha a contração"
+            },
+            {
+              "tipo": "contracao_forte",
+              "duracao_segundos": 1.0,
+              "instrucao": "Contraia mais forte (uma piscada a mais)"
+            },
+            {
+              "tipo": "relaxamento",
+              "duracao_segundos": 4.0,
+              "instrucao": "Relaxe"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "kegel_ini_ex3",
+      "nome": "Exercício 3: Potência + Agilidade",
+      "nivel": "iniciante",
+      "objetivo": "potência e agilidade",
+      "series": 3,
+      "descanso_segundos": 30,
+      "instrucoes": [
+        {
+          "repeticoes": 20,
+          "fases": [
+            {
+              "tipo": "contracao",
+              "duracao_segundos": 3.0,
+              "instrucao": "Contraia"
+            },
+            {
+              "tipo": "soltar",
+              "duracao_segundos": 3.0,
+              "instrucao": "Solta"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "intermediario": [
+    {
+      "id": "kegel_int_ex1",
+      "nome": "Exercício 1: Resistência + Agilidade",
+      "nivel": "intermediario",
+      "objetivo": "resistência + agilidade",
+      "series": 3,
+      "descanso_segundos": 45,
+      "instrucoes": [
+        {
+          "repeticoes": 6,
+          "fases": [
+            {
+              "tipo": "contracao",
+              "duracao_segundos": 6.0,
+              "instrucao": "Contraia"
+            },
+            {
+              "tipo": "manter",
+              "duracao_segundos": 6.0,
+              "instrucao": "Mantenha a contração"
+            },
+            {
+              "tipo": "relaxamento",
+              "duracao_segundos": 6.0,
+              "instrucao": "Relaxe completamente"
+            }
+          ]
+        },
+        {
+          "repeticoes": 15,
+          "fases": [
+            {
+              "tipo": "contracao",
+              "duracao_segundos": 1.0,
+              "instrucao": "Contraia"
+            },
+            {
+              "tipo": "soltar",
+              "duracao_segundos": 1.0,
+              "instrucao": "Solta"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "kegel_int_ex2",
+      "nome": "Exercício 2: Resistência + Hipertrofia",
+      "nivel": "intermediario",
+      "objetivo": "resistência + hipertrofia",
+      "series": 3,
+      "descanso_segundos": 45,
+      "instrucoes": [
+        {
+          "repeticoes": 8,
+          "fases": [
+            {
+              "tipo": "contracao",
+              "duracao_segundos": 5.0,
+              "instrucao": "Contraia"
+            },
+            {
+              "tipo": "manter",
+              "duracao_segundos": 5.0,
+              "instrucao": "Mantenha a contração"
+            },
+            {
+              "tipo": "contracao_forte",
+              "duracao_segundos": 2.0,
+              "instrucao": "Contraia mais forte mais forte (duas piscadas a mais)"
+            },
+            {
+              "tipo": "relaxamento",
+              "duracao_segundos": 7.0,
+              "instrucao": "Relaxe"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "kegel_int_ex3",
+      "nome": "Exercício 3: Potência + Agilidade",
+      "nivel": "intermediario",
+      "objetivo": "potência e agilidade",
+      "series": 3,
+      "descanso_segundos": 45,
+      "instrucoes": [
+        {
+          "repeticoes": 30,
+          "fases": [
+            {
+              "tipo": "contracao",
+              "duracao_segundos": 1.0,
+              "instrucao": "Contraia"
+            },
+            {
+              "tipo": "soltar",
+              "duracao_segundos": 1.0,
+              "instrucao": "Solta"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "avancado": [
+    {
+      "id": "kegel_avan_ex1",
+      "nome": "Exercício 1: Resistência + Agilidade",
+      "nivel": "avancado",
+      "objetivo": "resistência + agilidade",
+      "series": 3,
+      "descanso_segundos": 60,
+      "instrucoes": [
+        {
+          "repeticoes": 6,
+          "fases": [
+            {
+              "tipo": "contracao",
+              "duracao_segundos": 8.0,
+              "instrucao": "Contraia"
+            },
+            {
+              "tipo": "manter",
+              "duracao_segundos": 8.0,
+              "instrucao": "Mantenha a contração"
+            },
+            {
+              "tipo": "relaxamento",
+              "duracao_segundos": 8.0,
+              "instrucao": "Relaxe completamente"
+            }
+          ]
+        },
+        {
+          "repeticoes": 20,
+          "fases": [
+            {
+              "tipo": "contracao",
+              "duracao_segundos": 1.0,
+              "instrucao": "Contraia"
+            },
+            {
+              "tipo": "soltar",
+              "duracao_segundos": 1.0,
+              "instrucao": "Solta"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "kegel_avan_ex2",
+      "nome": "Exercício 2: Resistência + Hipertrofia",
+      "nivel": "avancado",
+      "objetivo": "resistência + hipertrofia",
+      "series": 3,
+      "descanso_segundos": 60,
+      "instrucoes": [
+        {
+          "repeticoes": 8,
+          "fases": [
+            {
+              "tipo": "contracao",
+              "duracao_segundos": 7.0,
+              "instrucao": "Contraia"
+            },
+            {
+              "tipo": "manter",
+              "duracao_segundos": 7.0,
+              "instrucao": "Mantenha a contração"
+            },
+            {
+              "tipo": "contracao_forte",
+              "duracao_segundos": 2.0,
+              "instrucao": "Contraia mais forte mais forte (duas piscadas a mais)"
+            },
+            {
+              "tipo": "relaxamento",
+              "duracao_segundos": 9.0,
+              "instrucao": "Relaxe"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "kegel_avan_ex3",
+      "nome": "Exercício 3: Potência + Agilidade",
+      "nivel": "avancado",
+      "objetivo": "potência e agilidade",
+      "series": 3,
+      "descanso_segundos": 60,
+      "instrucoes": [
+        {
+          "repeticoes": 50,
+          "fases": [
+            {
+              "tipo": "contracao",
+              "duracao_segundos": 1.0,
+              "instrucao": "Contraia"
+            },
+            {
+              "tipo": "soltar",
+              "duracao_segundos": 1.0,
+              "instrucao": "Solta"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

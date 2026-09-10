@@ -31,9 +31,13 @@ import { RootStackParamList } from "../../navigation/index";
 import { AnimatedLogo } from "../../components/AnimatedLogo";
 import { homeStyles } from "./homeStyles";
 import { globalStyles, themeColors } from "../../theme/global";
+import { LinearGradient } from "expo-linear-gradient";
+import { identidadeDaFase, palette } from "../../theme/colors";
+import { MarcaDaguaOrganica } from "../../components/FormaOrganica";
+import { auth } from "../../services/firebase";
 import { getPerfil } from "../../services/perfilService";
 import { getDetalhesFaseAtual } from "../../services/cicloService";
-import { api } from "../../services/api";
+import { api, ehPerfilIncompleto } from "../../services/api";
 import { getWeekDateRange } from "../../utils/getWeekDateRange";
 import ClasseLunarModal from "../../components/classeLunarModal";
 import LuniaCoachBubble from "../../components/LuniaCoachBubble";
@@ -43,6 +47,9 @@ import { useFaseLunar } from "../../hooks/useFaseLunar";
 import TrialBanner from "../../components/TrialBanner";
 import { useAssinatura } from "../../contexts/AssinaturaContext";
 import { usePremiumModal } from "../../utils/premiumModalController";
+import { useAuth } from "../../contexts/AuthContext";
+import { COBRANCA_ATIVA } from "../../config/monetizacao";
+import HomeVisual from "./HomeVisual";
 
 const hoje = new Date().toLocaleDateString("pt-BR", {
   weekday: "long",
@@ -52,6 +59,14 @@ const hoje = new Date().toLocaleDateString("pt-BR", {
 
 type Props = NativeStackScreenProps<RootStackParamList, "Home">;
 
+/** Saudação pelo horário local — o app abre falando com a pessoa, não com o dado. */
+function saudacaoDoDia(): string {
+  const hora = new Date().getHours();
+  if (hora < 12) return "Bom dia";
+  if (hora < 18) return "Boa tarde";
+  return "Boa noite";
+}
+
 export default function HomeScreen({ route }: Props) {
   // Parâmetros recebidos da navegação
   const params = route.params;
@@ -60,9 +75,17 @@ export default function HomeScreen({ route }: Props) {
   const [selectedSymptoms, setSelectedSymptoms] = useState<string[]>([]);
   const [userName, setUserName] = useState("");
   // Usando o novo hook para gerenciamento da fase lunar
-  const { fase: faseLunar, mensagem, carregando, recarregar } = useFaseLunar();
+  const {
+    fase: faseLunar,
+    mensagem,
+    carregando,
+    recarregar,
+    perfilIncompleto,
+  } = useFaseLunar();
+  // Cor, gradiente e leitura do corpo da fase atual.
+  const identidade = identidadeDaFase(faseLunar);
   const [progressoSemanal, setProgressoSemanal] = useState<number>(0);
-  const [corProgresso, setCorProgresso] = useState("#A56C6C");
+  const [corProgresso, setCorProgresso] = useState("#E08D8D");
   const [trofeuUri, setTrofeuUri] = useState<any>(null);
   const [pontuacao, setPontuacao] = useState<number>(0);
   const [classeAtual, setClasseAtual] = useState<string>("");
@@ -85,17 +108,26 @@ export default function HomeScreen({ route }: Props) {
   const { status, verificarStatus, estaNoPeriodoTrial, temPermissaoPremium } =
     useAssinatura();
   const { showModal } = usePremiumModal();
+  const { logout } = useAuth();
+
+  // Conta sem dados do ciclo não tem fase para mostrar: leva para o Perfil em
+  // modo primeiro acesso, que trava a saída até salvar e depois volta à Home.
+  useEffect(() => {
+    if (!perfilIncompleto) return;
+    (async () => {
+      await AsyncStorage.setItem("primeiro_acesso", "true");
+      navigation.reset({ index: 0, routes: [{ name: "Perfil" }] });
+    })();
+  }, [perfilIncompleto]);
+
   useFocusEffect(
     useCallback(() => {
       const verificarStatusAssinatura = async () => {
         try {
-          // Verificar se há token antes de consultar o status
-          const token = await AsyncStorage.getItem("auth_token");
-
           // Reset do banner inicialmente
           setTrialBannerVisible(false);
 
-          if (token) {
+          if (auth.currentUser) {
             // Verificação estratégica de status: Apenas verificamos se:
             // 1. Estamos voltando de uma tela de login ou pagamento (forçar atualização)
             // 2. Viemos explicitamente de uma tela que solicitou mostrar o banner
@@ -181,7 +213,9 @@ export default function HomeScreen({ route }: Props) {
       console.log("✅ Progresso semanal:", response.data.media_percentual);
       setProgressoSemanal(response.data.media_percentual);
     } catch (error) {
-      console.error("❌ Erro ao buscar progresso semanal:", error);
+      if (!ehPerfilIncompleto(error)) {
+        console.error("❌ Erro ao buscar progresso semanal:", error);
+      }
     }
   };
 
@@ -212,16 +246,16 @@ export default function HomeScreen({ route }: Props) {
         // Atualizar cor de acordo com a fase atual do hook
         switch (faseLunar) {
           case "Menstruação":
-            setCorProgresso("#A56C6C");
+            setCorProgresso("#E08D8D");
             break;
           case "Folicular":
-            setCorProgresso("#7EAA92");
+            setCorProgresso(palette.sage);
             break;
           case "Ovulatória":
-            setCorProgresso("#F4B860");
+            setCorProgresso(palette.gold);
             break;
           case "Lútea":
-            setCorProgresso("#B283A3");
+            setCorProgresso(palette.purpleLight);
             break;
         }
 
@@ -315,6 +349,28 @@ export default function HomeScreen({ route }: Props) {
   };
 
   return (
+    <HomeVisual
+      navigation={navigation}
+      fase={faseLunar}
+      mensagem={mensagem}
+      descricao={descricao}
+      carregando={carregando}
+      humor={identidade.humor}
+      progresso={progressoSemanal}
+      pontuacao={pontuacao}
+      classe={classeAtual}
+      diasRestantes={diasRestantes}
+      trofeuUri={trofeuUri}
+      modalAberto={modalAberto}
+      menuAberto={menuVisible}
+      onAbrirMenu={() => setMenuVisible(true)}
+      onFecharMenu={() => setMenuVisible(false)}
+      onAbrirClasse={() => setModalAberto(true)}
+      onFecharClasse={() => setModalAberto(false)}
+    />
+  );
+
+  return (
     <View style={{ flex: 1 }}>
       <StatusBar
         backgroundColor="transparent"
@@ -322,8 +378,8 @@ export default function HomeScreen({ route }: Props) {
         translucent={true}
       />
 
-      {/* Banner Modal de Trial/Premium - só exibe se usuário estiver logado e tiver status */}
-      {status && status.nome && (
+      {/* Banner de Trial/Premium - oculto enquanto o app é gratuito */}
+      {COBRANCA_ATIVA && status?.nome && (
         <TrialBanner
           onUpgrade={handleUpgradePress}
           visible={trialBannerVisible && !temPermissaoPremium}
@@ -341,7 +397,7 @@ export default function HomeScreen({ route }: Props) {
                 navigation.navigate("Home");
               }}
             >
-              <MaterialIcons name="home" size={20} color="#EED0FC" />
+              <MaterialIcons name="home" size={20} color={palette.textPrimary} />
               <Text style={homeStyles.menuItemText}>Início</Text>
             </TouchableOpacity>
             <TouchableOpacity
@@ -351,7 +407,7 @@ export default function HomeScreen({ route }: Props) {
                 navigation.navigate("Perfil");
               }}
             >
-              <MaterialIcons name="person" size={20} color="#EED0FC" />
+              <MaterialIcons name="person" size={20} color={palette.textPrimary} />
               <Text style={homeStyles.menuItemText}>Perfil</Text>
             </TouchableOpacity>
             <TouchableOpacity
@@ -361,7 +417,7 @@ export default function HomeScreen({ route }: Props) {
                 navigation.navigate("Calendario");
               }}
             >
-              <MaterialIcons name="calendar-today" size={20} color="#EED0FC" />
+              <MaterialIcons name="calendar-today" size={20} color={palette.textPrimary} />
               <Text style={homeStyles.menuItemText}>Calendário</Text>
             </TouchableOpacity>
             <TouchableOpacity
@@ -371,7 +427,7 @@ export default function HomeScreen({ route }: Props) {
                 navigation.navigate("TreinoDoDia");
               }}
             >
-              <MaterialCommunityIcons name="dumbbell" size={20} color="#EED0FC" />
+              <MaterialCommunityIcons name="dumbbell" size={20} color={palette.textPrimary} />
               <Text style={homeStyles.menuItemText}>Treino do dia</Text>
             </TouchableOpacity>
             <TouchableOpacity
@@ -381,7 +437,7 @@ export default function HomeScreen({ route }: Props) {
                 navigation.navigate("FaseCompletaScreen");
               }}
             >
-              <MaterialCommunityIcons name="chat-processing" size={20} color="#EED0FC" />
+              <MaterialCommunityIcons name="chat-processing" size={20} color={palette.textPrimary} />
               <Text style={homeStyles.menuItemText}>Assistente Lunia</Text>
             </TouchableOpacity>
             <TouchableOpacity
@@ -391,19 +447,19 @@ export default function HomeScreen({ route }: Props) {
                 navigation.navigate("RelatorioMensal");
               }}
             >
-              <MaterialIcons name="insights" size={20} color="#EED0FC" />
+              <MaterialIcons name="insights" size={20} color={palette.textPrimary} />
               <Text style={homeStyles.menuItemText}>Relatório do mês</Text>
             </TouchableOpacity>
             <TouchableOpacity
               style={homeStyles.menuItem}
               onPress={async () => {
-                await AsyncStorage.clear();
+                await logout();
                 setMenuVisible(false);
                 navigation.navigate("Login");
               }}
             >
-              <MaterialIcons name="logout" size={20} color="#ff6b6b" />
-              <Text style={[homeStyles.menuItemText, { color: "#ff6b6b" }]}>
+              <MaterialIcons name="logout" size={20} color={palette.error} />
+              <Text style={[homeStyles.menuItemText, { color: palette.error }]}>
                 Sair
               </Text>
             </TouchableOpacity>
@@ -415,39 +471,32 @@ export default function HomeScreen({ route }: Props) {
           <View style={homeStyles.header}>
             <TouchableOpacity
               onPress={() => setMenuVisible(true)}
-              style={{ zIndex: 1000, padding: 4 }}
+              style={homeStyles.iconeHeader}
             >
-              <MaterialIcons name="menu" size={28} color="#EED0FC" />
+              <MaterialIcons name="menu" size={26} color={palette.textPrimary} />
             </TouchableOpacity>
 
-            <View
-              style={{
-                flexDirection: "row",
-                alignItems: "center",
-                gap: 8,
-                zIndex: 1000,
-              }}
-            >
+            <View style={homeStyles.headerAcoes}>
               {trofeuUri && (
                 <TouchableOpacity
                   onPress={() => setModalAberto(true)}
-                  style={{ padding: 4 }}
+                  style={homeStyles.iconeHeader}
                 >
                   <Image
                     source={trofeuUri}
-                    style={{ width: 28, height: 28, resizeMode: "contain" }}
+                    style={{ width: 24, height: 24, resizeMode: "contain" }}
                   />
                 </TouchableOpacity>
               )}
 
               <TouchableOpacity
                 onPress={() => navigation.navigate("Calendario")}
-                style={{ padding: 4 }}
+                style={homeStyles.iconeHeader}
               >
                 <MaterialCommunityIcons
-                  name="calendar-heart"
-                  size={28}
-                  color="#EED0FC"
+                  name="calendar-blank-outline"
+                  size={24}
+                  color={palette.textPrimary}
                 />
               </TouchableOpacity>
 
@@ -466,72 +515,184 @@ export default function HomeScreen({ route }: Props) {
               />
             </View>
           </View>
+
           <ScrollView
             contentContainerStyle={homeStyles.content}
-            style={{ paddingTop: 0 }}
+            showsVerticalScrollIndicator={false}
           >
-            {" "}
-            <View style={homeStyles.card}>
-              <Text style={homeStyles.faseTitulo}>
-                🌙 Fase atual do seu ciclo
+            {/* Saudação: a única serifada grande da dobra */}
+            <View style={homeStyles.saudacaoBloco}>
+              <Text style={homeStyles.saudacao}>
+                {saudacaoDoDia()}
+                {userName ? `, ${userName}` : ""}
               </Text>
+              <Text style={homeStyles.perguntaDoDia}>
+                Como seu corpo está hoje?
+              </Text>
+            </View>
 
-              {carregando ? (
-                <ActivityIndicator
-                  size="small"
-                  color="#9260CE"
-                  style={{ marginVertical: 10 }}
+            {/* Card herói: domina a dobra e carrega a fase do ciclo */}
+            <View style={homeStyles.hero}>
+              <LinearGradient
+                colors={identidade.gradiente}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+              >
+                <MarcaDaguaOrganica
+                  color={palette.textOnDark}
+                  style={homeStyles.heroMarcaDagua}
                 />
-              ) : (
-                <>
-                  <Text style={homeStyles.faseNome}>
-                    {faseLunar || "Carregando..."}
-                  </Text>
-                  <Text style={homeStyles.faseResumo} numberOfLines={2}>
-                    {mensagem || descricao || "Carregando informações..."}
-                  </Text>
-                </>
-              )}
 
-              <TouchableOpacity
-                onPress={() => navigation.navigate("FaseCompletaScreen")}
-                style={homeStyles.saibaMaisBotao}
-              >
-                <Text style={homeStyles.saibaMaisTexto}>Saiba mais</Text>
-              </TouchableOpacity>
+                <View style={homeStyles.heroConteudo}>
+                  <View style={homeStyles.heroLinhaOverline}>
+                    <View
+                      style={[
+                        homeStyles.heroPontoFase,
+                        { backgroundColor: identidade.cor },
+                      ]}
+                    />
+                    <Text style={homeStyles.heroOverline}>Seu ciclo hoje</Text>
+                  </View>
 
-              {!carregando && (
-                <TouchableOpacity
-                  onPress={recarregar}
-                  style={homeStyles.recarregarBotao}
-                >
-                  <MaterialIcons name="refresh" size={14} color="#A56C6C" />
-                  <Text style={homeStyles.recarregarTexto}>Atualizar fase</Text>
-                </TouchableOpacity>
-              )}
+                  {carregando ? (
+                    <ActivityIndicator
+                      size="small"
+                      color={palette.textOnDark}
+                      style={{ alignSelf: "flex-start", marginVertical: 14 }}
+                    />
+                  ) : (
+                    <>
+                      <Text style={homeStyles.heroFase}>{faseLunar || "—"}</Text>
+                      {mensagem || descricao ? (
+                        <Text style={homeStyles.heroMensagem} numberOfLines={3}>
+                          {mensagem || descricao}
+                        </Text>
+                      ) : null}
+                    </>
+                  )}
+
+                  <View style={homeStyles.heroDivisor} />
+
+                  {/* Leitura do corpo: entendível em segundos */}
+                  <View style={homeStyles.heroMetricas}>
+                    <View style={homeStyles.heroMetrica}>
+                      <Text style={homeStyles.heroMetricaRotulo}>Energia</Text>
+                      <Text style={homeStyles.heroMetricaValor}>
+                        {identidade.energia}
+                      </Text>
+                    </View>
+                    <View style={homeStyles.heroMetrica}>
+                      <Text style={homeStyles.heroMetricaRotulo}>Humor</Text>
+                      <Text style={homeStyles.heroMetricaValor}>
+                        {identidade.humor}
+                      </Text>
+                    </View>
+                    <View style={homeStyles.heroMetrica}>
+                      <Text style={homeStyles.heroMetricaRotulo}>Treino</Text>
+                      <Text style={homeStyles.heroMetricaValor}>
+                        {identidade.treino}
+                      </Text>
+                    </View>
+                  </View>
+
+                  <TouchableOpacity
+                    style={homeStyles.heroBotao}
+                    onPress={() => navigation.navigate("FaseCompletaScreen")}
+                    activeOpacity={0.8}
+                  >
+                    <Text style={homeStyles.heroBotaoTexto}>
+                      Entender minha fase
+                    </Text>
+                    <MaterialIcons
+                      name="arrow-forward"
+                      size={15}
+                      color={palette.textOnDark}
+                    />
+                  </TouchableOpacity>
+
+                  {!carregando && (
+                    <TouchableOpacity
+                      style={homeStyles.heroAtualizar}
+                      onPress={recarregar}
+                    >
+                      <MaterialIcons
+                        name="refresh"
+                        size={13}
+                        color={palette.textOnDarkMuted}
+                      />
+                      <Text style={homeStyles.heroAtualizarTexto}>
+                        Atualizar fase
+                      </Text>
+                    </TouchableOpacity>
+                  )}
+                </View>
+              </LinearGradient>
             </View>
-            <View style={homeStyles.card}>
-              <Text style={homeStyles.treinoTexto}>Você já treinou hoje?</Text>
+
+            {/* Atalhos do dia */}
+            <Text style={homeStyles.secaoRotulo}>Hoje</Text>
+            <View style={homeStyles.linhaAtalhos}>
               <TouchableOpacity
-                style={globalStyles.button}
+                style={homeStyles.atalho}
                 onPress={() => navigation.navigate("TreinoDoDia")}
+                activeOpacity={0.85}
               >
-                <Text style={globalStyles.buttonText}>Ver treino do dia</Text>
+                <View
+                  style={[
+                    homeStyles.atalhoIcone,
+                    { backgroundColor: palette.mist },
+                  ]}
+                >
+                  <MaterialCommunityIcons
+                    name="dumbbell"
+                    size={19}
+                    color={palette.sageDark}
+                  />
+                </View>
+                <View>
+                  <Text style={homeStyles.atalhoTitulo}>Treino</Text>
+                  <Text style={homeStyles.atalhoLegenda} numberOfLines={2}>
+                    {identidade.treino}
+                  </Text>
+                </View>
               </TouchableOpacity>
-            </View>
-            <View style={homeStyles.card}>
-              <Text style={homeStyles.treinoTexto}>Exercícios de Kegel</Text>
+
               <TouchableOpacity
-                style={[globalStyles.button, { backgroundColor: "#91766E" }]}
+                style={homeStyles.atalho}
                 onPress={() => navigation.navigate("Kegel")}
+                activeOpacity={0.85}
               >
-                <Text style={globalStyles.buttonText}>Praticar Kegel</Text>
+                <View
+                  style={[
+                    homeStyles.atalhoIcone,
+                    { backgroundColor: palette.lilac },
+                  ]}
+                >
+                  <MaterialCommunityIcons
+                    name="flower-tulip-outline"
+                    size={19}
+                    color={palette.purple}
+                  />
+                </View>
+                <View>
+                  <Text style={homeStyles.atalhoTitulo}>Kegel</Text>
+                  <Text style={homeStyles.atalhoLegenda} numberOfLines={2}>
+                    Assoalho pélvico
+                  </Text>
+                </View>
               </TouchableOpacity>
             </View>
+
+            {/* Semana */}
+            <Text style={homeStyles.secaoRotulo}>Sua semana</Text>
+
             <View style={homeStyles.card}>
-              <Text style={homeStyles.progressoTexto}>
-                📊 Progresso da semana
-              </Text>
+              <View style={homeStyles.cardLinhaTopo}>
+                <Text style={homeStyles.cardTitulo}>Progresso</Text>
+                <Text style={homeStyles.cardValorForte}>
+                  {progressoSemanal || 0}%
+                </Text>
+              </View>
 
               <View style={homeStyles.barraContainer}>
                 <View
@@ -539,71 +700,49 @@ export default function HomeScreen({ route }: Props) {
                     homeStyles.barraProgresso,
                     {
                       width: `${Math.min(progressoSemanal, 100)}%`,
-                      backgroundColor: corProgresso,
+                      backgroundColor: identidade.cor,
                     },
                   ]}
                 />
-                <Image
-                  source={require("../../assets/moeda.png")}
-                  style={{
-                    position: "absolute",
-                    left: `${Math.min(progressoSemanal, 100)}%`,
-                    top: -14,
-                    width: 28,
-                    height: 28,
-                    transform: [{ translateX: -14 }],
-                    zIndex: 99,
-                  }}
-                />
               </View>
 
-              <Text style={homeStyles.progressoPorcentagem}>
-                {progressoSemanal || 0}% concluído
+              <Text style={homeStyles.progressoLegenda}>
+                dos treinos concluídos
               </Text>
             </View>
+
             <View style={homeStyles.card}>
-              <View style={homeStyles.moedaContainer}>
+              <View style={homeStyles.conquistaLinha}>
                 <Image
-                  source={require("../../assets/moeda.png")}
-                  style={{
-                    width: 20,
-                    height: 20,
-                    resizeMode: "contain",
-                    marginRight: 6,
-                  }}
+                  source={trofeuUri || require("../../assets/moeda.png")}
+                  style={homeStyles.conquistaTrofeu}
                 />
-                <Text style={homeStyles.moedaTexto}>
-                  {pontuacao || 0} pontos
-                </Text>
+                <View style={{ flex: 1 }}>
+                  <Text style={homeStyles.conquistaPontos}>
+                    {pontuacao || 0} pontos
+                  </Text>
+                  <Text style={homeStyles.conquistaClasse}>
+                    {classeAtual || "Carregando..."}
+                  </Text>
+                  {diasRestantes > 0 && (
+                    <Text style={homeStyles.conquistaFaltam}>
+                      Faltam {diasRestantes} dia(s) para avançar
+                    </Text>
+                  )}
+                </View>
               </View>
-              <Text
-                style={[
-                  homeStyles.subtitulo,
-                  { textAlign: "center", marginTop: 6 },
-                ]}
-              >
-                🏆 Classe atual: {classeAtual || "Carregando..."}
+            </View>
+
+            <TouchableOpacity
+              style={homeStyles.addButton}
+              onPress={() => navigation.navigate("Sintomas")}
+              activeOpacity={0.9}
+            >
+              <FontAwesome name="plus" size={15} color={palette.textOnDark} />
+              <Text style={homeStyles.addButtonText}>
+                Registrar como me senti
               </Text>
-              {diasRestantes > 0 && (
-                <Text
-                  style={[
-                    homeStyles.subtitulo,
-                    { textAlign: "center", fontSize: 12 },
-                  ]}
-                >
-                  Faltam {diasRestantes} dia(s) para avançar
-                </Text>
-              )}
-            </View>
-            <View style={{ marginTop: 20 }}>
-              <TouchableOpacity
-                style={homeStyles.addButton}
-                onPress={() => navigation.navigate("Sintomas")}
-              >
-                <FontAwesome name="plus" size={22} color="#fff" />
-                <Text style={homeStyles.addButtonText}>Registrar sintomas</Text>
-              </TouchableOpacity>
-            </View>
+            </TouchableOpacity>
           </ScrollView>
         </SafeAreaView>
       </AppBackground>

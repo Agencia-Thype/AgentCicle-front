@@ -1,4 +1,5 @@
 import { StyleSheet } from "react-native";
+import { palette } from "../../theme/colors";
 
 export const luniaStyles = StyleSheet.create({
   overlay: {
@@ -20,7 +21,7 @@ export const luniaStyles = StyleSheet.create({
     zIndex: 10,
   },
   balao: {
-    backgroundColor: "#FFF0F5",
+    backgroundColor: palette.bgSoft,
     borderRadius: 20,
     paddingVertical: 20,
     paddingHorizontal: 24,
@@ -46,11 +47,11 @@ export const luniaStyles = StyleSheet.create({
     borderStyle: "solid",
     borderLeftColor: "transparent",
     borderRightColor: "transparent",
-    borderBottomColor: "#FFF0F5",
+    borderBottomColor: palette.bgSoft,
   },
   titulo: {
     fontSize: 16,
-    color: "#5C3B3B",
+    color: palette.textPrimary,
     marginBottom: 8,
     textAlign: "center",
   },
@@ -59,7 +60,7 @@ export const luniaStyles = StyleSheet.create({
   },
   texto: {
     fontSize: 14,
-    color: "#5C3B3B",
+    color: palette.textPrimary,
     textAlign: "center",
     lineHeight: 22,
   },
@@ -70,24 +71,24 @@ export const luniaStyles = StyleSheet.create({
     gap: 12,
   },
   botaoRosa: {
-    backgroundColor: "#A56C6C",
+    backgroundColor: palette.textSecondary,
     paddingVertical: 10,
     paddingHorizontal: 18,
     borderRadius: 12,
   },
   textoBotaoRosa: {
-    color: "#FFFFFF",
+    color: palette.white,
     fontWeight: "600",
     fontSize: 14,
   },
   botaoVerde: {
-    backgroundColor: "#A2BBA1",
+    backgroundColor: palette.sage,
     paddingVertical: 10,
     paddingHorizontal: 18,
     borderRadius: 12,
   },
   textoBotaoVerde: {
-    color: "#FFFFFF",
+    color: palette.white,
     fontWeight: "600",
     fontSize: 14,
   },
@@ -95,7 +96,7 @@ export const luniaStyles = StyleSheet.create({
     position: "absolute",
     top: 0,
     right: 0,
-    backgroundColor: "#FFFFFF",
+    backgroundColor: palette.white,
     borderRadius: 16,
     width: 22,
     height: 22,
@@ -110,7 +111,7 @@ export const luniaStyles = StyleSheet.create({
   },
   fecharTexto: {
     fontSize: 14,
-    color: "#B283A3",
+    color: palette.purpleLight,
     fontWeight: "bold",
     textAlign: "center",
     lineHeight: 18,

@@ -1,6 +1,6 @@
 // cicloService.ts
 
-import { api } from "./api";
+import { api, ehPerfilIncompleto } from "./api";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
 // Chaves para armazenamento de cache
@@ -27,6 +27,10 @@ export async function getFaseCiclo() {
       throw new Error(`Erro ${response.status} ao obter fase do ciclo`);
     }
   } catch (error) {
+    if (ehPerfilIncompleto(error)) {
+      return { fase: "Desconhecida", dias_na_fase: 0, duracao_fase: 0, perfil_incompleto: true };
+    }
+
     console.error("Erro ao sincronizar fase:", error);
 
     // Tentar recuperar do cache
@@ -71,6 +75,10 @@ export async function getDetalhesFaseAtual() {
       throw new Error(`Erro ${response.status} ao obter detalhes da fase`);
     }
   } catch (error) {
+    if (ehPerfilIncompleto(error)) {
+      return { fase: "Desconhecida", descricao: "", perfil_incompleto: true };
+    }
+
     console.error("Erro ao buscar detalhes da fase:", error);
 
     // Tentar recuperar do cache

@@ -1,36 +1,31 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useRef } from "react";
 import {
-  View,
+  Modal,
+  ScrollView,
+  StyleSheet,
   Text,
   TouchableOpacity,
-  Modal,
   Vibration,
-  StyleSheet,
+  View,
 } from "react-native";
-import { Audio } from "expo-av";
+import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { AnimatedCircularProgress } from "react-native-circular-progress";
-import { Ionicons } from "@expo/vector-icons";
+import * as Haptics from "expo-haptics";
 
-interface FaseKegel {
-  tipo: string;
-  duracao_segundos: number;
-  instrucao: string;
-}
+import LuniaAnimada from "../../components/LuniaAnimada";
+import { palette } from "../../theme/colors";
+import { criarBipe, tocarDoInicio, type AudioPlayer } from "../../utils/som";
+import { useKegelEngine } from "../../hooks/useKegelEngine";
+import type { EstadoKegel, EtapaKegel, ExercicioKegel } from "./kegel.types";
+import { fonts } from "../../theme/fonts";
 
-interface SerieKegel {
-  repeticoes: number;
-  fases: FaseKegel[];
-}
-
-interface ExercicioKegel {
-  id: string;
-  nome: string;
-  nivel: string;
-  objetivo: string;
-  series: number;
-  descanso_segundos: number;
-  instrucoes: SerieKegel[];
-}
+/**
+ * Execução do exercício de Kegel.
+ *
+ * Toda a temporização vem de useKegelEngine: um relógio só comanda fase,
+ * cronômetro, contadores, animação da Lunia e feedback. A tela apenas desenha
+ * o que o motor diz — não existe regra de exercício aqui dentro.
+ */
 
 interface KegelTemporizadorModalProps {
   exercicio: ExercicioKegel;
@@ -39,223 +34,112 @@ interface KegelTemporizadorModalProps {
   onComplete: () => void;
 }
 
+const ROTULO_DO_ESTADO: Record<EstadoKegel, string> = {
+  prepare: "Prepare-se",
+  contract: "Contraia",
+  hold: "Mantenha",
+  boost: "Mais forte",
+  release: "Relaxe",
+  rest: "Descanse",
+  complete: "Concluído",
+};
+
+const COR_DO_ESTADO: Record<EstadoKegel, string> = {
+  prepare: palette.textSecondary,
+  contract: palette.purple,
+  hold: palette.purple,
+  boost: palette.purpleDark,
+  release: palette.sage,
+  rest: palette.sageLight,
+  complete: palette.sage,
+};
+
+function formatarTempo(ms: number): string {
+  // Segundos inteiros, contando para baixo: 3, 2, 1. Evita a pressão visual
+  // causada pelos décimos mudando várias vezes por segundo.
+  return `${Math.max(0, Math.ceil(ms / 1000))}s`;
+}
+
 export function KegelTemporizadorModal({
   exercicio,
   visible,
   onClose,
   onComplete,
 }: KegelTemporizadorModalProps) {
-  const [currentSerie, setCurrentSerie] = useState(0);
-  const [currentRepeticao, setCurrentRepeticao] = useState(1);
-  const [currentFase, setCurrentFase] = useState(0);
-  const [timeLeft, setTimeLeft] = useState(0);
-  const [currentPhaseTotal, setCurrentPhaseTotal] = useState(0);
-  const [paused, setPaused] = useState(false);
-  const [completed, setCompleted] = useState(false);
+  const bipeEsforcoRef = useRef<AudioPlayer | null>(null);
+  const bipeDescansoRef = useRef<AudioPlayer | null>(null);
 
-  const intervalRef = useRef<NodeJS.Timeout | null>(null);
-  const soundExecRef = useRef<Audio.Sound | null>(null);
-  const soundRestRef = useRef<Audio.Sound | null>(null);
-
-  // Obter a série e fase atual
-  const currentSerieData = exercicio.instrucoes[currentSerie];
-  const currentFaseData = currentSerieData?.fases[currentFase];
-
-  // Iniciar o temporizador quando o modal abrir
   useEffect(() => {
-    if (visible && !completed && currentFaseData) {
-      const duracao = Math.round(currentFaseData.duracao_segundos);
-      setTimeLeft(duracao);
-      setCurrentPhaseTotal(duracao);
+    try {
+      bipeEsforcoRef.current = criarBipe(require("../../assets/sounds/beep_execucao.mp3"));
+      bipeDescansoRef.current = criarBipe(require("../../assets/sounds/beep_descanso.mp3"));
+    } catch (e) {
+      console.warn("Erro ao carregar sons", e);
     }
-  }, [visible, currentSerie, currentFase, completed]);
 
-  // Carregar sons
-  useEffect(() => {
-    let mounted = true;
-    (async () => {
-      try {
-        const { sound: execSound } = await Audio.Sound.createAsync(
-          require("../../assets/sounds/beep_execucao.mp3")
-        );
-        const { sound: restSound } = await Audio.Sound.createAsync(
-          require("../../assets/sounds/beep_descanso.mp3")
-        );
-        if (mounted) {
-          soundExecRef.current = execSound;
-          soundRestRef.current = restSound;
-          // Som inicial
-          await execSound.playAsync();
-          Vibration.vibrate(500);
-        }
-      } catch (e) {
-        console.warn("Erro ao carregar sons", e);
-      }
-    })();
     return () => {
-      mounted = false;
-      soundExecRef.current?.unloadAsync();
-      soundRestRef.current?.unloadAsync();
+      bipeEsforcoRef.current?.remove();
+      bipeDescansoRef.current?.remove();
+      bipeEsforcoRef.current = null;
+      bipeDescansoRef.current = null;
     };
   }, []);
 
-  // Lógica do temporizador
-  useEffect(() => {
-    if (!visible || completed || paused || !currentFaseData) return;
+  /**
+   * Som e vibração a cada troca de fase, para o exercício poder ser feito sem
+   * olhar a tela o tempo todo.
+   */
+  const avisarTroca = useCallback((etapa: EtapaKegel, anterior: EtapaKegel | null) => {
+    // A primeira etapa não precisa de aviso: a usuária acabou de abrir a tela.
+    if (!anterior) return;
 
-    intervalRef.current = setInterval(() => {
-      setTimeLeft((prev) => {
-        if (prev <= 1) {
-          clearInterval(intervalRef.current!);
-          avancarFase();
-          return 0;
-        }
-        return prev - 1;
-      });
-    }, 1000);
-
-    return () => clearInterval(intervalRef.current!);
-  }, [visible, paused, completed, currentSerie, currentFase, currentRepeticao]);
-
-  const avancarFase = async () => {
-    const serieAtual = exercicio.instrucoes[currentSerie];
-    if (!serieAtual) return;
-
-    const proximaFase = currentFase + 1;
-
-    // Verificar se ainda há fases nesta repetição
-    if (proximaFase < serieAtual.fases.length) {
-      setCurrentFase(proximaFase);
-      const novaFase = serieAtual.fases[proximaFase];
-      const duracao = Math.round(novaFase.duracao_segundos);
-      setTimeLeft(duracao);
-      setCurrentPhaseTotal(duracao);
-
-      // Tocar som e vibrar
-      await tocarSomProximaFase(novaFase.tipo);
-    } else {
-      // Finalizou todas as fases da repetição, avançar para próxima repetição ou série
-      avancarRepeticaoOuSerie();
+    if (etapa.estado === "boost") {
+      // Duas batidas: "mais forte".
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy).catch(() => undefined);
+      setTimeout(
+        () => Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy).catch(() => undefined),
+        130
+      );
+      Vibration.vibrate([0, 90, 70, 90]);
+      void tocarDoInicio(bipeEsforcoRef.current);
+      return;
     }
-  };
 
-  const avancarRepeticaoOuSerie = async () => {
-    const serieAtual = exercicio.instrucoes[currentSerie];
-    if (!serieAtual) return;
-
-    const proximaRepeticao = currentRepeticao + 1;
-
-    // Verificar se ainda há repetições nesta série
-    if (proximaRepeticao <= serieAtual.repeticoes) {
-      setCurrentRepeticao(proximaRepeticao);
-      setCurrentFase(0); // Voltar para a primeira fase
-
-      const primeiraFase = serieAtual.fases[0];
-      const duracao = Math.round(primeiraFase.duracao_segundos);
-      setTimeLeft(duracao);
-      setCurrentPhaseTotal(duracao);
-
-      // Tocar som de nova repetição
-      await soundExecRef.current?.replayAsync();
-      Vibration.vibrate([100, 50, 100]);
-    } else {
-      // Finalizou todas as repetições da série, avançar para próxima série ou concluir
-      await avancarSerie();
+    if (etapa.estado === "contract") {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium).catch(() => undefined);
+      Vibration.vibrate(120);
+      void tocarDoInicio(bipeEsforcoRef.current);
+      return;
     }
-  };
 
-  const avancarSerie = async () => {
-    const proximaSerie = currentSerie + 1;
-
-    // Verificar se ainda há séries
-    if (proximaSerie < exercicio.instrucoes.length) {
-      setCurrentSerie(proximaSerie);
-      setCurrentRepeticao(1);
-      setCurrentFase(0);
-
-      const novaSerie = exercicio.instrucoes[proximaSerie];
-      const primeiraFase = novaSerie.fases[0];
-      const duracao = Math.round(primeiraFase.duracao_segundos);
-      setTimeLeft(duracao);
-      setCurrentPhaseTotal(duracao);
-
-      // Tocar som de descanso entre séries
-      await soundRestRef.current?.replayAsync();
-      Vibration.vibrate([100, 50, 100, 50, 100]);
-    } else {
-      // Concluiu todas as séries do exercício
-      await concluirExercicio();
+    if (etapa.estado === "release" || etapa.estado === "rest") {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => undefined);
+      Vibration.vibrate(60);
+      void tocarDoInicio(bipeDescansoRef.current);
     }
-  };
+  }, []);
 
-  const concluirExercicio = async () => {
-    setCompleted(true);
-    await soundExecRef.current?.replayAsync();
-    Vibration.vibrate([200, 100, 200]);
-  };
+  const aoConcluir = useCallback(() => {
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => undefined);
+    Vibration.vibrate([0, 120, 80, 120, 80, 200]);
+  }, []);
 
-  const tocarSomProximaFase = async (tipoFase: string) => {
-    if (tipoFase.includes("contracao")) {
-      await soundExecRef.current?.replayAsync();
-    } else {
-      await soundRestRef.current?.replayAsync();
-    }
-    Vibration.vibrate(500);
-  };
+  const motor = useKegelEngine(exercicio, {
+    ativo: visible,
+    aoConcluir,
+    aoTrocarEtapa: avisarTroca,
+  });
 
-  const togglePause = () => {
-    setPaused(!paused);
-  };
+  const { etapa, progresso, restanteMs, pausado, concluido } = motor;
 
-  const avancarManualmente = async () => {
-    if (!currentFaseData) return;
-    clearInterval(intervalRef.current!);
-    avancarFase();
-  };
-
-  const voltarInicio = () => {
-    setCurrentSerie(0);
-    setCurrentRepeticao(1);
-    setCurrentFase(0);
-    setCompleted(false);
-    setPaused(false);
-
-    const primeiraFase = exercicio.instrucoes[0].fases[0];
-    const duracao = Math.round(primeiraFase.duracao_segundos);
-    setTimeLeft(duracao);
-    setCurrentPhaseTotal(duracao);
-  };
-
-  const formatTime = (seconds: number): string => {
-    if (seconds < 60) return `${seconds}s`;
-    const m = Math.floor(seconds / 60);
-    const s = seconds % 60;
-    return `${m}:${s < 10 ? "0" + s : s}`;
-  };
-
-  const getFaseLabel = (tipo: string): string => {
-    if (tipo === "contracao") return "Contração";
-    if (tipo === "contracao_forte") return "Contração Forte";
-    if (tipo === "relaxamento") return "Relaxamento";
-    return tipo;
-  };
-
-  const getFaseColor = (tipo: string): string => {
-    if (tipo.includes("contracao")) return "#f44336";
-    if (tipo === "relaxamento") return "#4caf50";
-    return "#ff9800";
-  };
-
-  const fillPercent =
-    currentPhaseTotal > 0 ? ((currentPhaseTotal - timeLeft) / currentPhaseTotal) * 100 : 0;
-
-  if (completed) {
+  // ------------------------------------------------------------- concluído
+  if (concluido) {
     return (
       <Modal visible={visible} transparent animationType="fade">
         <View style={styles.modalOverlay}>
-          <View style={[styles.completedContainer, { backgroundColor: "#3F1C65" }]}>
+          <View style={[styles.completedContainer, { backgroundColor: palette.bgSoft }]}>
             <View style={styles.completedContent}>
-              <Ionicons name="checkmark-circle" size={80} color="#fff" />
+              <LuniaAnimada estado="complete" progresso={1} largura={150} />
               <Text style={styles.completedTitle}>Exercício Concluído!</Text>
               <Text style={styles.completedText}>{exercicio.nome}</Text>
 
@@ -273,78 +157,82 @@ export function KegelTemporizadorModal({
     );
   }
 
-  if (!currentFaseData) return null;
+  if (!etapa) return null;
+
+  const cor = COR_DO_ESTADO[etapa.estado];
+  const ehDescanso = etapa.estado === "rest" || etapa.estado === "prepare";
+  const rotuloVisivel =
+    etapa.estado === "release" && etapa.rotulo.toLocaleLowerCase().includes("solta")
+      ? "Solta"
+      : ROTULO_DO_ESTADO[etapa.estado];
 
   return (
     <Modal visible={visible} transparent animationType="fade">
       <View style={styles.modalOverlay}>
         <View style={styles.modalContainer}>
-          {/* Cabeçalho */}
-          <View style={styles.header}>
+          <ScrollView
+            style={styles.modalScroll}
+            contentContainerStyle={styles.modalScrollContent}
+            showsVerticalScrollIndicator={false}
+          >
+            <View style={styles.sheetHandle} />
             <Text style={styles.exerciseName}>{exercicio.nome}</Text>
-            <Text style={styles.exerciseSubtitle}>
-              Série {currentSerie + 1} de {exercicio.instrucoes.length} • Repetição {currentRepeticao} de{" "}
-              {currentSerieData?.repeticoes || 0}
-            </Text>
-          </View>
+            <View style={styles.counterRow}>
+              <View style={styles.counterPill}><MaterialCommunityIcons name="layers-triple-outline" size={21} color="#8C5CAD" /><Text style={styles.counterText}>Série {etapa.serie} de {etapa.totalSeries}</Text></View>
+              <View style={styles.counterDivider} />
+              <View style={styles.counterPill}><MaterialCommunityIcons name="repeat-variant" size={21} color="#8C5CAD" /><Text style={styles.counterText}>Repetição {etapa.repeticao} de {etapa.totalRepeticoes}</Text></View>
+            </View>
+            <View style={styles.followBubble}><Text style={styles.followText}>Siga a Lunia</Text><MaterialCommunityIcons name="heart" size={20} color="#A04BC1" /></View>
 
-          {/* Temporizador Circular */}
-          <View style={styles.timerContainer}>
-            <AnimatedCircularProgress
-              size={220}
-              width={12}
-              fill={fillPercent}
-              tintColor={getFaseColor(currentFaseData.tipo)}
-              backgroundColor="#eee"
-              lineCap="round"
-            >
-              {() => (
-                <View style={styles.timerContent}>
-                  <Text style={styles.timerText}>{formatTime(timeLeft)}</Text>
-                  <Text style={styles.phaseText}>{getFaseLabel(currentFaseData.tipo)}</Text>
-                </View>
-              )}
-            </AnimatedCircularProgress>
-          </View>
+            {/* A Lunia fica no centro e o anel vira o halo do esforço dela:
+                o mesmo progresso move os dois. */}
+            <View style={styles.timerContainer}>
+              <AnimatedCircularProgress
+                size={300}
+                width={13}
+                fill={progresso * 100}
+                tintColor={cor}
+                backgroundColor="#EADFED"
+                lineCap="round"
+                // Sem animação própria: o anel segue o relógio do motor, que já
+                // atualiza a cada 50ms. Com a animação padrão ele ficaria meio
+                // segundo atrás do número.
+                duration={0}
+              >
+                {() => (
+                  <View style={styles.timerContent}>
+                    <LuniaAnimada
+                      estado={etapa.estado}
+                      progresso={progresso}
+                      pausado={pausado}
+                      largura={210}
+                    />
+                    <Text style={styles.timerText}>{formatarTempo(restanteMs)}</Text>
+                    <View style={[styles.phasePill, { backgroundColor: cor }]}><Text style={styles.phaseText}>{rotuloVisivel.toUpperCase()}</Text></View>
+                  </View>
+                )}
+              </AnimatedCircularProgress>
+            </View>
 
-          {/* Instrução da Fase Atual */}
-          <View style={styles.instructionContainer}>
-            <Ionicons
-              name={currentFaseData.tipo.includes("contracao") ? "arrow-up-circle" : "arrow-down-circle"}
-              size={24}
-              color={getFaseColor(currentFaseData.tipo)}
-            />
-            <Text style={styles.instructionText}>{currentFaseData.instrucao}</Text>
-          </View>
-
-          {/* Controles */}
-          <View style={styles.controlsContainer}>
-            <TouchableOpacity style={styles.controlButton} onPress={togglePause}>
-              <Ionicons name={paused ? "play" : "pause"} size={28} color="#fff" />
-            </TouchableOpacity>
-
-            <TouchableOpacity style={styles.controlButton} onPress={avancarManualmente}>
-              <Ionicons name="play-skip-forward" size={28} color="#fff" />
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={[styles.controlButton, styles.secondaryButton]}
-              onPress={voltarInicio}
-            >
-              <Ionicons name="refresh" size={28} color="#fff" />
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={[styles.controlButton, styles.closeButton]}
-              onPress={onClose}
-            >
-              <Ionicons name="close" size={28} color="#fff" />
-            </TouchableOpacity>
-          </View>
+            <View style={styles.instructionContainer}>
+              <View style={[styles.instructionIcon, { backgroundColor: cor }]}><Ionicons name={etapa.estado === "release" || etapa.estado === "rest" ? "arrow-down" : "arrow-up"} size={27} color="#fff" /></View>
+              <View style={styles.instructionCopy}><Text style={styles.instructionText}>{etapa.rotulo}</Text><Text style={styles.instructionSubtext}>Siga o ritmo da Lunia</Text></View>
+            </View>
+            <View style={styles.controlsContainer}>
+              <Control icon={pausado ? "play" : "pause"} label={pausado ? "Continuar" : "Pausar"} onPress={motor.alternarPausa} />
+              <Control icon="play-skip-forward" label="Próximo" onPress={motor.pularEtapa} />
+              <Control icon="refresh" label="Repetir" onPress={motor.reiniciar} />
+              <Control icon="close" label="Encerrar" onPress={onClose} primary />
+            </View>
+          </ScrollView>
         </View>
       </View>
     </Modal>
   );
+}
+
+function Control({ icon, label, onPress, primary }: { icon: any; label: string; onPress: () => void; primary?: boolean }) {
+  return <View style={styles.controlItem}><TouchableOpacity style={[styles.controlButton, primary && styles.closeButton]} onPress={onPress}><Ionicons name={icon} size={29} color="#fff" /></TouchableOpacity><Text style={styles.controlLabel}>{label}</Text></View>;
 }
 
 const styles = StyleSheet.create({
@@ -355,82 +243,107 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   modalContainer: {
-    backgroundColor: "#fff",
-    borderRadius: 20,
-    padding: 24,
+    backgroundColor: "#FFFCFA",
+    borderRadius: 28,
+    paddingHorizontal: 18,
+    paddingTop: 11,
+    paddingBottom: 18,
     width: "90%",
-    maxWidth: 380,
+    maxWidth: 410,
+    alignItems: "center",
+    // Teto de altura para o conteúdo rolar em vez de vazar da tela.
+    maxHeight: "94%",
+  },
+  modalScroll: {
+    width: "100%",
+  },
+  modalScrollContent: {
     alignItems: "center",
   },
+  sheetHandle: { width: 42, height: 5, borderRadius: 3, backgroundColor: "#DED9DB", marginBottom: 14 },
   header: {
     alignItems: "center",
-    marginBottom: 24,
+    marginBottom: 16,
   },
   exerciseName: {
-    fontSize: 20,
-    fontWeight: "700",
-    color: "#5C3B3B",
+    fontFamily: fonts.title,
+    fontSize: 25,
+    color: palette.textPrimary,
     textAlign: "center",
-    marginBottom: 8,
+    lineHeight: 29,
+    marginBottom: 13,
   },
   exerciseSubtitle: {
     fontSize: 14,
     color: "#888",
     textAlign: "center",
   },
+  counterRow: { width: "100%", flexDirection: "row", alignItems: "center", justifyContent: "center", marginBottom: 13 },
+  counterPill: { flex: 1, height: 43, borderRadius: 22, backgroundColor: "#F4EBF5", flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 7 },
+  counterText: { fontFamily: fonts.bodyBold, fontSize: 11, color: "#4B3C51" },
+  counterDivider: { width: 1, height: 29, backgroundColor: "#DCCDE0", marginHorizontal: 8 },
+  followBubble: { height: 61, minWidth: 116, borderRadius: 20, backgroundColor: "#F1E4F4", alignItems: "center", justifyContent: "center", gap: 4, marginBottom: -24, zIndex: 3, shadowColor: palette.purpleDark, shadowOpacity: .1, shadowRadius: 8, elevation: 3 },
+  followText: { fontFamily: fonts.bodyBold, fontSize: 14, color: "#765092" },
   timerContainer: {
-    marginBottom: 24,
+    marginBottom: 12,
   },
   timerContent: {
     alignItems: "center",
   },
+  // Reduzido de 48 para a Lunia caber dentro do anel junto com o número.
   timerText: {
-    fontSize: 48,
-    fontWeight: "700",
-    color: "#5C3B3B",
+    fontFamily: fonts.bodyBold,
+    fontSize: 43,
+    color: palette.textPrimary,
+    lineHeight: 48,
+    marginTop: -4,
   },
+  phasePill: { minWidth: 132, height: 35, borderRadius: 18, alignItems: "center", justifyContent: "center", paddingHorizontal: 17 },
   phaseText: {
-    fontSize: 16,
-    fontWeight: "600",
-    color: "#666",
-    marginTop: 8,
+    fontFamily: fonts.bodyBold,
+    fontSize: 14,
+    letterSpacing: 1.1,
+    color: "#fff",
   },
   instructionContainer: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "#F9F9F9",
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 24,
+    backgroundColor: palette.glass,
+    borderRadius: 17,
+    padding: 11,
+    marginBottom: 7,
     width: "100%",
   },
+  instructionIcon: { width: 43, height: 43, borderRadius: 22, alignItems: "center", justifyContent: "center" },
+  instructionCopy: { flex: 1, marginLeft: 12 },
   instructionText: {
-    fontSize: 14,
-    color: "#333",
-    marginLeft: 12,
-    flex: 1,
+    fontFamily: fonts.bodyBold,
+    fontSize: 13,
+    color: palette.purpleDark,
   },
+  instructionSubtext: { fontFamily: fonts.body, fontSize: 10, color: "#756D80", marginTop: 2 },
   controlsContainer: {
     flexDirection: "row",
-    justifyContent: "center",
     alignItems: "center",
-    gap: 12,
+    justifyContent: "space-around",
     width: "100%",
   },
+  controlItem: { alignItems: "center", width: 66 },
   controlButton: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    backgroundColor: "#A56C6C",
+    width: 58,
+    height: 58,
+    borderRadius: 29,
+    backgroundColor: palette.textSecondary,
     justifyContent: "center",
     alignItems: "center",
   },
   secondaryButton: {
-    backgroundColor: "#7D5A5A",
+    backgroundColor: palette.textSecondary,
   },
   closeButton: {
-    backgroundColor: "#91766E",
+    backgroundColor: palette.purpleDark,
   },
+  controlLabel: { fontFamily: fonts.bodyMedium, fontSize: 10, color: "#5F5367", marginTop: 5 },
   completedContainer: {
     flex: 1,
     justifyContent: "center",
@@ -443,18 +356,18 @@ const styles = StyleSheet.create({
   completedTitle: {
     fontSize: 28,
     fontWeight: "700",
-    color: "#fff",
+    color: palette.textPrimary,
     marginTop: 24,
     marginBottom: 8,
   },
   completedText: {
     fontSize: 18,
-    color: "#fff",
+    color: palette.textSecondary,
     textAlign: "center",
     marginBottom: 32,
   },
   completedButton: {
-    backgroundColor: "#fff",
+    backgroundColor: palette.purpleDark,
     paddingHorizontal: 48,
     paddingVertical: 16,
     borderRadius: 28,
@@ -463,7 +376,7 @@ const styles = StyleSheet.create({
   completedButtonText: {
     fontSize: 18,
     fontWeight: "700",
-    color: "#A56C6C",
+    color: palette.white,
   },
   completedCloseButton: {
     paddingHorizontal: 32,
@@ -471,7 +384,7 @@ const styles = StyleSheet.create({
   },
   completedCloseButtonText: {
     fontSize: 16,
-    color: "#fff",
+    color: palette.textSecondary,
     fontWeight: "600",
   },
 });

@@ -11,8 +11,9 @@ import { useNavigation } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { RootStackParamList } from "app/navigation";
 import { luniaStyles } from "./LuniaStyles";
-import { api } from "app/services/api";
+import { api, ehPerfilIncompleto } from "app/services/api";
 import { LunIAModalProps } from "app/interface/LuniaIAModalInterface";
+import { palette } from "../../theme/colors";
 
 export default function LunIAModal({
   visivel,
@@ -38,7 +39,9 @@ export default function LunIAModal({
       const res = await api.get("/ia/mensagem-entrada?tipo=boas_vindas");
       setMensagem(res.data?.resposta || `Oi, ${nomeFormatado}! 🌸`);
     } catch (err) {
-      console.error("Erro ao buscar mensagem da IA", err);
+      if (!ehPerfilIncompleto(err)) {
+        console.error("Erro ao buscar mensagem da IA", err);
+      }
       setMensagem(`Oi, ${nomeFormatado}! 🌸`);
     } finally {
       setCarregando(false);
@@ -76,7 +79,7 @@ export default function LunIAModal({
             </Text>
 
             {carregando ? (
-              <ActivityIndicator size="small" color="#A56C6C" />
+              <ActivityIndicator size="small" color={palette.textSecondary} />
             ) : (
               <Text style={luniaStyles.texto}>{mensagem}</Text>
             )}

@@ -2,6 +2,7 @@ import React from "react";
 import { View, Text, Image, TouchableOpacity, StyleSheet } from "react-native";
 import Modal from "react-native-modal";
 import { globalStyles } from "../theme/global";
+import { palette } from "../theme/colors";
 
 interface ClasseLunarModalProps {
   visivel: boolean;
@@ -120,18 +121,18 @@ const styles = StyleSheet.create({
   modalTitulo: {
     fontSize: 18,
     fontWeight: "600",
-    color: "#5C3B3B",
+    color: palette.textPrimary,
     marginBottom: 2,
   },
   classeNome: {
     fontSize: 16,
     fontWeight: "bold",
-    color: "#7EAA92",
+    color: palette.sage,
     textAlign: "center",
   },
   descricaoClasse: {
     fontSize: 14,
-    color: "#5C3B3B",
+    color: palette.textPrimary,
     textAlign: "center",
     marginBottom: 16,
     lineHeight: 20,
@@ -148,13 +149,13 @@ const styles = StyleSheet.create({
   },
   blocoTexto: {
     fontSize: 14,
-    color: "#5C3B3B",
+    color: palette.textPrimary,
     lineHeight: 22,
     flex: 1,
     textAlign: "justify",
   },
   blocoDestaque: {
     fontWeight: "600",
-    color: "#7EAA92",
+    color: palette.sage,
   },
 });

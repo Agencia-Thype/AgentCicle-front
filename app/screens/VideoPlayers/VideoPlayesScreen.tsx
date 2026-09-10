@@ -9,13 +9,14 @@ import {
   Platform,
   ScrollView,
 } from "react-native";
-import { Video, ResizeMode } from "expo-av";
+import { useVideoPlayer, VideoView } from "expo-video";
 import { RouteProp, useRoute, useNavigation } from "@react-navigation/native";
 import { RootStackParamList } from "../../navigation";
 import { globalStyles, themeColors } from "../../theme/global";
 import AppBackground from "../../components/AppBackground";
 import { Ionicons } from "@expo/vector-icons";
 import { AnimatedLogo } from "../../components/AnimatedLogo";
+import { palette } from "../../theme/colors";
 
 type VideoPlayerRouteProp = RouteProp<RootStackParamList, "VideoPlayer">;
 
@@ -23,6 +24,15 @@ export default function VideoPlayerScreen() {
   const route = useRoute<VideoPlayerRouteProp>();
   const { url } = route.params;
   const navigation = useNavigation();
+
+  // useVideoPlayer é um hook: precisa ser chamado incondicionalmente, antes do
+  // early return de "vídeo indisponível". Fonte null é aceita e não carrega nada.
+  const player = useVideoPlayer(url ?? null, (player) => {
+    player.loop = false;
+    if (url) {
+      player.play();
+    }
+  });
 
   if (!url) {
     return (
@@ -40,10 +50,6 @@ export default function VideoPlayerScreen() {
             showsVerticalScrollIndicator={false}
             keyboardShouldPersistTaps="handled"
           >
-            <TouchableOpacity onPress={() => navigation.goBack()} style={{ backgroundColor: "rgba(146,96,206,0.3)", borderRadius: 20, padding: 8, alignSelf: "flex-start" }}>
-              <Ionicons name="arrow-back" size={24} color="#EED0FC" />
-            </TouchableOpacity>
-
             <AnimatedLogo />
 
             <View style={styles.container}>
@@ -74,13 +80,6 @@ export default function VideoPlayerScreen() {
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
         >
-          <TouchableOpacity
-            onPress={() => navigation.goBack()}
-            style={{ marginBottom: 12, backgroundColor: "rgba(146,96,206,0.3)", borderRadius: 20, padding: 8, alignSelf: "flex-start" }}
-          >
-            <Ionicons name="arrow-back" size={24} color="#EED0FC" />
-          </TouchableOpacity>
-
           <AnimatedLogo />
 
           <Text style={styles.title}>
@@ -88,14 +87,10 @@ export default function VideoPlayerScreen() {
           </Text>
 
           <View style={styles.container}>
-            <Video
-              source={{ uri: url }}
-              rate={1.0}
-              volume={1.0}
-              isMuted={false}
-              resizeMode={ResizeMode.CONTAIN}
-              useNativeControls
-              shouldPlay
+            <VideoView
+              player={player}
+              nativeControls
+              contentFit="contain"
               style={styles.video}
             />
           </View>
@@ -122,13 +117,13 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: "600",
     textAlign: "center",
-    color: "#5C3B3B",
+    color: palette.textPrimary,
     marginBottom: 20,
   },
   messageText: {
     textAlign: "center",
     fontSize: 18,
-    color: "#5C3B3B",
+    color: palette.textPrimary,
     paddingHorizontal: 24,
     lineHeight: 26,
   },

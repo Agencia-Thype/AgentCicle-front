@@ -1,24 +1,29 @@
 import React, { useEffect, useState } from "react";
 import {
-  View,
-  Text,
-  ScrollView,
-  TouchableOpacity,
   ActivityIndicator,
-  StyleSheet,
   Alert,
   Modal,
-  Animated,
+  Pressable,
+  ScrollView,
+  StatusBar,
+  Text,
+  TouchableOpacity,
+  View,
 } from "react-native";
-import AppBackground from "../../components/AppBackground";
-import { Ionicons } from "@expo/vector-icons";
-import { SafeAreaView } from "react-native-safe-area-context";
-import { globalStyles, themeColors } from "../../theme/global";
+import { MaterialCommunityIcons, MaterialIcons } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
+
+import AppBackground from "../../components/AppBackground";
 import { RootStackParamList } from "../../navigation";
 import { api } from "../../services/api";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { palette } from "../../theme/colors";
 import { KegelTemporizadorModal } from "./KegelTemporizadorModal";
+import { kegelStyles as styles } from "./kegelStyles";
+import FloatingLuniaCoach from "../../components/LunIA/LuniaFloatingMessage";
+import LunIAModal from "../../components/LunIA/LuniaModal";
+import { useFaseLunar } from "../../hooks/useFaseLunar";
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList, "Kegel">;
 
@@ -78,6 +83,10 @@ const niveis: { value: NivelKegel; label: string }[] = [
   { value: "avancado", label: "Avançado" },
 ];
 
+// Alterar quando o protocolo terapêutico do backend mudar. Além de evitar uma
+// resposta em cache, faz o Fast Refresh buscar os novos tempos sem reiniciar o app.
+const REVISAO_PROTOCOLO_KEGEL = 4;
+
 export default function KegelScreen() {
   const navigation = useNavigation<NavigationProp>();
   const [loading, setLoading] = useState(true);
@@ -87,6 +96,10 @@ export default function KegelScreen() {
   const [exercicioSelecionado, setExercicioSelecionado] = useState<ExercicioKegel | null>(null);
   const [mostrarTemporizador, setMostrarTemporizador] = useState(false);
   const [statusNiveis, setStatusNiveis] = useState<StatusNiveisResponse | null>(null);
+  const [mostrarLunia, setMostrarLunia] = useState(false);
+  const { fase } = useFaseLunar();
+  // Instruções ficam recolhidas: abertas, cada card vira uma parede de texto.
+  const [exercicioExpandido, setExercicioExpandido] = useState<string | null>(null);
 
   useEffect(() => {
     carregarStatusNiveis();
@@ -94,7 +107,15 @@ export default function KegelScreen() {
 
   useEffect(() => {
     carregarTreino();
-  }, [nivelSelecionado]);
+  }, [nivelSelecionado, REVISAO_PROTOCOLO_KEGEL]);
+
+  useEffect(() => {
+    if (!exercicioSelecionado || !treino) return;
+    const exercicioAtualizado = treino.exercicios.find(
+      (item) => item.id === exercicioSelecionado.id
+    );
+    if (exercicioAtualizado) setExercicioSelecionado(exercicioAtualizado);
+  }, [treino]);
 
   const carregarStatusNiveis = async () => {
     try {
@@ -108,7 +129,9 @@ export default function KegelScreen() {
   const carregarTreino = async () => {
     try {
       setLoading(true);
-      const response = await api.get(`/kegel/treino-dia?nivel=${nivelSelecionado}`);
+      const response = await api.get(
+        `/kegel/treino-dia?nivel=${nivelSelecionado}&revisao=${REVISAO_PROTOCOLO_KEGEL}`
+      );
       setTreino(response.data);
     } catch (error) {
       console.error("Erro ao carregar treino de Kegel:", error);
@@ -150,21 +173,27 @@ export default function KegelScreen() {
     setMostrarTemporizador(true);
   };
 
-  const registrarConclusao = async (exercicio: ExercicioKegel) => {
+  // Devolve os pontos ganhos: cada exercício pontua uma vez por dia.
+  const registrarConclusao = async (exercicio: ExercicioKegel): Promise<number> => {
     try {
-      await api.post("/kegel/concluir-exercicio", {
+      const response = await api.post("/kegel/concluir-exercicio", {
         nivel: exercicio.nivel,
         exercicio_id: exercicio.id,
         percentual: 100
       });
+      const pontos = Number(response.data?.pontos_ganhos) || 0;
+      // A Home só relê a pontuação quando encontra esta flag.
+      if (pontos > 0) await AsyncStorage.setItem("atualizarPontuacao", "true");
 
       // Recarregar status dos níveis
       await carregarStatusNiveis();
 
       // Recarregar treino atual para atualizar progresso
       await carregarTreino();
+      return pontos;
     } catch (error) {
       console.error("Erro ao registrar conclusão:", error);
+      return 0;
     }
   };
 
@@ -181,532 +210,444 @@ export default function KegelScreen() {
     return segsRestantes > 0 ? `${minutos}min ${segsRestantes}s` : `${minutos}min`;
   };
 
+  const concluidos = treino?.progresso_usuario?.exercicios_concluidos ?? [];
+  const total =
+    treino?.progresso_usuario?.total_exercicios ?? treino?.exercicios.length ?? 0;
+  const percentual = Math.round(
+    treino?.progresso_usuario?.percentual_conclusao ?? 0
+  );
+  const ir = (rota: string) => navigation.navigate(rota as never);
+
   if (loading) {
     return (
       <AppBackground>
-        <SafeAreaView style={{ flex: 1 }}>
-          <View style={globalStyles.centeredContainer}>
-            <ActivityIndicator size="large" color="#9260CE" />
-          </View>
-        </SafeAreaView>
+        <View style={styles.center}>
+          <ActivityIndicator size="large" color={palette.purple} />
+        </View>
       </AppBackground>
     );
   }
 
   return (
     <AppBackground>
-      <SafeAreaView style={{ flex: 1 }}>
-        <ScrollView contentContainerStyle={{ flexGrow: 1, padding: 24, paddingBottom: 80 }} showsVerticalScrollIndicator={false}>
-          {/* Header */}
-          <View style={styles.header}>
-            <TouchableOpacity onPress={() => navigation.goBack()}>
-              <Ionicons name="arrow-back" size={24} color="#5C3B3B" />
-            </TouchableOpacity>
+      <StatusBar barStyle="dark-content" backgroundColor="transparent" translucent />
 
-            <View style={styles.headerContent}>
-              <Text style={globalStyles.title}>Exercícios de Kegel</Text>
-              <TouchableOpacity
-                style={styles.nivelButton}
-                onPress={() => setMostrarSeletorNivel(true)}
-              >
-                <Ionicons name="layers-outline" size={20} color="#fff" />
-                <Text style={styles.nivelButtonText}>{getNivelLabel(nivelSelecionado)}</Text>
-                <Ionicons name="chevron-down" size={18} color="#fff" />
-              </TouchableOpacity>
+      <View style={styles.screen}>
+        <View style={styles.header}>
+          <View style={styles.brand}>
+            <Text style={styles.brandName}>Cíclica</Text>
+            <Text style={styles.brandTag}>SEU CICLO, SUA FORÇA.</Text>
+          </View>
+        </View>
+
+        <View style={styles.hero}>
+          <View style={styles.heroCopy}>
+            <Text style={styles.heroTitle}>Kegel</Text>
+            <Text style={styles.heroSubtitle}>Seu assoalho pélvico</Text>
+            <View style={styles.statusPill}>
+              <View style={styles.statusDot} />
+              <Text style={styles.statusText}>
+                {concluidos.length} de {total} concluídos
+              </Text>
+              <MaterialCommunityIcons
+                name="heart-outline"
+                size={19}
+                color={palette.purpleDark}
+              />
             </View>
           </View>
 
-          {/* Informações do Nível */}
-          {treino?.progresso_usuario && (
-            <View style={styles.infoCard}>
-              <View style={styles.infoRow}>
-                <Ionicons name="information-circle-outline" size={20} color="#A56C6C" />
-                <Text style={styles.infoText}>
-                  Nível atual: <Text style={styles.infoTextBold}>{getNivelLabel(treino.nivel)}</Text>
-                </Text>
-              </View>
-              <Text style={styles.infoSubtext}>
-                {treino.progresso_usuario.total_exercicios} exercício(s) disponível(is)
-              </Text>
-              <Text style={styles.infoSubtext}>
-                Progresso: {treino.progresso_usuario.percentual_conclusao.toFixed(0)}% concluído
-              </Text>
-            </View>
-          )}
+          <View style={styles.sideQuote}>
+            <Text style={styles.sideQuoteText}>
+              {`Constância\nvale mais\nque\nintensidade`}
+            </Text>
+            <MaterialCommunityIcons
+              name="heart-outline"
+              size={24}
+              color={palette.purpleDark}
+            />
+          </View>
+        </View>
 
-          {/* Lista de Exercícios */}
-          {treino?.exercicios.map((exercicio, index) => {
-            const isConcluido = treino.progresso_usuario?.exercicios_concluidos?.includes(exercicio.id);
+        {/* Card de nível — toque abre o seletor, como o card de fase da Lunia */}
+        <TouchableOpacity
+          style={styles.levelCard}
+          activeOpacity={0.85}
+          onPress={() => setMostrarSeletorNivel(true)}
+        >
+          <View style={styles.levelIcon}>
+            <MaterialCommunityIcons
+              name="layers-triple-outline"
+              size={40}
+              color={palette.purpleDark}
+            />
+          </View>
+          <View style={styles.levelCopy}>
+            <Text style={styles.levelLabel}>Nível atual:</Text>
+            <Text style={styles.levelName}>
+              {getNivelLabel(treino?.nivel ?? nivelSelecionado)}
+            </Text>
+            <Text style={styles.levelDescription} numberOfLines={1}>
+              {total} exercício{total === 1 ? "" : "s"} · toque para trocar
+            </Text>
+          </View>
+          <View style={styles.levelDivider} />
+          <View style={styles.countPill}>
+            <Text style={styles.countText}>{percentual}% feito</Text>
+          </View>
+        </TouchableOpacity>
 
-            return (
-              <View key={exercicio.id} style={[styles.exercicioCard, isConcluido && styles.exercicioCardCompleted]}>
-                <View style={styles.exercicioHeader}>
-                  <View style={styles.exercicioTitleContainer}>
-                    {isConcluido && (
-                      <Ionicons name="checkmark-circle" size={24} color="#4caf50" style={styles.completedIcon} />
-                    )}
-                    <Text style={styles.exercicioTitle}>{exercicio.nome}</Text>
+        <ScrollView
+          style={styles.list}
+          contentContainerStyle={styles.listContent}
+          showsVerticalScrollIndicator={false}
+        >
+          {treino?.exercicios.length ? (
+            treino.exercicios.map((exercicio) => {
+              const isConcluido = concluidos.includes(exercicio.id);
+              const aberto = exercicioExpandido === exercicio.id;
+
+              return (
+                <View
+                  key={exercicio.id}
+                  style={[styles.exCard, isConcluido && styles.exCardDone]}
+                >
+                  <View style={styles.exHeader}>
+                    <View style={styles.exTitleWrap}>
+                      {isConcluido && (
+                        <MaterialCommunityIcons
+                          name="check-circle"
+                          size={20}
+                          color="#6E9C5B"
+                        />
+                      )}
+                      <Text style={styles.exTitle} numberOfLines={2}>
+                        {exercicio.nome}
+                      </Text>
+                    </View>
+
+                    <TouchableOpacity
+                      style={[styles.playBtn, isConcluido && styles.playBtnDone]}
+                      onPress={() => iniciarExercicio(exercicio)}
+                    >
+                      <MaterialCommunityIcons name="play" size={25} color="#fff" />
+                    </TouchableOpacity>
                   </View>
+
+                  <View style={styles.metaRow}>
+                    <Meta icon="target" texto={exercicio.objetivo} />
+                    <Meta icon="repeat" texto={`${exercicio.series} séries`} />
+                    <Meta
+                      icon="timer-sand"
+                      texto={`Descanso ${formatarDuracao(exercicio.descanso_segundos)}`}
+                    />
+                  </View>
+
                   <TouchableOpacity
-                    style={styles.playButton}
-                    onPress={() => iniciarExercicio(exercicio)}
+                    style={styles.toggle}
+                    onPress={() =>
+                      setExercicioExpandido(aberto ? null : exercicio.id)
+                    }
                   >
-                    <Ionicons name="play-circle" size={32} color="#A56C6C" />
+                    <Text style={styles.toggleText}>
+                      {aberto ? "Ocultar instruções" : "Ver instruções"}
+                    </Text>
+                    <MaterialCommunityIcons
+                      name={aberto ? "chevron-up" : "chevron-down"}
+                      size={15}
+                      color={palette.purple}
+                    />
                   </TouchableOpacity>
-              </View>
 
-              <View style={styles.exercicioDetails}>
-                <View style={styles.detailRow}>
-                  <Ionicons name="fitness-outline" size={18} color="#666" />
-                  <Text style={styles.detailText}>Objetivo: {exercicio.objetivo}</Text>
-                </View>
-
-                <View style={styles.detailRow}>
-                  <Ionicons name="repeat-outline" size={18} color="#666" />
-                  <Text style={styles.detailText}>{exercicio.series} séries</Text>
-                </View>
-
-                <View style={styles.detailRow}>
-                  <Ionicons name="time-outline" size={18} color="#666" />
-                  <Text style={styles.detailText}>Descanso: {formatarDuracao(exercicio.descanso_segundos)}</Text>
-                </View>
-              </View>
-
-              {/* Instruções do Exercício */}
-              <View style={styles.instrucoesContainer}>
-                <Text style={styles.instrucoesTitle}>Instruções:</Text>
-                {exercicio.instrucoes.map((serie, serieIndex) => (
-                  <View key={serieIndex} style={styles.serieContainer}>
-                    <Text style={styles.serieTitle}>Série {serieIndex + 1}:</Text>
-                    <Text style={styles.serieRepeticoes}>{serie.repeticoes} repetições</Text>
-                    <View style={styles.fasesContainer}>
-                      {serie.fases.map((fase, faseIndex) => (
-                        <View key={faseIndex} style={styles.faseItem}>
-                          <View style={styles.faseHeader}>
-                            <View
-                              style={[
-                                styles.faseIndicator,
-                                fase.tipo.includes("contracao") ? styles.contracaoIndicator : styles.relaxamentoIndicator,
-                              ]}
-                            />
-                            <Text style={styles.faseTipo}>
-                              {fase.tipo === "contracao" ? "Contração" :
-                               fase.tipo === "contracao_forte" ? "Contração Forte" :
-                               fase.tipo === "relaxamento" ? "Relaxamento" : fase.tipo}
+                  {aberto && (
+                    <View style={styles.instrucoes}>
+                      {exercicio.instrucoes.map((serie, serieIndex) => (
+                        <View key={serieIndex} style={styles.serie}>
+                          <View style={styles.serieTop}>
+                            <Text style={styles.serieTitle}>
+                              Série {serieIndex + 1}
+                            </Text>
+                            <Text style={styles.serieReps}>
+                              {serie.repeticoes} repetições
                             </Text>
                           </View>
-                          <Text style={styles.faseDuracao}>{formatarDuracao(fase.duracao_segundos)}</Text>
-                          <Text style={styles.faseInstrucao}>{fase.instrucao}</Text>
+
+                          <View style={styles.fases}>
+                            {serie.fases.map((fase, faseIndex) => (
+                              <View key={faseIndex} style={styles.faseItem}>
+                                <View
+                                  style={[
+                                    styles.faseDot,
+                                    fase.tipo.includes("contracao")
+                                      ? styles.faseContracao
+                                      : styles.faseRelaxamento,
+                                  ]}
+                                />
+                                <View style={styles.faseCopy}>
+                                  <View style={styles.faseTopo}>
+                                    <Text style={styles.faseTipo}>
+                                      {rotuloDaFase(fase.tipo)}
+                                    </Text>
+                                    <Text style={styles.faseDuracao}>
+                                      {formatarDuracao(fase.duracao_segundos)}
+                                    </Text>
+                                  </View>
+                                  <Text style={styles.faseInstrucao}>
+                                    {fase.instrucao}
+                                  </Text>
+                                </View>
+                              </View>
+                            ))}
+                          </View>
                         </View>
                       ))}
                     </View>
-                  </View>
-                ))}
-              </View>
-            </View>
-          );
-        })}
+                  )}
+                </View>
+              );
+            })
+          ) : (
+            <Text style={styles.vazio}>
+              Nenhum exercício disponível neste nível.
+            </Text>
+          )}
         </ScrollView>
 
-        {/* Modal de Seleção de Nível */}
-        <Modal visible={mostrarSeletorNivel} transparent animationType="fade">
-          <View style={styles.modalOverlay}>
-            <View style={styles.modalContent}>
-              <Text style={styles.modalTitle}>Selecione o Nível</Text>
-              <Text style={styles.modalSubtitle}>Você pode praticar qualquer nível, mas precisa desbloquear progredindo</Text>
+        {/* Chips de nível — mesmo lugar dos chips de pergunta da Lunia */}
+        <View style={styles.quickRow}>
+          {niveis.map((nivel) => {
+            const ativo = nivelSelecionado === nivel.value;
+            const bloqueado = statusNiveis?.[nivel.value]?.bloqueado;
 
-              {niveis.map((nivel) => {
-                const nivelStatus = statusNiveis?.[nivel.value];
-                const isBloqueado = nivelStatus?.bloqueado || false;
-                const progresso = nivelStatus?.percentual_conclusao || 0;
-
-                return (
-                  <TouchableOpacity
-                    key={nivel.value}
-                    style={[
-                      styles.nivelOption,
-                      nivelSelecionado === nivel.value && styles.nivelOptionSelected,
-                      isBloqueado && styles.nivelOptionBlocked,
-                    ]}
-                    onPress={() => atualizarNivel(nivel.value)}
-                    disabled={false} // Sempre permite clicar
-                  >
-                    <View style={styles.nivelOptionContent}>
-                      <View style={styles.nivelOptionLeft}>
-                        {isBloqueado ? (
-                          <Ionicons name="lock-closed" size={24} color="#999" />
-                        ) : nivelSelecionado === nivel.value ? (
-                          <Ionicons name="checkmark-circle" size={24} color="#A56C6C" />
-                        ) : (
-                          <Ionicons name="unlock-open" size={24} color="#A56C6C" />
-                        )}
-
-                        <View style={styles.nivelOptionTextContainer}>
-                          <Text
-                            style={[
-                              styles.nivelOptionText,
-                              nivelSelecionado === nivel.value && styles.nivelOptionTextSelected,
-                              isBloqueado && styles.nivelOptionTextBlocked,
-                            ]}
-                          >
-                            {nivel.label}
-                          </Text>
-
-                          {/* Barra de progresso do nível */}
-                          {nivelStatus && (
-                            <View style={styles.nivelProgressContainer}>
-                              <View style={styles.nivelProgressBar}>
-                                <View
-                                  style={[
-                                    styles.nivelProgressFill,
-                                    { width: `${progresso}%` }
-                                  ]}
-                                />
-                              </View>
-                              <Text style={styles.nivelProgressText}>
-                                {nivelStatus.exercicios_concluidos}/{nivelStatus.total_exercicios}
-                              </Text>
-                            </View>
-                          )}
-
-                          {/* Mensagem de bloqueio */}
-                          {isBloqueado && nivelStatus?.motivo_bloqueio && (
-                            <Text style={styles.nivelBlockedText}>
-                              {nivelStatus.motivo_bloqueio}
-                            </Text>
-                          )}
-                        </View>
-                      </View>
-                    </View>
-                  </TouchableOpacity>
-                );
-              })}
-
+            return (
               <TouchableOpacity
-                style={styles.modalCloseButton}
-                onPress={() => setMostrarSeletorNivel(false)}
+                key={nivel.value}
+                style={[styles.quick, ativo && styles.quickAtivo]}
+                onPress={() => atualizarNivel(nivel.value)}
               >
-                <Text style={styles.modalCloseButtonText}>Cancelar</Text>
+                <MaterialCommunityIcons
+                  name={bloqueado ? "lock-outline" : "lock-open-variant-outline"}
+                  size={20}
+                  color={ativo ? "#fff" : palette.purpleDark}
+                />
+                <Text
+                  style={[styles.quickText, ativo && styles.quickTextAtivo]}
+                  numberOfLines={1}
+                >
+                  {nivel.label}
+                </Text>
               </TouchableOpacity>
-            </View>
-          </View>
-        </Modal>
+            );
+          })}
+        </View>
 
-        {/* Modal de Temporizador */}
-        {exercicioSelecionado && mostrarTemporizador && (
-          <KegelTemporizadorModal
-            exercicio={exercicioSelecionado}
-            visible={mostrarTemporizador}
-            onClose={() => {
-              setMostrarTemporizador(false);
-              setExercicioSelecionado(null);
-            }}
-            onComplete={async () => {
-              if (exercicioSelecionado) {
-                await registrarConclusao(exercicioSelecionado);
-
-                // Verificar se desbloqueou novo nível
-                const nivelInfo = statusNiveis?.[exercicioSelecionado.nivel];
-                const nivelStatus = statusNiveis;
-
-                let mensagem = "Parabéns! Exercício concluído com sucesso!";
-
-                // Verificar se desbloqueou intermediário
-                if (exercicioSelecionado.nivel === "iniciante") {
-                  const inicianteCompleto = nivelStatus?.iniciante?.concluido;
-                  if (inicianteCompleto) {
-                    mensagem += "\n\n🎉 Você completou todos os exercícios do nível Iniciante!";
-                    mensagem += "\n\nNível Intermediário desbloqueado!";
-                  }
-                }
-
-                // Verificar se desbloqueou avançado
-                if (exercicioSelecionado.nivel === "intermediario") {
-                  const intermediarioCompleto = nivelStatus?.intermediario?.concluido;
-                  if (intermediarioCompleto) {
-                    mensagem += "\n\n🎉 Você completou todos os exercícios do nível Intermediário!";
-                    mensagem += "\n\nNível Avançado desbloqueado!";
-                  }
-                }
-
-                Alert.alert("Parabéns!", mensagem);
-              }
-              setMostrarTemporizador(false);
-              setExercicioSelecionado(null);
-            }}
+        <View style={styles.bottomNav}>
+          <Nav icon="home-outline" label="Início" onPress={() => ir("Home")} />
+          <Nav
+            icon="calendar-month-outline"
+            label="Ciclo"
+            onPress={() => ir("Calendario")}
           />
-        )}
-      </SafeAreaView>
+          <Nav icon="meditation" label="Kegel" active onPress={() => {}} />
+          <Nav
+            icon="dumbbell"
+            label="Treinos"
+            onPress={() => ir("TreinoDoDia")}
+          />
+          <Nav
+            icon="account-outline"
+            label="Perfil"
+            onPress={() => ir("Perfil")}
+          />
+        </View>
+      </View>
+
+      <Modal visible={mostrarSeletorNivel} transparent animationType="fade">
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalCard}>
+            <Text style={styles.modalTitle}>Selecione o nível</Text>
+            <Text style={styles.modalSubtitle}>
+              Você pode praticar qualquer nível, mas precisa desbloquear progredindo.
+            </Text>
+
+            {niveis.map((nivel) => {
+              const nivelStatus = statusNiveis?.[nivel.value];
+              const isBloqueado = nivelStatus?.bloqueado || false;
+              const progresso = nivelStatus?.percentual_conclusao || 0;
+              const selecionado = nivelSelecionado === nivel.value;
+
+              return (
+                <TouchableOpacity
+                  key={nivel.value}
+                  style={[
+                    styles.nivelOption,
+                    selecionado && styles.nivelOptionSelecionado,
+                    isBloqueado && styles.nivelOptionBloqueado,
+                  ]}
+                  onPress={() => atualizarNivel(nivel.value)}
+                >
+                  <View style={styles.nivelOptionLinha}>
+                    <MaterialCommunityIcons
+                      name={
+                        isBloqueado
+                          ? "lock-outline"
+                          : selecionado
+                            ? "check-circle"
+                            : "lock-open-variant-outline"
+                      }
+                      size={24}
+                      color={isBloqueado ? "#8C849A" : palette.purpleDark}
+                    />
+
+                    <View style={styles.nivelOptionCopy}>
+                      <Text
+                        style={[
+                          styles.nivelOptionTexto,
+                          isBloqueado && styles.nivelOptionTextoBloqueado,
+                        ]}
+                      >
+                        {nivel.label}
+                      </Text>
+
+                      {nivelStatus && (
+                        <View style={styles.nivelProgresso}>
+                          <View style={styles.nivelProgressoBarra}>
+                            <View
+                              style={[
+                                styles.nivelProgressoFill,
+                                { width: `${progresso}%` },
+                              ]}
+                            />
+                          </View>
+                          <Text style={styles.nivelProgressoTexto}>
+                            {nivelStatus.exercicios_concluidos}/
+                            {nivelStatus.total_exercicios}
+                          </Text>
+                        </View>
+                      )}
+
+                      {isBloqueado && nivelStatus?.motivo_bloqueio && (
+                        <Text style={styles.nivelBloqueadoTexto}>
+                          {nivelStatus.motivo_bloqueio}
+                        </Text>
+                      )}
+                    </View>
+                  </View>
+                </TouchableOpacity>
+              );
+            })}
+
+            <TouchableOpacity
+              style={styles.modalFechar}
+              onPress={() => setMostrarSeletorNivel(false)}
+            >
+              <Text style={styles.modalFecharTexto}>Cancelar</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+
+      {exercicioSelecionado && mostrarTemporizador && (
+        <KegelTemporizadorModal
+          exercicio={exercicioSelecionado}
+          visible={mostrarTemporizador}
+          onClose={() => {
+            setMostrarTemporizador(false);
+            setExercicioSelecionado(null);
+          }}
+          onComplete={async () => {
+            if (exercicioSelecionado) {
+              const pontos = await registrarConclusao(exercicioSelecionado);
+
+              const nivelStatus = statusNiveis;
+              let mensagem = "Parabéns! Exercício concluído com sucesso!";
+              if (pontos > 0) {
+                mensagem += `\n\n+${pontos} ponto${pontos !== 1 ? "s" : ""}`;
+              }
+
+              if (exercicioSelecionado.nivel === "iniciante") {
+                if (nivelStatus?.iniciante?.concluido) {
+                  mensagem +=
+                    "\n\n🎉 Você completou todos os exercícios do nível Iniciante!";
+                  mensagem += "\n\nNível Intermediário desbloqueado!";
+                }
+              }
+
+              if (exercicioSelecionado.nivel === "intermediario") {
+                if (nivelStatus?.intermediario?.concluido) {
+                  mensagem +=
+                    "\n\n🎉 Você completou todos os exercícios do nível Intermediário!";
+                  mensagem += "\n\nNível Avançado desbloqueado!";
+                }
+              }
+
+              Alert.alert("Parabéns!", mensagem);
+            }
+
+            setMostrarTemporizador(false);
+            setExercicioSelecionado(null);
+          }}
+        />
+      )}
+      {!mostrarTemporizador && (
+        <FloatingLuniaCoach
+          userName=""
+          mostrarAssistente={mostrarLunia}
+          bottomOffset={76}
+          onAbrirAssistente={() => setMostrarLunia(true)}
+        />
+      )}
+      <LunIAModal
+        visivel={mostrarLunia}
+        onFechar={() => setMostrarLunia(false)}
+        fase={fase}
+        userName=""
+      />
     </AppBackground>
   );
 }
 
-const styles = StyleSheet.create({
-  header: {
-    marginBottom: 20,
-  },
-  headerContent: {
-    marginTop: 16,
-  },
-  nivelButton: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: "#A56C6C",
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    borderRadius: 20,
-    alignSelf: "flex-start",
-    marginTop: 8,
-  },
-  nivelButtonText: {
-    color: "#fff",
-    fontWeight: "600",
-    marginHorizontal: 8,
-  },
-  infoCard: {
-    backgroundColor: "#FFF5F5",
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 20,
-    borderLeftWidth: 4,
-    borderLeftColor: "#A56C6C",
-  },
-  infoRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginBottom: 4,
-  },
-  infoText: {
-    fontSize: 14,
-    color: "#5C3B3B",
-    marginLeft: 8,
-  },
-  infoTextBold: {
-    fontWeight: "700",
-  },
-  infoSubtext: {
-    fontSize: 12,
-    color: "#888",
-    marginLeft: 28,
-  },
-  exercicioCard: {
-    backgroundColor: "#fff",
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 16,
-    shadowColor: "#000",
-    shadowOpacity: 0.05,
-    shadowOffset: { width: 0, height: 2 },
-    shadowRadius: 6,
-    elevation: 3,
-  },
-  exercicioCardCompleted: {
-    borderLeftWidth: 4,
-    borderLeftColor: "#4caf50",
-  },
-  exercicioHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 12,
-  },
-  exercicioTitleContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    flex: 1,
-  },
-  completedIcon: {
-    marginRight: 8,
-  },
-  exercicioTitle: {
-    fontSize: 18,
-    fontWeight: "700",
-    color: "#5C3B3B",
-    flex: 1,
-  },
-  playButton: {
-    marginLeft: 12,
-  },
-  exercicioDetails: {
-    marginBottom: 12,
-  },
-  detailRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginBottom: 6,
-  },
-  detailText: {
-    fontSize: 14,
-    color: "#666",
-    marginLeft: 8,
-  },
-  instrucoesContainer: {
-    backgroundColor: "#F9F9F9",
-    borderRadius: 8,
-    padding: 12,
-  },
-  instrucoesTitle: {
-    fontSize: 14,
-    fontWeight: "600",
-    color: "#5C3B3B",
-    marginBottom: 8,
-  },
-  serieContainer: {
-    marginBottom: 12,
-  },
-  serieTitle: {
-    fontSize: 13,
-    fontWeight: "600",
-    color: "#666",
-    marginBottom: 4,
-  },
-  serieRepeticoes: {
-    fontSize: 12,
-    color: "#888",
-    marginBottom: 8,
-  },
-  fasesContainer: {
-    paddingLeft: 8,
-  },
-  faseItem: {
-    marginBottom: 8,
-  },
-  faseHeader: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginBottom: 4,
-  },
-  faseIndicator: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    marginRight: 8,
-  },
-  contracaoIndicator: {
-    backgroundColor: "#f44336",
-  },
-  relaxamentoIndicator: {
-    backgroundColor: "#4caf50",
-  },
-  faseTipo: {
-    fontSize: 12,
-    fontWeight: "600",
-    color: "#333",
-  },
-  faseDuracao: {
-    fontSize: 12,
-    color: "#666",
-    marginLeft: 16,
-    marginBottom: 2,
-  },
-  faseInstrucao: {
-    fontSize: 11,
-    color: "#888",
-    marginLeft: 16,
-  },
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: "rgba(0, 0, 0, 0.5)",
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  modalContent: {
-    backgroundColor: "#fff",
-    borderRadius: 12,
-    padding: 24,
-    width: "90%",
-    maxWidth: 400,
-    maxHeight: "80%",
-  },
-  modalTitle: {
-    fontSize: 18,
-    fontWeight: "700",
-    color: "#5C3B3B",
-    marginBottom: 8,
-    textAlign: "center",
-  },
-  modalSubtitle: {
-    fontSize: 12,
-    color: "#888",
-    textAlign: "center",
-    marginBottom: 16,
-  },
-  nivelOption: {
-    padding: 16,
-    borderRadius: 8,
-    marginBottom: 8,
-    borderWidth: 1,
-    borderColor: "#ddd",
-  },
-  nivelOptionSelected: {
-    backgroundColor: "#FFF5F5",
-    borderColor: "#A56C6C",
-  },
-  nivelOptionBlocked: {
-    backgroundColor: "#F5F5F5",
-    borderColor: "#ddd",
-  },
-  nivelOptionContent: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-  },
-  nivelOptionLeft: {
-    flexDirection: "row",
-    alignItems: "center",
-    flex: 1,
-  },
-  nivelOptionTextContainer: {
-    marginLeft: 12,
-    flex: 1,
-  },
-  nivelOptionText: {
-    fontSize: 16,
-    color: "#333",
-    marginBottom: 4,
-  },
-  nivelOptionTextSelected: {
-    color: "#A56C6C",
-    fontWeight: "600",
-  },
-  nivelOptionTextBlocked: {
-    color: "#999",
-  },
-  nivelProgressContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginTop: 4,
-  },
-  nivelProgressBar: {
-    flex: 1,
-    height: 4,
-    backgroundColor: "#eee",
-    borderRadius: 2,
-    marginRight: 8,
-  },
-  nivelProgressFill: {
-    height: "100%",
-    backgroundColor: "#A56C6C",
-    borderRadius: 2,
-  },
-  nivelProgressText: {
-    fontSize: 11,
-    color: "#888",
-  },
-  nivelBlockedText: {
-    fontSize: 11,
-    color: "#ff9800",
-    marginTop: 4,
-  },
-  modalCloseButton: {
-    marginTop: 8,
-    padding: 16,
-    borderRadius: 8,
-    backgroundColor: "#f0f0f0",
-    alignItems: "center",
-  },
-  modalCloseButtonText: {
-    color: "#666",
-    fontWeight: "600",
-  },
-});
+/** Rótulo legível para o tipo de fase vindo da API. */
+function rotuloDaFase(tipo: string): string {
+  if (tipo === "contracao") return "Contração";
+  if (tipo === "manter") return "Manter";
+  if (tipo === "contracao_forte") return "Contração forte";
+  if (tipo === "soltar") return "Solta";
+  if (tipo === "relaxamento") return "Relaxamento";
+  return tipo;
+}
+
+function Meta({ icon, texto }: { icon: any; texto: string }) {
+  return (
+    <View style={styles.metaChip}>
+      <MaterialCommunityIcons name={icon} size={13} color={palette.purpleDark} />
+      <Text style={styles.metaText} numberOfLines={1}>
+        {texto}
+      </Text>
+    </View>
+  );
+}
+
+function Nav({
+  icon,
+  label,
+  active,
+  onPress,
+}: {
+  icon: any;
+  label: string;
+  active?: boolean;
+  onPress: () => void;
+}) {
+  return (
+    <TouchableOpacity style={styles.navItem} onPress={onPress}>
+      <MaterialCommunityIcons
+        name={icon}
+        size={25}
+        color={active ? palette.purpleDark : "#756D89"}
+      />
+      <Text style={[styles.navText, active && styles.navActive]}>{label}</Text>
+      {active && <View style={styles.navDot} />}
+    </TouchableOpacity>
+  );
+}

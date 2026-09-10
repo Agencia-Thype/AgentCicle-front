@@ -1,6 +1,7 @@
 import React from "react";
 import { View, Text, Modal, TouchableOpacity, StyleSheet, ScrollView } from "react-native";
 import { MaterialIcons } from "@expo/vector-icons";
+import { palette } from "../theme/colors";
 
 interface Props {
   visible: boolean;
@@ -18,7 +19,7 @@ export default function ResumoDiaModal({ visible, onClose, resumo }: Props) {
           <View style={styles.header}>
             <Text style={styles.titulo}>Resumo do dia</Text>
             <TouchableOpacity onPress={onClose}>
-              <MaterialIcons name="close" size={24} color="#5C3B3B" />
+              <MaterialIcons name="close" size={24} color={palette.textPrimary} />
             </TouchableOpacity>
           </View>
 
@@ -63,7 +64,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   modal: {
-    backgroundColor: "#FFF0F0",
+    backgroundColor: "rgba(214, 69, 63, 0.1)",
     borderRadius: 20,
     width: "90%",
     maxHeight: "80%",
@@ -78,7 +79,7 @@ const styles = StyleSheet.create({
   titulo: {
     fontSize: 18,
     fontWeight: "bold",
-    color: "#5C3B3B",
+    color: palette.textPrimary,
   },
   conteudo: {
     marginTop: 10,
@@ -86,7 +87,7 @@ const styles = StyleSheet.create({
   label: {
     fontWeight: "600",
     fontSize: 14,
-    color: "#5C3B3B",
+    color: palette.textPrimary,
     marginTop: 12,
   },
   valor: {

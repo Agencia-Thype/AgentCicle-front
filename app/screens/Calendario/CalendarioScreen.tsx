@@ -11,6 +11,8 @@ import { api } from "../../services/api";
 import ResumoDiaModal from "app/components/resumoDiaModal";
 import LunIAModal from "app/components/LunIA/LuniaModal";
 import FloatingLuniaCoach from "app/components/LunIA/LuniaFloatingMessage";
+import { palette } from "../../theme/colors";
+import CalendarVisual from "./CalendarVisual";
 
 const meses = [
   "Janeiro",
@@ -48,6 +50,8 @@ export default function CalendarioScreen() {
       try {
         const resp = await api.get("/fase-ciclo");
         const dataStr = resp.data?.inicio_ciclo;
+        const faseAtual = resp.data?.fase;
+        if (faseAtual) setFase(faseAtual);
         if (dataStr) {
           setDataUltimaMenstruacao(new Date(dataStr));
         }
@@ -89,35 +93,49 @@ export default function CalendarioScreen() {
     return {};
   };
 
+  const diaDoCiclo = dataUltimaMenstruacao
+    ? Math.max(1, Math.min(28, Math.floor((hoje.getTime() - dataUltimaMenstruacao.getTime()) / 86400000) + 1))
+    : 14;
+  const diasAteProximaMenstruacao = Math.max(0, 28 - diaDoCiclo + 1);
+  const primeiroDiaSemana = new Date(anoAtual, mesAtual, 1).getDay();
+
+  return (
+    <>
+      <CalendarVisual
+        navigation={navigation}
+        month={meses[mesAtual]}
+        monthIndex={mesAtual}
+        year={anoAtual}
+        daysInMonth={diasNoMes}
+        firstWeekday={primeiroDiaSemana}
+        phase={fase ? fase.charAt(0).toUpperCase() + fase.slice(1) : "Ovulatória"}
+        cycleDay={diaDoCiclo}
+        nextPeriodDays={diasAteProximaMenstruacao}
+        today={hoje}
+        onChangeMonth={mudarMes}
+        onSelectDay={handleSelecionarDia}
+        getDayStyle={getEstiloDia}
+      />
+      <ResumoDiaModal visible={modalResumoVisible} onClose={() => setModalResumoVisible(false)} resumo={resumoDia} />
+      <FloatingLuniaCoach userName={userName} mostrarAssistente={mostrarLunia} bottomOffset={72} onAbrirAssistente={() => setMostrarLunia(true)} />
+      <LunIAModal visivel={mostrarLunia} onFechar={() => setMostrarLunia(false)} fase={fase} userName={userName} />
+    </>
+  );
+
   return (
     <AppBackground>
       <View style={calendarioStyles.container}>
-        <TouchableOpacity
-          onPress={() => navigation.goBack()}
-          style={{
-            position: "absolute",
-            top: 50,
-            left: 16,
-            zIndex: 10,
-            backgroundColor: "rgba(146,96,206,0.3)",
-            borderRadius: 20,
-            padding: 8,
-          }}
-        >
-          <MaterialIcons name="arrow-back" size={22} color="#EED0FC" />
-        </TouchableOpacity>
-
         <AnimatedLogo />
 
         <View style={[calendarioStyles.header, { marginTop: 16 }]}>
           <TouchableOpacity onPress={() => mudarMes(-1)}>
-            <MaterialIcons name="chevron-left" size={28} color="#EED0FC" />
+            <MaterialIcons name="chevron-left" size={28} color={palette.textSecondary} />
           </TouchableOpacity>
           <Text style={calendarioStyles.headerText}>
             {meses[mesAtual]} {anoAtual}
           </Text>
           <TouchableOpacity onPress={() => mudarMes(1)}>
-            <MaterialIcons name="chevron-right" size={28} color="#EED0FC" />
+            <MaterialIcons name="chevron-right" size={28} color={palette.textSecondary} />
           </TouchableOpacity>
         </View>
 

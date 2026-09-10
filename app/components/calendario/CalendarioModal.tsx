@@ -8,9 +8,10 @@ import {
 import { MaterialIcons } from "@expo/vector-icons";
 import * as Animatable from "react-native-animatable";
 import { calendarioStyles as styles } from "./calendarioStyles";
-import { api } from "../../services/api";
+import { api, ehPerfilIncompleto } from "../../services/api";
 import Toast from "react-native-toast-message";
 import { getFasePorData, FaseCiclo } from "../../utils/cicloUtils";
+import { palette } from "../../theme/colors";
 
 const meses = [
   "Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho",
@@ -55,6 +56,13 @@ export default function CalendarioModal({ visible, onClose, onSelectDate }: Prop
           setPrimeiroDiaPermitido(limite);
         }
       } catch (err) {
+        // Conta nova ainda não possui um ciclo para consultar. O calendário
+        // continua utilizável para cadastrar a primeira menstruação.
+        if (ehPerfilIncompleto(err)) {
+          setDataUltimaMenstruacao(null);
+          setPrimeiroDiaPermitido(null);
+          return;
+        }
         console.error("Erro ao buscar ciclo:", err);
       }
     }
@@ -131,16 +139,16 @@ export default function CalendarioModal({ visible, onClose, onSelectDate }: Prop
         <Animatable.View animation="fadeInUp" duration={400} style={styles.modal}>
           <View style={styles.header}>
             <TouchableOpacity onPress={() => mudarMes(-1)}>
-              <MaterialIcons name="chevron-left" size={28} color="#5C3B3B" />
+              <MaterialIcons name="chevron-left" size={28} color={palette.textPrimary} />
             </TouchableOpacity>
             <Text style={styles.headerText}>{meses[mesAtual]} {anoAtual}</Text>
             <TouchableOpacity onPress={() => mudarMes(1)}>
-              <MaterialIcons name="chevron-right" size={28} color="#5C3B3B" />
+              <MaterialIcons name="chevron-right" size={28} color={palette.textPrimary} />
             </TouchableOpacity>
           </View>
 
           <TouchableOpacity onPress={onClose} style={{ alignSelf: 'flex-end', marginBottom: 8 }}>
-            <Text style={{ color: '#5C3B3B', fontWeight: 'bold' }}>Fechar</Text>
+            <Text style={{ color: palette.textPrimary, fontWeight: 'bold' }}>Fechar</Text>
           </TouchableOpacity>
 
           <View style={styles.grid}>

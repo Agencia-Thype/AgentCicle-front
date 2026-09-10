@@ -1,4 +1,6 @@
 import { StyleSheet } from "react-native";
+import { palette } from "../../theme/colors";
+import { fonts } from "../../theme/fonts";
 
 export const calendarioStyles = StyleSheet.create({
   container: {
@@ -16,8 +18,8 @@ export const calendarioStyles = StyleSheet.create({
   headerText: {
     fontSize: 20,
     fontWeight: "bold",
-    color: "#FFFAC3",
-    fontFamily: "LobsterTwo_700Bold",
+    color: palette.gold,
+    fontFamily: fonts.title,
   },
   grid: {
     alignItems: "center",
@@ -31,40 +33,40 @@ export const calendarioStyles = StyleSheet.create({
     marginVertical: 6,
     marginHorizontal: 4,
     borderRadius: 20,
-    backgroundColor: "rgba(63, 28, 101, 0.6)",
+    backgroundColor: "rgba(130, 87, 219, 0.08)",
     justifyContent: "center",
     alignItems: "center",
     borderWidth: 1,
-    borderColor: "rgba(146, 96, 206, 0.3)",
+    borderColor: "rgba(130, 87, 219, 0.3)",
   },
   diaTexto: {
     fontSize: 16,
-    color: "#EED0FC",
+    color: palette.textSecondary,
     fontWeight: "bold",
   },
   diaMenstruacao: {
     borderWidth: 2,
-    borderColor: "#ff6b6b",
+    borderColor: palette.error,
     borderStyle: "dotted",
-    backgroundColor: "rgba(255, 107, 107, 0.2)",
+    backgroundColor: "rgba(214, 69, 63, 0.15)",
   },
   diaFolicular: {
-    backgroundColor: "rgba(177, 214, 134, 0.4)",
-    borderColor: "#B1D686",
+    backgroundColor: "rgba(143, 191, 110, 0.3)",
+    borderColor: palette.sageLight,
     borderWidth: 1,
   },
   diaOvulatoria: {
-    backgroundColor: "rgba(255, 250, 195, 0.4)",
-    borderColor: "#FFFAC3",
+    backgroundColor: "rgba(201, 146, 46, 0.25)",
+    borderColor: palette.gold,
     borderWidth: 1,
   },
   diaLutea: {
-    backgroundColor: "rgba(238, 208, 252, 0.3)",
-    borderColor: "#EED0FC",
+    backgroundColor: "rgba(43, 27, 68, 0.3)",
+    borderColor: palette.textSecondary,
     borderWidth: 1,
   },
   diaHoje: {
     borderWidth: 2,
-    borderColor: "#FFFAC3",
+    borderColor: palette.gold,
   },
 });

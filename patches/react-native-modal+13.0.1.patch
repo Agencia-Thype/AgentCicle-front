@@ -1,0 +1,46 @@
+diff --git a/node_modules/react-native-modal/dist/modal.js b/node_modules/react-native-modal/dist/modal.js
+index 80f4e75..92234e2 100644
+--- a/node_modules/react-native-modal/dist/modal.js
++++ b/node_modules/react-native-modal/dist/modal.js
+@@ -1,9 +1,16 @@
+ import * as React from 'react';
+-import { Animated, DeviceEventEmitter, Dimensions, InteractionManager, KeyboardAvoidingView, Modal, PanResponder, BackHandler, Platform, TouchableWithoutFeedback, View, } from 'react-native';
++import { Animated, Dimensions, KeyboardAvoidingView, Modal, PanResponder, BackHandler, Platform, TouchableWithoutFeedback, View, } from 'react-native';
+ import * as PropTypes from 'prop-types';
+ import * as animatable from 'react-native-animatable';
+ import { initializeAnimations, buildAnimations, reversePercentage, } from './utils';
+ import styles from './modal.style';
++// React Native 0.86 deprecated InteractionManager. These handles were only
++// bookkeeping around the modal animation, so a local no-op handle preserves
++// the lifecycle without accessing the deprecated React Native export.
++const InteractionManager = {
++    createInteractionHandle: () => 1,
++    clearInteractionHandle: () => undefined,
++};
+ // Override default react-native-animatable animations
+ initializeAnimations();
+ const defaultProps = {
+@@ -449,14 +456,20 @@ export class ReactNativeModal extends React.Component {
+         if (this.props.onSwipe) {
+             console.warn('`<Modal onSwipe="..." />` is deprecated and will be removed starting from 13.0.0. Use `<Modal onSwipeComplete="..." />` instead.');
+         }
+-        this.didUpdateDimensionsEmitter = DeviceEventEmitter.addListener('didUpdateDimensions', this.handleDimensionsUpdate);
++        // Expo Go / React Native 0.86 may not expose either the legacy
++        // didUpdateDimensions event or Dimensions.addEventListener. The modal
++        // already reads the current window size during construction.
++        this.didUpdateDimensionsEmitter = null;
+         if (this.state.isVisible) {
+             this.open();
+         }
+-        BackHandler.addEventListener('hardwareBackPress', this.onBackButtonPress);
++        this.backHandlerSubscription = BackHandler.addEventListener('hardwareBackPress', this.onBackButtonPress);
+     }
+     componentWillUnmount() {
+-        BackHandler.removeEventListener('hardwareBackPress', this.onBackButtonPress);
++        if (this.backHandlerSubscription) {
++            this.backHandlerSubscription.remove();
++            this.backHandlerSubscription = null;
++        }
+         if (this.didUpdateDimensionsEmitter) {
+             this.didUpdateDimensionsEmitter.remove();
+         }

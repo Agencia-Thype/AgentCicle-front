@@ -1,0 +1,39 @@
+{
+  "cli": {
+    "version": ">= 5.9.0",
+    "appVersionSource": "remote"
+  },
+  "build": {
+    "development": {
+      "developmentClient": true,
+      "distribution": "internal",
+      "env": {
+        "EXPO_PUBLIC_API_URL": "http://192.168.0.12:8000",
+        "EXPO_PUBLIC_COBRANCA_ATIVA": "false"
+      }
+    },
+    "preview": {
+      "distribution": "internal",
+      "android": {
+        "buildType": "apk"
+      },
+      "env": {
+        "EXPO_PUBLIC_API_URL": "https://api.agentcicle.com",
+        "EXPO_PUBLIC_COBRANCA_ATIVA": "false"
+      }
+    },
+    "production": {
+      "autoIncrement": true,
+      "android": {
+        "buildType": "app-bundle"
+      },
+      "env": {
+        "EXPO_PUBLIC_API_URL": "https://api.agentcicle.com",
+        "EXPO_PUBLIC_COBRANCA_ATIVA": "false"
+      }
+    }
+  },
+  "submit": {
+    "production": {}
+  }
+}

@@ -226,13 +226,13 @@ const styles = StyleSheet.create({
   },
   // Variações de estilo por tipo de status
   infoContent: {
-    backgroundColor: themeColors.accent || "#7EAA92",
+    backgroundColor: themeColors.accent,
   },
   warningContent: {
-    backgroundColor: themeColors.accent || "#FFA500",
+    backgroundColor: themeColors.accent,
   },
   expiredContent: {
-    backgroundColor: themeColors.error || "#FF6347",
+    backgroundColor: themeColors.error,
   },
   // Estilos de texto
   title: {
@@ -258,7 +258,7 @@ const styles = StyleSheet.create({
     marginTop: 8,
   },
   buttonText: {
-    color: themeColors.accent || "#7EAA92",
+    color: themeColors.accent,
     fontWeight: "bold",
     fontSize: 14,
   },
@@ -271,7 +271,7 @@ const styles = StyleSheet.create({
     width: "100%",
   },
   containerWarning: {
-    backgroundColor: themeColors.error || "#FFA500",
+    backgroundColor: themeColors.error,
   },
   contentWrapper: {
     flexDirection: "row",

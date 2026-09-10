@@ -18,6 +18,7 @@ import { globalStyles, themeColors } from "../../theme/global";
 import AppBackground from "../../components/AppBackground";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useAuth } from "../../contexts/AuthContext";
+import { auth } from "../../services/firebase";
 
 // Função para decodificar base64 em React Native
 const base64ToUtf8 = (base64: string): string => {
@@ -173,7 +174,7 @@ export default function DiagnosticoScreen() {
         // Definir headers com tipo adequado para evitar erro de TypeScript
         const headers: Record<string, string> = {
           Accept: "application/json",
-          Authorization: `Bearer ${await AsyncStorage.getItem("auth_token")}`,
+          Authorization: `Bearer ${auth.currentUser ? await auth.currentUser.getIdToken() : ""}`,
         };
 
         // Adicionar Content-Type apenas para POST
@@ -279,7 +280,7 @@ export default function DiagnosticoScreen() {
   const testarToken = async () => {
     try {
       adicionarResultado("Token Auth", "Testando...", "");
-      const token = await AsyncStorage.getItem("auth_token");
+      const token = auth.currentUser ? await auth.currentUser.getIdToken() : null;
 
       if (token) {
         // Verificar se o token é válido analisando o JWT

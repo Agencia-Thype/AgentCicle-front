@@ -13,7 +13,10 @@ import {
 // Chaves para armazenamento de cache
 const CACHE_MENSAGEM_BALAO_KEY = "@AgentCicle:ia_mensagem_balao";
 const CACHE_MENSAGEM_BOAS_VINDAS_KEY = "@AgentCicle:ia_mensagem_boas_vindas";
-const CACHE_TIMEOUT_IA = 10000; // 10 segundos para timeout de requisições IA
+// A rota /ia/* chama o GPT-4-turbo no backend e passa de 10s com frequência.
+// Alinhado ao timeout da instância do axios (30s) para o abort não disparar
+// antes da resposta chegar.
+const CACHE_TIMEOUT_IA = 30000;
 const CACHE_DURATION_IA = 3600000; // 1 hora de cache para mensagens da IA
 
 // Chaves para identificar endpoints no sistema de backoff

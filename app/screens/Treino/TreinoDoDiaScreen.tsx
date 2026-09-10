@@ -27,6 +27,8 @@ import LunIAModal from "app/components/LunIA/LuniaModal";
 import FloatingLuniaCoach from "app/components/LunIA/LuniaFloatingMessage";
 import { TemporizadorModal } from "./TemporizadorModal/temporizadorModal";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { palette } from "../../theme/colors";
+import TreinoVisual from "./TreinoVisual";
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList, "TreinoDoDia">;
 type ExercicioTemporizador = {
@@ -34,6 +36,9 @@ type ExercicioTemporizador = {
   series: number;
   duracao?: string;
   descanso?: string;
+  metodo?: string;
+  repeticoes?: string;
+  observacao?: string;
 };
 
 export default function TreinoDoDiaScreen() {
@@ -43,6 +48,8 @@ export default function TreinoDoDiaScreen() {
   const [loading, setLoading] = useState(true);
   const [treino, setTreino] = useState<TreinoExercicio[]>([]);
   const [progressoSalvo, setProgressoSalvo] = useState(false);
+  // Já existe check-in hoje: aí salvar 0% é permitido (desmarcou tudo).
+  const [jaSalvoHoje, setJaSalvoHoje] = useState(false);
   const [modalVisible, setModalVisible] = useState(false);
   const [pontosGanho, setPontosGanho] = useState(0);
   const [moedaAnim] = useState(new Animated.Value(0));
@@ -61,7 +68,7 @@ export default function TreinoDoDiaScreen() {
         setFase(response.data.fase);
         setTipoTreino(response.data.tipo_treino);
         calcularDuracaoTotal(response.data.exercicios);
-        buscarMarcadosHoje(response.data.exercicios.length);
+        buscarMarcadosHoje(response.data.exercicios);
       } catch (error) {
         console.error("Erro ao buscar treino:", error);
       } finally {
@@ -84,14 +91,25 @@ export default function TreinoDoDiaScreen() {
     setDuracaoTotal(Math.round(totalMin));
   };
 
-  async function buscarMarcadosHoje(total: number) {
+  async function buscarMarcadosHoje(exercicios: TreinoExercicio[]) {
     try {
       const response = await api.get("/treino-dia/marcados-hoje");
-      const percentualSalvo = response.data.percentual;
-      const quantidadeMarcada = Math.round((percentualSalvo / 100) * total);
+      const { ja_salvo, percentual, exercicios_concluidos } = response.data;
+      setJaSalvoHoje(!!ja_salvo);
+
       const novosChecks: { [key: number]: boolean } = {};
-      for (let i = 0; i < quantidadeMarcada; i++) {
-        novosChecks[i] = true;
+      if (Array.isArray(exercicios_concluidos) && exercicios_concluidos.length) {
+        // Marca exatamente os exercícios feitos, pelo nome.
+        const feitos = new Set<string>(exercicios_concluidos);
+        exercicios.forEach((ex, index) => {
+          if (feitos.has(ex.exercicio)) novosChecks[index] = true;
+        });
+      } else {
+        // Check-ins de antes da migração só têm o percentual.
+        const quantidadeMarcada = Math.round(((percentual || 0) / 100) * exercicios.length);
+        for (let i = 0; i < quantidadeMarcada; i++) {
+          novosChecks[i] = true;
+        }
       }
       setChecked(novosChecks);
     } catch (error) {
@@ -101,10 +119,12 @@ export default function TreinoDoDiaScreen() {
 
   const toggleCheck = (index: number) => {
     setChecked((prev) => ({ ...prev, [index]: !prev[index] }));
+    setProgressoSalvo(false);
   };
 
   const calcularProgresso = () => {
     const total = treino.length;
+    if (!total) return 0;
     const feitos = Object.values(checked).filter(Boolean).length;
     return Math.round((feitos / total) * 100);
   };
@@ -121,54 +141,133 @@ export default function TreinoDoDiaScreen() {
       return;
     }
     const percentual = calcularProgresso();
-    if (percentual === 0) {
+    if (percentual === 0 && !jaSalvoHoje) {
       return Alert.alert("Ops!", "Você ainda não marcou nenhum exercício como feito.");
     }
+    const exerciciosConcluidos = treino
+      .filter((_, index) => checked[index])
+      .map((ex) => ex.exercicio);
     try {
       const response = await api.post("/treino-dia/concluir", {
-        fase,
         tipo_treino: tipoTreino,
         percentual,
+        exercicios_concluidos: exerciciosConcluidos,
       });
       const data = response.data;
       if (!data) throw new Error("Resposta inválida do servidor.");
-      const { pontos, ja_salvo, percentual: salvoPercentual } = data;
-      if (ja_salvo) {
-        Alert.alert("Treino já realizado", `Você já concluiu esse treino hoje com ${salvoPercentual}% e ganhou ${pontos} ponto${pontos !== 1 ? "s" : ""}.`);
-      } else {
-        setPontosGanho(pontos);
-        animarMoeda();
-        await AsyncStorage.setItem("atualizarHome", "true");
-      }
+
+      // A pontuação acompanha a conclusão: desmarcar exercícios tira pontos.
+      const ganhos = Number(data.pontos_ganhos) || 0;
+      setJaSalvoHoje(true);
       setProgressoSalvo(true);
+      if (ganhos !== 0) await AsyncStorage.setItem("atualizarHome", "true");
+
+      if (ganhos > 0) {
+        setPontosGanho(ganhos);
+        animarMoeda();
+      } else if (ganhos < 0) {
+        const perdidos = Math.abs(ganhos);
+        Alert.alert("Progresso atualizado", `Treino em ${data.percentual}%: ${perdidos} ponto${perdidos !== 1 ? "s" : ""} a menos.`);
+      } else {
+        Alert.alert("Progresso salvo", `Treino em ${data.percentual}%. Sua pontuação não mudou.`);
+      }
     } catch (error: any) {
-      console.error("Erro ao salvar progresso:", error);
-      Alert.alert("Erro", error.message === "Network Error" ? "Erro de conexão." : "Erro ao salvar progresso.");
+      const detalhe = error?.response?.data?.detail;
+      if (typeof detalhe !== "string") console.error("Erro ao salvar progresso:", error);
+      Alert.alert(
+        "Erro",
+        typeof detalhe === "string"
+          ? detalhe
+          : error.message === "Network Error" ? "Erro de conexão." : "Erro ao salvar progresso."
+      );
     }
   };
 
   if (loading) {
     return (
       <View style={globalStyles.centeredContainer}>
-        <ActivityIndicator size="large" color="#A56C6C" />
+        <ActivityIndicator size="large" color={palette.textSecondary} />
       </View>
     );
   }
+
+  return (
+    <>
+      <TreinoVisual
+        fase={fase}
+        tipoTreino={tipoTreino}
+        duracaoTotal={duracaoTotal}
+        treino={treino}
+        checked={checked}
+        progresso={calcularProgresso()}
+        progressoSalvo={progressoSalvo}
+        onBack={() => {
+          if (navigation.canGoBack()) {
+            navigation.goBack();
+          } else {
+            navigation.navigate("Home");
+          }
+        }}
+        onToggle={toggleCheck}
+        onStart={salvarProgresso}
+        onNavigate={(route) => (navigation.navigate as any)(route)}
+        onPlay={(ex) => {
+          setExercicioSelecionado({
+            nome: ex.exercicio,
+            series: Number(ex.series || "1"),
+            duracao: ex.duracao,
+            descanso: ex.descanso,
+            metodo: ex.metodo,
+            repeticoes: ex.repeticoes,
+            observacao: ex.obs,
+          });
+          setMostrarTemporizadorExercicio(true);
+        }}
+      />
+      {exercicioSelecionado && mostrarTemporizadorExercicio && (
+        <TemporizadorModal
+          nome={exercicioSelecionado.nome}
+          series={Number(exercicioSelecionado.series)}
+          duracao={exercicioSelecionado.duracao ?? ""}
+          descanso={exercicioSelecionado.descanso ?? ""}
+          metodo={exercicioSelecionado.metodo}
+          repeticoes={exercicioSelecionado.repeticoes}
+          observacao={exercicioSelecionado.observacao}
+          visible={mostrarTemporizadorExercicio}
+          onNext={() => {
+            setMostrarTemporizadorExercicio(false);
+            setExercicioSelecionado(null);
+          }}
+          onExit={() => {
+            setMostrarTemporizadorExercicio(false);
+            setExercicioSelecionado(null);
+          }}
+        />
+      )}
+      <FloatingLuniaCoach
+        userName={userName}
+        mostrarAssistente={mostrarLunia}
+        onAbrirAssistente={() => setMostrarLunia(true)}
+      />
+      <LunIAModal
+        visivel={mostrarLunia}
+        onFechar={() => setMostrarLunia(false)}
+        fase={fase}
+        userName={userName}
+      />
+    </>
+  );
 
   return (
     <AppBackground>
       <SafeAreaView style={{ flex: 1 }}>
         <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : undefined} style={{ flex: 1 }}>
           <ScrollView contentContainerStyle={{ flexGrow: 1, padding: 24, paddingBottom: 80 }} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
-            <TouchableOpacity onPress={() => navigation.goBack()} style={{ backgroundColor: "rgba(146,96,206,0.3)", borderRadius: 20, padding: 8, alignSelf: "flex-start", marginBottom: 8 }}>
-              <Ionicons name="arrow-back" size={24} color="#EED0FC" />
-            </TouchableOpacity>
-
             <AnimatedLogo />
 
             <Text style={globalStyles.title}>Fase: {fase}</Text>
             <Text style={globalStyles.subtitle}>Treino {tipoTreino}</Text>
-            <Text style={{ color: "#5C3B3B", fontWeight: "600", marginTop: 4, marginBottom: 12 }}>
+            <Text style={{ color: palette.textPrimary, fontWeight: "600", marginTop: 4, marginBottom: 12 }}>
               🕒 Tempo estimado: {duracaoTotal} minutos
             </Text>
 
@@ -178,7 +277,7 @@ export default function TreinoDoDiaScreen() {
                   <CheckBox
                     value={checked[index] || false}
                     onValueChange={() => toggleCheck(index)}
-                    color={checked[index] ? "#A56C6C" : undefined}
+                    color={checked[index] ? palette.textSecondary : undefined}
                   />
                   <Text style={styles.exerciseTitle}>{ex.exercicio}</Text>
 
@@ -194,7 +293,7 @@ export default function TreinoDoDiaScreen() {
                     }}
                     style={styles.timerButton}
                   >
-                    <Ionicons name="timer-outline" size={22} color="#5C3B3B" />
+                    <Ionicons name="timer-outline" size={22} color={palette.textPrimary} />
                   </TouchableOpacity>
                 </View>
 
@@ -227,11 +326,11 @@ export default function TreinoDoDiaScreen() {
         </KeyboardAvoidingView>
 
         <Modal isVisible={modalVisible}>
-          <View style={{ backgroundColor: "#fff", borderRadius: 12, padding: 20, alignItems: "center" }}>
-            <Text style={{ fontWeight: "bold", fontSize: 18, color: "#3F1C65", marginBottom: 10 }}>
+          <View style={{ backgroundColor: palette.white, borderRadius: 12, padding: 20, alignItems: "center" }}>
+            <Text style={{ fontWeight: "bold", fontSize: 18, color: palette.bgSoft, marginBottom: 10 }}>
               Progresso salvo!
             </Text>
-            <Text style={{ fontSize: 16, color: "#3F1C65", textAlign: "center" }}>
+            <Text style={{ fontSize: 16, color: palette.bgSoft, textAlign: "center" }}>
               Parabéns! Você concluiu {calcularProgresso()}% do treino e ganhou:
             </Text>
             <Animated.Image
@@ -243,21 +342,21 @@ export default function TreinoDoDiaScreen() {
                 transform: [{ scale: moedaAnim.interpolate({ inputRange: [0, 1], outputRange: [0.1, 1] }) }],
               }}
             />
-            <Text style={{ fontSize: 20, fontWeight: "bold", color: "#5C3B3B" }}>
+            <Text style={{ fontSize: 20, fontWeight: "bold", color: palette.textPrimary }}>
               {pontosGanho} ponto{pontosGanho !== 1 ? "s" : ""}
             </Text>
             <TouchableOpacity onPress={() => setModalVisible(false)} style={{ marginTop: 20 }}>
-              <Text style={{ color: "#A56C6C", fontWeight: "bold" }}>Fechar</Text>
+              <Text style={{ color: palette.textSecondary, fontWeight: "bold" }}>Fechar</Text>
             </TouchableOpacity>
           </View>
         </Modal>
 
         {exercicioSelecionado && mostrarTemporizadorExercicio && (
           <TemporizadorModal
-            nome={exercicioSelecionado.nome}
-            series={Number(exercicioSelecionado.series)}
-            duracao={exercicioSelecionado.duracao ?? ""}
-            descanso={exercicioSelecionado.descanso ?? ""}
+            nome={exercicioSelecionado!.nome}
+            series={Number(exercicioSelecionado!.series)}
+            duracao={exercicioSelecionado!.duracao ?? ""}
+            descanso={exercicioSelecionado!.descanso ?? ""}
             visible={mostrarTemporizadorExercicio}
             onNext={() => {
               setMostrarTemporizadorExercicio(false);
@@ -283,9 +382,9 @@ export default function TreinoDoDiaScreen() {
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: "rgba(63,28,101,0.75)",
+    backgroundColor: "rgba(130, 87, 219, 0.11)",
     borderWidth: 1,
-    borderColor: "rgba(146,96,206,0.4)",
+    borderColor: "rgba(130, 87, 219, 0.4)",
     borderRadius: 12,
     padding: 16,
     marginBottom: 16,
@@ -304,7 +403,7 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     marginLeft: 8,
     fontSize: 16,
-    color: "#EED0FC",
+    color: palette.textSecondary,
   },
   timerButton: {
     marginLeft: "auto",
@@ -312,7 +411,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
   },
   itemText: {
-    color: "#EED0FC",
+    color: palette.textSecondary,
     marginBottom: 2,
   },
 });

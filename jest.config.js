@@ -11,6 +11,9 @@ module.exports = {
           jsx: 'react',
           esModuleInterop: true,
           allowSyntheticDefaultImports: true,
+          // O tsconfig inline do ts-jest nao herda a descoberta automatica de
+          // @types, entao os globals do Jest precisam ser declarados aqui.
+          types: ['jest', 'node'],
         },
       },
     ],

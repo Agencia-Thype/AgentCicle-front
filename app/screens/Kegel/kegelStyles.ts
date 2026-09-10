@@ -1,0 +1,265 @@
+import { StyleSheet } from "react-native";
+import { palette } from "../../theme/colors";
+import { fonts } from "../../theme/fonts";
+
+/**
+ * Kegel — mesma linguagem visual da tela da Lunia (faseCompletaStyles).
+ *
+ * Os tokens são deliberadamente idênticos aos de lá: mesmo header com wordmark,
+ * mesmo card lilás de contexto, mesmos chips arredondados e a mesma barra
+ * inferior. O que muda é só o conteúdo.
+ */
+export const kegelStyles = StyleSheet.create({
+  screen: { flex: 1, paddingHorizontal: 18 },
+  center: { flex: 1, alignItems: "center", justifyContent: "center" },
+
+  // ------------------------------------------------------------------ header
+  header: { height: 62, justifyContent: "center", alignItems: "center" },
+  back: {
+    position: "absolute",
+    left: 3,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    overflow: "hidden",
+    backgroundColor: "#F0E7F2",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  backPressed: { backgroundColor: "#E5D7EA" },
+  brand: { alignItems: "center" },
+  brandName: { fontFamily: fonts.title, fontSize: 31, lineHeight: 33, color: palette.purpleDark },
+  brandTag: { fontFamily: fonts.bodyMedium, fontSize: 6, letterSpacing: 2.8, color: "#786C84" },
+
+  // -------------------------------------------------------------------- hero
+  hero: {
+    minHeight: 104,
+    flexDirection: "row",
+    alignItems: "center",
+    position: "relative",
+    marginBottom: 9,
+    paddingHorizontal: 15,
+    paddingVertical: 12,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: "rgba(183,154,197,.24)",
+    backgroundColor: "rgba(255,253,250,.58)",
+  },
+  heroHalo: {
+    width: 137,
+    height: 108,
+    borderRadius: 65,
+    backgroundColor: "rgba(233,220,237,.55)",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  heroCopy: { flex: 1, paddingRight: 82 },
+  heroTitle: { fontFamily: fonts.title, fontSize: 32, lineHeight: 36, color: palette.purpleDark },
+  heroSubtitle: { fontFamily: fonts.body, fontSize: 14, color: "#766C8C" },
+  statusPill: {
+    marginTop: 8,
+    height: 29,
+    borderRadius: 15,
+    paddingHorizontal: 10,
+    backgroundColor: "#F1E8F2",
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 7,
+    alignSelf: "flex-start",
+  },
+  statusDot: { width: 11, height: 11, borderRadius: 6, backgroundColor: "#94CE73" },
+  statusText: { fontFamily: fonts.body, fontSize: 10, color: "#665C73" },
+  sideQuote: { position: "absolute", right: 12, top: 15, width: 68, alignItems: "center", paddingLeft: 10, borderLeftWidth: 1, borderLeftColor: "rgba(86,53,92,.16)" },
+  sideQuoteText: {
+    fontFamily: fonts.title,
+    fontSize: 10,
+    lineHeight: 12,
+    textAlign: "center",
+    color: "#405344",
+  },
+
+  // ------------------------------------------------------- card de nível
+  levelCard: {
+    height: 87,
+    borderWidth: 1,
+    borderColor: "#E6D7E8",
+    borderRadius: 18,
+    backgroundColor: "rgba(239,223,241,.83)",
+    flexDirection: "row",
+    alignItems: "center",
+    padding: 10,
+  },
+  levelIcon: {
+    width: 62,
+    height: 62,
+    borderRadius: 31,
+    backgroundColor: "#DFCBE5",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  levelCopy: { flex: 1, paddingLeft: 12, minWidth: 0 },
+  levelLabel: { fontFamily: fonts.body, fontSize: 11, color: "#6E6580" },
+  levelName: { fontFamily: fonts.title, fontSize: 24, lineHeight: 27, color: palette.purpleDark },
+  levelDescription: { fontFamily: fonts.body, fontSize: 9, color: "#6D647B", marginTop: 1 },
+  levelDivider: { width: 1, height: 43, backgroundColor: "#CDB7D0", marginHorizontal: 9 },
+  countPill: {
+    height: 34,
+    borderRadius: 17,
+    backgroundColor: "rgba(223,200,229,.72)",
+    paddingHorizontal: 12,
+    justifyContent: "center",
+  },
+  countText: { fontFamily: fonts.bodyMedium, fontSize: 10, color: palette.purpleDark },
+
+  // ------------------------------------------------------ lista de exercícios
+  list: { flex: 1, marginTop: 8 },
+  listContent: { paddingVertical: 5, gap: 10, paddingBottom: 6 },
+
+  exCard: {
+    borderWidth: 1,
+    borderColor: "#E6D7E8",
+    borderRadius: 17,
+    backgroundColor: "rgba(255,255,255,.72)",
+    paddingHorizontal: 15,
+    paddingVertical: 13,
+  },
+  exCardDone: { borderColor: "#C7DCBB", backgroundColor: "rgba(240,246,235,.8)" },
+  exHeader: { flexDirection: "row", alignItems: "center", gap: 8 },
+  exTitleWrap: { flex: 1, flexDirection: "row", alignItems: "center", gap: 7, minWidth: 0 },
+  exTitle: { flex: 1, fontFamily: fonts.title, fontSize: 20, lineHeight: 24, color: palette.purpleDark },
+  playBtn: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: palette.purpleDark,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  playBtnDone: { backgroundColor: "#6E9C5B" },
+
+  metaRow: { flexDirection: "row", flexWrap: "wrap", gap: 5, marginTop: 10 },
+  metaChip: {
+    height: 27,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: "#DCCAE2",
+    backgroundColor: "rgba(255,255,255,.55)",
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    paddingHorizontal: 9,
+  },
+  metaText: { fontFamily: fonts.bodyMedium, fontSize: 9, color: palette.purpleDark },
+
+  // Instruções: recolhidas por padrão para o card não virar uma parede de texto
+  toggle: { flexDirection: "row", alignItems: "center", gap: 4, marginTop: 11, alignSelf: "flex-start" },
+  toggleText: { fontFamily: fonts.bodyMedium, fontSize: 10, color: palette.purple },
+
+  instrucoes: { marginTop: 10, gap: 9 },
+  serie: {
+    borderRadius: 13,
+    backgroundColor: "rgba(239,228,241,.86)",
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+  },
+  serieTop: { flexDirection: "row", alignItems: "baseline", justifyContent: "space-between" },
+  serieTitle: { fontFamily: fonts.bodyBold, fontSize: 11, color: palette.purpleDark },
+  serieReps: { fontFamily: fonts.body, fontSize: 10, color: "#6D647B" },
+  fases: { marginTop: 7, gap: 6 },
+  faseItem: { flexDirection: "row", alignItems: "flex-start", gap: 7 },
+  faseDot: { width: 8, height: 8, borderRadius: 4, marginTop: 4 },
+  faseContracao: { backgroundColor: palette.purpleDark },
+  faseRelaxamento: { backgroundColor: "#94CE73" },
+  faseCopy: { flex: 1, minWidth: 0 },
+  faseTopo: { flexDirection: "row", alignItems: "baseline", gap: 6 },
+  faseTipo: { fontFamily: fonts.bodyMedium, fontSize: 10, color: "#52425F" },
+  faseDuracao: { fontFamily: fonts.body, fontSize: 9, color: "#81788F" },
+  faseInstrucao: { fontFamily: fonts.body, fontSize: 10, lineHeight: 14, color: "#6D647B", marginTop: 1 },
+
+  vazio: { fontFamily: fonts.body, fontSize: 12, color: "#766C8C", textAlign: "center", marginTop: 26 },
+
+  // ------------------------------------------------------- chips de nível
+  quickRow: { height: 43, flexDirection: "row", gap: 4, alignItems: "center" },
+  quick: {
+    flex: 1,
+    height: 34,
+    borderRadius: 17,
+    borderWidth: 1,
+    borderColor: "#DCCAE2",
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 5,
+    backgroundColor: "rgba(255,255,255,.45)",
+    paddingHorizontal: 5,
+  },
+  quickAtivo: { backgroundColor: palette.purpleDark, borderColor: palette.purpleDark },
+  quickText: { fontFamily: fonts.bodyMedium, fontSize: 8, color: palette.purpleDark },
+  quickTextAtivo: { color: "#fff" },
+
+  // ----------------------------------------------------------- barra inferior
+  bottomNav: {
+    height: 67,
+    marginHorizontal: -18,
+    marginTop: 7,
+    flexDirection: "row",
+    borderTopWidth: 1,
+    borderTopColor: "#EDE4E9",
+    backgroundColor: "rgba(255,252,250,.95)",
+    borderTopLeftRadius: 23,
+    borderTopRightRadius: 23,
+  },
+  navItem: { flex: 1, alignItems: "center", justifyContent: "center", gap: 1 },
+  navText: { fontFamily: fonts.body, fontSize: 9, color: "#756D89" },
+  navActive: { fontFamily: fonts.bodyBold, color: palette.purpleDark },
+  navDot: { width: 5, height: 5, borderRadius: 3, backgroundColor: palette.purpleDark },
+
+  // ------------------------------------------------------- modal de níveis
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(56,35,62,.45)",
+    alignItems: "center",
+    justifyContent: "center",
+    paddingHorizontal: 26,
+  },
+  modalCard: {
+    width: "100%",
+    borderRadius: 24,
+    backgroundColor: "#FFFCFA",
+    borderWidth: 1,
+    borderColor: "#E6D7E8",
+    padding: 20,
+  },
+  modalTitle: { fontFamily: fonts.title, fontSize: 25, color: palette.purpleDark },
+  modalSubtitle: { fontFamily: fonts.body, fontSize: 11, color: "#6E6580", marginTop: 3, marginBottom: 14 },
+
+  nivelOption: {
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: "#E6D7E8",
+    backgroundColor: "rgba(239,223,241,.45)",
+    padding: 13,
+    marginBottom: 9,
+  },
+  nivelOptionSelecionado: { borderColor: palette.purpleDark, backgroundColor: "rgba(239,223,241,.9)" },
+  nivelOptionBloqueado: { opacity: 0.62 },
+  nivelOptionLinha: { flexDirection: "row", alignItems: "center", gap: 11 },
+  nivelOptionCopy: { flex: 1, minWidth: 0 },
+  nivelOptionTexto: { fontFamily: fonts.title, fontSize: 19, color: palette.purpleDark },
+  nivelOptionTextoBloqueado: { color: "#8C849A" },
+  nivelProgresso: { flexDirection: "row", alignItems: "center", gap: 8, marginTop: 6 },
+  nivelProgressoBarra: { flex: 1, height: 6, borderRadius: 3, backgroundColor: "#E4D6E8", overflow: "hidden" },
+  nivelProgressoFill: { height: "100%", borderRadius: 3, backgroundColor: palette.purple },
+  nivelProgressoTexto: { fontFamily: fonts.bodyMedium, fontSize: 9, color: "#6E6580" },
+  nivelBloqueadoTexto: { fontFamily: fonts.body, fontSize: 9, color: "#8C849A", marginTop: 4 },
+
+  modalFechar: {
+    height: 46,
+    borderRadius: 23,
+    alignItems: "center",
+    justifyContent: "center",
+    marginTop: 4,
+    backgroundColor: "#F0E7F2",
+  },
+  modalFecharTexto: { fontFamily: fonts.bodyMedium, fontSize: 13, color: palette.purpleDark },
+});

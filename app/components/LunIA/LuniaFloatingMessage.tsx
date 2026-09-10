@@ -9,26 +9,35 @@ import {
   Easing,
   TouchableOpacity,
   Image,
+  PanResponder,
+  useWindowDimensions,
 } from "react-native";
 import { getMensagemIA } from "../../services/iaService";
+import { palette } from "../../theme/colors";
 
 // Constantes para o componente
 const MENSAGEM_DISPLAY_TIME = 6000; // 6 segundos
 const INTERVALO_ENTRE_MENSAGENS = 180000; // 3 minutos
 const MAX_TENTATIVAS = 3;
+const AVATAR_SIZE = 68;
+const SCREEN_MARGIN = 8;
+const POSICAO_LUNIA_KEY = "@AgentCicle:lunia_position";
 const MENSAGEM_PADRAO = "Como posso ajudar você hoje?";
 
 interface Props {
   userName: string;
   onAbrirAssistente: () => void;
   mostrarAssistente?: boolean;
+  bottomOffset?: number;
 }
 
 export default function FloatingLuniaCoach({
   userName,
   onAbrirAssistente,
   mostrarAssistente,
+  bottomOffset = 78,
 }: Props) {
+  const { width: screenWidth, height: screenHeight } = useWindowDimensions();
   const [mensagem, setMensagem] = useState("");
   const [visivel, setVisivel] = useState(false);
   const fadeAnim = useRef(new Animated.Value(0)).current;
@@ -36,8 +45,77 @@ export default function FloatingLuniaCoach({
   const ultimaMensagemRef = useRef(MENSAGEM_PADRAO);
   const ultimaTentativaRef = useRef(0);
   const intervalIdRef = useRef<NodeJS.Timeout | null>(null);
+  const posicao = useRef(new Animated.ValueXY()).current;
+  const posicaoAtualRef = useRef({ x: 0, y: 0 });
+  const inicioArrasteRef = useRef({ x: 0, y: 0 });
+  const arrastouRef = useRef(false);
+  const limitesRef = useRef({ maxX: 0, maxY: 0 });
+
+  const limitarPosicao = (x: number, y: number) => ({
+    x: Math.max(SCREEN_MARGIN, Math.min(x, limitesRef.current.maxX)),
+    y: Math.max(SCREEN_MARGIN, Math.min(y, limitesRef.current.maxY)),
+  });
+
+  const aplicarPosicao = (x: number, y: number) => {
+    const limitada = limitarPosicao(x, y);
+    posicaoAtualRef.current = limitada;
+    posicao.setValue(limitada);
+    return limitada;
+  };
+
+  const panResponder = useRef(
+    PanResponder.create({
+      onMoveShouldSetPanResponder: (_, gesture) =>
+        Math.abs(gesture.dx) > 4 || Math.abs(gesture.dy) > 4,
+      onPanResponderGrant: () => {
+        inicioArrasteRef.current = posicaoAtualRef.current;
+        arrastouRef.current = false;
+      },
+      onPanResponderMove: (_, gesture) => {
+        arrastouRef.current = true;
+        aplicarPosicao(
+          inicioArrasteRef.current.x + gesture.dx,
+          inicioArrasteRef.current.y + gesture.dy
+        );
+      },
+      onPanResponderRelease: async () => {
+        const final = aplicarPosicao(posicaoAtualRef.current.x, posicaoAtualRef.current.y);
+        await AsyncStorage.setItem(POSICAO_LUNIA_KEY, JSON.stringify(final));
+      },
+      onPanResponderTerminate: () => {
+        aplicarPosicao(posicaoAtualRef.current.x, posicaoAtualRef.current.y);
+      },
+    })
+  ).current;
 
   const nomeFormatado = userName?.toLowerCase() || "miga";
+
+  useEffect(() => {
+    limitesRef.current = {
+      maxX: Math.max(SCREEN_MARGIN, screenWidth - AVATAR_SIZE - SCREEN_MARGIN),
+      // Durante o arraste, toda a área visível fica disponível. O bottomOffset
+      // influencia somente a posição inicial segura, acima do menu inferior.
+      maxY: Math.max(SCREEN_MARGIN, screenHeight - AVATAR_SIZE - SCREEN_MARGIN),
+    };
+
+    const restaurarPosicao = async () => {
+      const salva = await AsyncStorage.getItem(POSICAO_LUNIA_KEY);
+      if (salva) {
+        try {
+          const { x, y } = JSON.parse(salva);
+          if (Number.isFinite(x) && Number.isFinite(y)) {
+            aplicarPosicao(x, y);
+            return;
+          }
+        } catch {
+          // Posição inválida: usa o ponto inicial seguro.
+        }
+      }
+      aplicarPosicao(screenWidth - AVATAR_SIZE - 16, screenHeight - bottomOffset - AVATAR_SIZE);
+    };
+
+    restaurarPosicao();
+  }, [bottomOffset, screenHeight, screenWidth]);
 
   // Função que obtém a mensagem da IA usando o serviço iaService
   const buscarMensagemIA = async () => {
@@ -166,7 +244,10 @@ export default function FloatingLuniaCoach({
   if (mostrarAssistente) return null;
 
   return (
-    <View style={styles.wrapper}>
+    <Animated.View
+      style={[styles.wrapper, { transform: posicao.getTranslateTransform() }]}
+      {...panResponder.panHandlers}
+    >
       {visivel && (
         <Animated.View style={[styles.balaoWrapper, { opacity: fadeAnim }]}>
           <View style={styles.balao}>
@@ -178,28 +259,38 @@ export default function FloatingLuniaCoach({
         </Animated.View>
       )}
 
-      <TouchableOpacity onPress={onAbrirAssistente} style={styles.botao}>
+      <TouchableOpacity
+        onPress={() => {
+          if (!arrastouRef.current) onAbrirAssistente();
+          arrastouRef.current = false;
+        }}
+        style={styles.botao}
+      >
         <Image source={require("../../assets/logo.png")} style={styles.logo} />
       </TouchableOpacity>
-    </View>
+    </Animated.View>
   );
 }
 
 const styles = StyleSheet.create({
   wrapper: {
     position: "absolute",
-    bottom: 12,
-    right: 20,
-    flexDirection: "column",
+    left: 0,
+    top: 0,
+    width: AVATAR_SIZE,
+    height: AVATAR_SIZE,
     alignItems: "flex-end",
     zIndex: 999,
-    maxWidth: 300,
+    elevation: 20,
   },
   balaoWrapper: {
-    marginRight: 8,
+    position: "absolute",
+    bottom: AVATAR_SIZE,
+    right: 0,
+    width: 220,
   },
   balao: {
-    backgroundColor: "#FFF0F5",
+    backgroundColor: palette.bgSoft,
     borderRadius: 10,
     paddingHorizontal: 14,
     paddingVertical: 10,
@@ -211,7 +302,7 @@ const styles = StyleSheet.create({
   },
   texto: {
     fontSize: 14,
-    color: "#5C3B3B",
+    color: palette.textPrimary,
     fontStyle: "italic",
     textAlign: "left",
     lineHeight: 20,
@@ -227,12 +318,16 @@ const styles = StyleSheet.create({
     borderTopWidth: 8,
     borderLeftColor: "transparent",
     borderRightColor: "transparent",
-    borderTopColor: "#FFF0F5",
+    borderTopColor: palette.bgSoft,
   },
   botao: {
     backgroundColor: "transparent",
     borderRadius: 100,
     padding: 4,
+    width: AVATAR_SIZE,
+    height: AVATAR_SIZE,
+    alignItems: "center",
+    justifyContent: "center",
   },
   logo: {
     width: 60,

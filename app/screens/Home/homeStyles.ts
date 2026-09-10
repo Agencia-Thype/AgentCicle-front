@@ -1,322 +1,430 @@
-import { StyleSheet, Platform } from "react-native";
+import { StyleSheet } from "react-native";
 
+import { elevation, palette, radius, spacing } from "../../theme/colors";
+import { fonts, overline } from "../../theme/fonts";
+
+/**
+ * Home — painel diário do corpo.
+ *
+ * Hierarquia editorial: fundo off-white respirando, uma saudação em serifada,
+ * um card herói escuro que domina a dobra, e o resto em cards claros e baixos
+ * que não competem. A cor da fase entra em pontos pequenos — nunca no fundo.
+ */
 export const homeStyles = StyleSheet.create({
+  // ---------------------------------------------------------------- cabeçalho
   header: {
     flexDirection: "row",
+    alignItems: "center",
     justifyContent: "space-between",
-    alignItems: "center",
-    paddingHorizontal: 16,
-    paddingTop: 40,
-    paddingBottom: 8,
-    zIndex: 1001,
-    position: "relative",
-    backgroundColor: "transparent",
-    marginTop: 5,
+    paddingHorizontal: 28,
+    paddingTop: 18,
+    paddingBottom: 16,
+    minHeight: 78,
   },
+  headerAcoes: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 22,
+  },
+  iconeHeader: {
+    padding: 7,
+    borderRadius: radius.pill,
+  },
+
   content: {
-    paddingHorizontal: 20,
-    paddingTop: 16,
-    paddingBottom: 24,
-    alignItems: "center",
+    paddingHorizontal: 28,
+    paddingBottom: 132,
   },
 
-  dataTexto: {
-    fontSize: 16,
-    fontWeight: "500",
-    color: "#EED0FC",
-    textAlign: "center",
-    marginBottom: 6,
-    textTransform: "capitalize",
+  // ---------------------------------------------------------------- saudação
+  saudacaoBloco: {
+    display: "none",
   },
-
   saudacao: {
-    fontSize: 22,
-    fontWeight: "bold",
-    color: "#FFFAC3",
-    textAlign: "center",
+    fontFamily: fonts.body,
+    fontSize: 15,
+    color: palette.textSecondary,
     marginBottom: 6,
   },
-
-  subtitulo: {
-    fontSize: 16,
-    color: "#EED0FC",
-    textAlign: "center",
-    marginBottom: 16,
+  perguntaDoDia: {
+    fontFamily: fonts.title,
+    fontSize: 30,
+    lineHeight: 38,
+    color: palette.textPrimary,
+    letterSpacing: -0.3,
   },
-  card: {
-    backgroundColor: "rgba(63, 28, 101, 0.75)",
-    padding: 16,
-    borderRadius: 16,
-    marginVertical: 8,
-    width: "100%",
+
+  // -------------------------------------------------------------- card herói
+  hero: {
+    borderRadius: 28,
+    overflow: "hidden",
+    marginBottom: 24,
     borderWidth: 1,
-    borderColor: "rgba(146, 96, 206, 0.4)",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.3,
-    shadowRadius: 4,
+    borderColor: "rgba(86, 53, 92, 0.12)",
+    shadowColor: palette.purpleDark,
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.07,
+    shadowRadius: 24,
     elevation: 3,
   },
-
-  faseMensagem: {
+  heroConteudo: {
+    paddingHorizontal: 30,
+    paddingVertical: 28,
+    minHeight: 350,
+    backgroundColor: "rgba(255, 250, 253, 0.84)",
+  },
+  heroMarcaDagua: {
+    position: "absolute",
+    right: -86,
+    top: -18,
+    opacity: 0.1,
+  },
+  heroOverline: {
+    ...overline,
+    color: palette.purple,
+    marginBottom: 10,
+    fontFamily: fonts.title,
+    fontSize: 18,
+    letterSpacing: 0,
+    textTransform: "none",
+  },
+  heroPontoFase: {
+    width: 18,
+    height: 18,
+    borderRadius: 9,
+    marginRight: 10,
+  },
+  heroLinhaOverline: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  heroFase: {
+    fontFamily: fonts.title,
+    fontSize: 45,
+    lineHeight: 54,
+    color: palette.sage,
+    letterSpacing: -0.8,
+  },
+  heroMensagem: {
+    fontFamily: fonts.body,
     fontSize: 16,
-    color: "#EED0FC",
+    lineHeight: 24,
+    color: "#766C82",
+    marginTop: 6,
+    maxWidth: "82%",
   },
 
-  treinoTexto: {
-    fontSize: 16,
-    marginBottom: 12,
-    color: "#FFFAC3",
-    textAlign: "center",
-    fontWeight: "600",
+  // Régua de leitura do corpo: energia / humor / treino
+  heroDivisor: {
+    height: StyleSheet.hairlineWidth,
+    backgroundColor: "rgba(86, 53, 92, 0.12)",
+    marginVertical: 18,
+  },
+  heroMetricas: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    gap: spacing.md,
+  },
+  heroMetrica: {
+    flex: 1,
+  },
+  heroMetricaRotulo: {
+    ...overline,
+    fontSize: 10,
+    color: "#8B8095",
+    marginBottom: 5,
+  },
+  heroMetricaValor: {
+    fontFamily: fonts.bodyMedium,
+    fontSize: 14,
+    color: palette.purpleDark,
+    lineHeight: 19,
   },
 
-  progressoContainer: {
-    marginTop: 16,
+  heroBotao: {
+    flexDirection: "row",
+    alignItems: "center",
+    alignSelf: "stretch",
+    justifyContent: "center",
+    gap: 6,
+    marginTop: 20,
+    paddingVertical: 15,
+    paddingHorizontal: spacing.md,
+    borderRadius: radius.pill,
+    borderWidth: 0,
+    backgroundColor: palette.purple,
+  },
+  heroBotaoTexto: {
+    fontFamily: fonts.bodyMedium,
+    fontSize: 16,
+    color: palette.textOnDark,
+  },
+  heroAtualizar: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 5,
+    marginTop: 10,
+    alignSelf: "center",
+  },
+  heroAtualizarTexto: {
+    fontFamily: fonts.body,
+    fontSize: 12,
+    color: palette.textMuted,
+  },
+
+  // ------------------------------------------------------------- seções
+  secaoRotulo: {
+    display: "none",
+  },
+
+  // Dois atalhos lado a lado
+  linhaAtalhos: {
+    flexDirection: "column",
+    gap: 16,
+    marginBottom: 18,
+  },
+  atalho: {
+    flex: 1,
+    backgroundColor: palette.glass,
+    flexDirection: "row",
+    alignItems: "center",
+    borderRadius: 24,
+    borderWidth: 1,
+    borderColor: "rgba(86, 53, 92, 0.14)",
+    paddingHorizontal: 22,
+    paddingVertical: 20,
+    minHeight: 116,
+    justifyContent: "flex-start",
+    gap: 18,
+    ...elevation.card,
+  },
+  atalhoIcone: {
+    width: 58,
+    height: 58,
+    borderRadius: 29,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  atalhoTitulo: {
+    fontFamily: fonts.title,
+    fontSize: 23,
+    lineHeight: 28,
+    color: palette.purpleDark,
+  },
+  atalhoLegenda: {
+    fontFamily: fonts.body,
+    fontSize: 14,
+    color: "#655B83",
+    marginTop: 4,
+  },
+
+  // ------------------------------------------------------------- card padrão
+  card: {
+    backgroundColor: palette.glass,
+    borderRadius: 24,
+    borderWidth: 1,
+    borderColor: "rgba(86, 53, 92, 0.14)",
+    padding: 24,
     marginBottom: 16,
-    width: "100%",
+    ...elevation.card,
   },
-
-  progressoTexto: {
+  cardLinhaTopo: {
+    flexDirection: "row",
+    alignItems: "baseline",
+    justifyContent: "space-between",
+    marginBottom: spacing.md,
+  },
+  cardTitulo: {
+    fontFamily: fonts.title,
+    fontSize: 22,
+    color: palette.purpleDark,
+  },
+  cardValorForte: {
+    fontFamily: fonts.body,
     fontSize: 16,
-    fontWeight: "bold",
-    color: "#FFFAC3",
-    marginBottom: 8,
+    color: "#655B83",
+    letterSpacing: -0.4,
   },
 
+  // Barra de progresso: fina, sem brilho, cor da fase
   barraContainer: {
     height: 12,
-    backgroundColor: "rgba(255, 255, 255, 0.15)",
-    borderRadius: 10,
-    marginTop: 10,
-    marginBottom: 6,
-    position: "relative",
+    borderRadius: radius.pill,
+    backgroundColor: palette.lilac,
+    overflow: "hidden",
   },
-
   barraProgresso: {
     height: "100%",
-    borderRadius: 8,
+    borderRadius: radius.pill,
+  },
+  progressoLegenda: {
+    fontFamily: fonts.body,
+    fontSize: 12,
+    color: "#756B8A",
+    marginTop: spacing.sm,
   },
 
-  progressoPorcentagem: {
-    marginTop: 4,
-    fontSize: 14,
-    color: "#EED0FC",
-    textAlign: "right",
+  // Conquistas
+  conquistaLinha: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.md,
   },
+  conquistaTrofeu: {
+    width: 74,
+    height: 74,
+    resizeMode: "contain",
+  },
+  conquistaPontos: {
+    fontFamily: fonts.title,
+    fontSize: 27,
+    color: palette.goldDark,
+  },
+  conquistaClasse: {
+    fontFamily: fonts.body,
+    fontSize: 17,
+    color: palette.purpleDark,
+    marginTop: 3,
+  },
+  conquistaFaltam: {
+    fontFamily: fonts.body,
+    fontSize: 13,
+    color: palette.textMuted,
+    marginTop: 3,
+  },
+
+  // ------------------------------------------------------- ação principal
   addButton: {
-    backgroundColor: "#9260CE",
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    paddingVertical: Platform.OS === "ios" ? 14 : 12,
-    paddingHorizontal: 20,
-    borderRadius: 30,
+    gap: spacing.sm,
+    backgroundColor: palette.purple,
+    borderRadius: radius.pill,
+    paddingVertical: 18,
     marginTop: 4,
-    shadowColor: "#9260CE",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.5,
-    shadowRadius: 6,
-    elevation: 6,
+  },
+  addButtonText: {
+    fontFamily: fonts.bodyMedium,
+    fontSize: 15,
+    color: palette.textOnDark,
+    letterSpacing: 0.2,
   },
 
-  addButtonText: {
-    color: "#fff",
-    fontWeight: "bold",
-    marginLeft: 8,
-    fontSize: 16,
-  },
+  // ------------------------------------------------------------- menu modal
   modalOverlay: {
     flex: 1,
-    backgroundColor: "rgba(0, 0, 0, 0.6)",
-    justifyContent: "flex-end",
-    alignItems: "center",
-    zIndex: 10000,
+    backgroundColor: "rgba(36, 33, 39, 0.42)",
   },
-
   modalMenu: {
-    backgroundColor: "#3F1C65",
-    width: "100%",
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
-    padding: 20,
-    paddingBottom: Platform.OS === "ios" ? 50 : 40,
-    borderTopWidth: 1,
-    borderColor: "rgba(146, 96, 206, 0.5)",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: -5 },
-    shadowOpacity: 0.4,
-    shadowRadius: 6,
-    elevation: 5,
+    position: "absolute",
+    top: 0,
+    bottom: 0,
+    left: 0,
+    width: "78%",
+    backgroundColor: palette.bgDeep,
+    paddingTop: 72,
+    paddingHorizontal: spacing.lg,
+    borderTopRightRadius: radius.xl,
+    borderBottomRightRadius: radius.xl,
   },
   menuItem: {
     flexDirection: "row",
     alignItems: "center",
-    paddingVertical: 12,
+    gap: spacing.md,
+    paddingVertical: 15,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: palette.glassBorder,
   },
-
   menuItemText: {
-    marginLeft: 12,
-    fontSize: 16,
-    color: "#EED0FC",
+    fontFamily: fonts.body,
+    fontSize: 15,
+    color: palette.textPrimary,
   },
 
+  // ------------------------------------------------- modal de sintomas
   modalContainer: {
     flex: 1,
-    backgroundColor: "rgba(0,0,0,0.5)",
-    justifyContent: "center",
-    alignItems: "center",
+    justifyContent: "flex-end",
+    backgroundColor: "rgba(36, 33, 39, 0.42)",
   },
-
   modalContent: {
-    backgroundColor: "#3F1C65",
-    padding: 24,
-    borderRadius: 16,
-    width: "85%",
-    borderWidth: 1,
-    borderColor: "rgba(146, 96, 206, 0.4)",
+    backgroundColor: palette.bgDeep,
+    borderTopLeftRadius: radius.xl,
+    borderTopRightRadius: radius.xl,
+    padding: spacing.lg,
+    paddingBottom: spacing.xl,
   },
-
   modalTitle: {
-    fontSize: 18,
-    fontWeight: "bold",
-    marginBottom: 12,
-    color: "#FFFAC3",
+    fontFamily: fonts.title,
+    fontSize: 24,
+    color: palette.textPrimary,
+    marginBottom: spacing.lg,
   },
-
   symptomItem: {
-    paddingVertical: 10,
-    paddingHorizontal: 16,
-    backgroundColor: "rgba(146, 96, 206, 0.3)",
-    borderRadius: 10,
-    marginVertical: 6,
+    paddingVertical: 11,
+    paddingHorizontal: spacing.md,
+    borderRadius: radius.pill,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: palette.glassBorder,
+    backgroundColor: palette.glass,
+    marginRight: spacing.sm,
+    marginBottom: spacing.sm,
   },
-
   selectedSymptom: {
-    backgroundColor: "#9260CE",
+    backgroundColor: palette.lilac,
+    borderColor: palette.purpleLight,
   },
-
   symptomText: {
-    fontSize: 16,
-    color: "#EED0FC",
+    fontFamily: fonts.body,
+    fontSize: 13,
+    color: palette.textPrimary,
   },
-
   modalButton: {
-    backgroundColor: "#9260CE",
-    paddingVertical: 12,
-    borderRadius: 10,
-    marginTop: 16,
+    backgroundColor: palette.purpleDark,
+    borderRadius: radius.pill,
+    paddingVertical: 16,
+    alignItems: "center",
+    marginTop: spacing.md,
+  },
+  modalButtonText: {
+    fontFamily: fonts.bodyMedium,
+    fontSize: 15,
+    color: palette.textOnDark,
   },
 
-  modalButtonText: {
-    textAlign: "center",
-    color: "#fff",
-    fontWeight: "bold",
-    fontSize: 16,
+  // ------------------------------------------------------------ compatíveis
+  // Mantidos porque outras partes da Home ainda os referenciam.
+  dataTexto: {
+    fontFamily: fonts.body,
+    fontSize: 13,
+    color: palette.textSecondary,
+  },
+  subtitulo: {
+    fontFamily: fonts.body,
+    fontSize: 13,
+    color: palette.textSecondary,
   },
   trofeuContainer: {
-    marginTop: 16,
     alignItems: "center",
   },
-
   trofeuImagem: {
-    width: 48,
-    height: 48,
+    width: 44,
+    height: 44,
     resizeMode: "contain",
   },
-
   trofeuTexto: {
-    marginTop: 4,
-    fontSize: 14,
-    color: "#FFFAC3",
-    fontWeight: "600",
+    fontFamily: fonts.body,
+    fontSize: 12,
+    color: palette.textSecondary,
   },
   moedaContainer: {
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "center",
-    marginTop: 8,
   },
   moedaTexto: {
-    color: "#FFFAC3",
-    fontSize: 16,
-    fontWeight: "600",
-  },
-  faseResumo: {
+    fontFamily: fonts.bodyMedium,
     fontSize: 14,
-    color: "#EED0FC",
-    marginTop: 8,
-    textAlign: "center",
-    lineHeight: 20,
-  },
-
-  botaoSaibaMais: {
-    marginTop: 10,
-    alignSelf: "center",
-  },
-
-  textoSaibaMais: {
-    color: "#FFFAC3",
-    textDecorationLine: "underline",
-    fontWeight: "500",
-    fontSize: 14,
-  },
-  faseTitulo: {
-    fontSize: 16,
-    fontWeight: "600",
-    color: "#FFFAC3",
-    marginBottom: 4,
-    textAlign: "left",
-  },
-
-  faseNome: {
-    fontSize: 18,
-    fontWeight: "bold",
-    color: "#B1D686",
-    textAlign: "center",
-  },
-
-  faseDescricao: {
-    fontSize: 14,
-    color: "#EED0FC",
-    lineHeight: 22,
-    textAlign: "justify",
-    fontWeight: "bold",
-    padding: 6,
-    borderRadius: 8,
-  },
-
-  saibaMaisContainer: {
-    alignItems: "flex-end",
-  },
-
-  saibaMaisBotao: {
-    alignSelf: "flex-end",
-    marginTop: 8,
-    backgroundColor: "#9260CE",
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 8,
-  },
-  saibaMaisTexto: {
-    color: "#fff",
-    fontWeight: "500",
-    fontSize: 14,
-  },
-
-  recarregarBotao: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    marginTop: 12,
-    alignSelf: "center",
-    padding: 6,
-  },
-
-  recarregarTexto: {
-    color: "#EED0FC",
-    fontSize: 12,
-    marginLeft: 4,
-    fontWeight: "500",
+    color: palette.textPrimary,
   },
 });

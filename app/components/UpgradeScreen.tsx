@@ -7,7 +7,7 @@ import {
   Image,
   ScrollView,
 } from "react-native";
-import { themeColors } from "../theme/colors";
+import { palette, themeColors } from "../theme/colors";
 
 interface UpgradeScreenProps {
   onUpgrade: () => void;
@@ -169,7 +169,7 @@ const styles = StyleSheet.create({
   },
   planCard: {
     width: "100%",
-    backgroundColor: "#F9F5F0",
+    backgroundColor: palette.glass,
     borderRadius: 16,
     padding: 24,
     marginBottom: 24,

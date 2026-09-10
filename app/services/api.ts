@@ -2,35 +2,9 @@ import axios from "axios";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Platform } from "react-native";
 import { PremiumModalController } from "../utils/premiumModalController";
-
-// Função para decodificar base64 em React Native
-const base64ToUtf8 = (base64: string): string => {
-  const chars =
-    "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=";
-  let str = "";
-  let i = 0;
-
-  while (i < base64.length) {
-    const c0 = chars.indexOf(base64.charAt(i++));
-    const c1 = chars.indexOf(base64.charAt(i++));
-    const c2 = chars.indexOf(base64.charAt(i++));
-    const c3 = chars.indexOf(base64.charAt(i++));
-
-    const b0 = ((c0 & 0x3f) << 2) | ((c1 & 0x30) >> 4);
-    const b1 = ((c1 & 0x0f) << 4) | ((c2 & 0x3c) >> 2);
-    const b2 = ((c2 & 0x03) << 6) | (c3 & 0x3f);
-
-    if (c2 === 64) {
-      str += String.fromCharCode(b0);
-    } else if (c3 === 64) {
-      str += String.fromCharCode(b0, b1);
-    } else {
-      str += String.fromCharCode(b0, b1, b2);
-    }
-  }
-
-  return str;
-};
+import { COBRANCA_ATIVA } from "../config/monetizacao";
+import { auth } from "./firebase";
+import { signOut } from "firebase/auth";
 
 // Definir a URL base da API com base no ambiente e plataforma
 const getBaseURL = () => {
@@ -70,7 +44,7 @@ export const api = axios.create({
 });
 
 // Lista de endpoints que podem ser acessados sem autenticação
-const endpointsSemAuth = ["/login", "/register", "/validar-email", "/ping"];
+const endpointsSemAuth = ["/ping"];
 
 // Log de todas as requisições (para debug)
 api.interceptors.request.use((config) => {
@@ -134,30 +108,29 @@ api.interceptors.response.use(
         console.log(
           "Ignorando erro 401 em verificação de status - usuário pode não estar logado"
         );
+      } else if (!auth.currentUser) {
+        // "Not authenticated" quer dizer que NÓS não mandamos o header, não que
+        // o token foi rejeitado. Deslogar aqui não conserta nada e cria um
+        // ciclo: sem usuário, toda requisição seguinte sai sem token e volta
+        // 401, deslogando de novo.
+        console.warn(
+          "Requisição protegida enviada sem usuário autenticado:",
+          response.config.url
+        );
       } else {
-        // Para outros endpoints, o erro 401 pode indicar que precisamos fazer logout
-        // Verificar se é um problema de token inválido
-        const errorDetail = response.data?.detail || "";
-        if (
-          errorDetail.includes("Token inválido") ||
-          errorDetail.includes("expirado") ||
-          errorDetail.includes("assinatura")
-        ) {
-          console.warn(
-            "Token JWT inválido ou expirado - Limpando armazenamento"
-          );
-
-          // Remover apenas o token sem fazer logout completo
-          // para que o usuário possa fazer login novamente
-          AsyncStorage.removeItem("auth_token").catch((err) => {
-            console.error("Erro ao limpar token:", err);
-          });
-        }
+        // Havia usuário e mesmo assim o backend recusou: o ID token foi de fato
+        // rejeitado. Aí sim deslogar para forçar novo login.
+        console.warn("Token do Firebase rejeitado pelo backend - deslogando");
+        signOut(auth).catch((err) => {
+          console.error("Erro ao deslogar:", err);
+        });
       }
     }
 
-    // Interceptar erro 403 (Forbidden) - pode ser relacionado à assinatura premium
-    if (response.status === 403) {
+    // Interceptar erro 403 (Forbidden) - pode ser relacionado à assinatura premium.
+    // No modo gratuito o backend não bloqueia por assinatura, e a UI não pode
+    // abrir modal de upgrade em hipótese alguma.
+    if (COBRANCA_ATIVA && response.status === 403) {
       console.warn(`Acesso negado (403) para ${response.config.url}`);
 
       // Verifica primeiro se o erro 403 é relacionado à assinatura e não à autenticação
@@ -174,22 +147,12 @@ api.interceptors.response.use(
         message.includes("plano");
 
       if (isAssinaturaError) {
-        // Verificar se o usuário está logado antes de mostrar o modal
-        AsyncStorage.getItem("auth_token")
-          .then((token) => {
-            if (token) {
-              // Só mostra o modal se o usuário estiver autenticado
-              PremiumModalController.showUpgradeModal(message);
-            } else {
-              // Se não estiver autenticado, apenas loga o erro
-              console.log(
-                "Usuário não autenticado, não exibindo modal premium"
-              );
-            }
-          })
-          .catch((error) => {
-            console.error("Erro ao verificar token:", error);
-          });
+        // Só mostra o modal se o usuário estiver autenticado
+        if (auth.currentUser) {
+          PremiumModalController.showUpgradeModal(message);
+        } else {
+          console.log("Usuário não autenticado, não exibindo modal premium");
+        }
       }
     }
 
@@ -200,91 +163,36 @@ api.interceptors.response.use(
     });
   },
   (error) => {
-    // Erro de rede ou timeout
-    if (error.code === "ECONNABORTED") {
-      console.error("Timeout na requisição:", error.config.url);
+    // Requisição abortada de propósito (AbortController). Não é falha de rede e
+    // não deve poluir o console como erro.
+    if (error.code === "ERR_CANCELED" || error.message === "canceled") {
+      console.warn("Requisição cancelada:", error.config?.url);
+    } else if (error.code === "ECONNABORTED") {
+      console.warn("API indisponível (timeout):", error.config?.url);
     } else if (!error.response) {
-      console.error("Erro de rede:", error.message);
+      // Backend local desligado ou temporariamente inacessível. A chamada ainda
+      // é rejeitada para a tela tratar o fallback, mas não deve abrir o LogBox.
+      console.warn("API indisponível:", error.config?.url || error.message);
     }
 
     return Promise.reject(error);
   }
 );
 
-// Função para verificar se o token JWT está expirado
-const isTokenExpired = (token: string): boolean => {
-  try {
-    if (!token) return true;
-
-    // Obter a parte do payload do JWT (segunda parte)
-    const base64Url = token.split(".")[1];
-    if (!base64Url) return true;
-
-    // Decodificar o base64 usando nossa função compatível com React Native
-    const base64 = base64Url.replace(/-/g, "+").replace(/_/g, "/");
-    const decodedPayload = base64ToUtf8(base64);
-    const payload = JSON.parse(decodedPayload);
-
-    // Verificar se o token possui uma data de expiração
-    if (!payload.exp) return true;
-
-    // Verificar se o token está expirado (exp é em segundos)
-    const expiry = payload.exp * 1000; // converter para milissegundos
-    return Date.now() >= expiry;
-  } catch (error) {
-    console.error("Erro ao verificar expiração do token:", error);
-    return true; // Em caso de erro, considerar como expirado por segurança
-  }
-};
-
-// Interceptor para incluir o token
+// Interceptor para incluir o token do Firebase (renovado automaticamente pelo SDK)
 api.interceptors.request.use(
   async (config) => {
     try {
-      // Se for um endpoint que exige autenticação
-      if (
-        !endpointsSemAuth.some((endpoint) => config.url?.includes(endpoint))
-      ) {
-        const token = await AsyncStorage.getItem("auth_token");
-        console.log("Interceptor - Token:", token ? "Existe" : "Não existe");
-
-        // Se não tiver token ou o token estiver expirado e não for um endpoint público
-        if (!token || isTokenExpired(token)) {
+      if (!endpointsSemAuth.some((endpoint) => config.url?.includes(endpoint))) {
+        if (auth.currentUser) {
+          const token = await auth.currentUser.getIdToken();
+          config.headers.Authorization = `Bearer ${token}`;
+        } else {
           console.warn(
-            "Token inválido ou expirado para endpoint protegido:",
+            "Nenhum usuário autenticado para endpoint protegido:",
             config.url
           );
-
-          // Se o token existir mas estiver expirado, removê-lo
-          if (token && isTokenExpired(token)) {
-            console.warn("Removendo token expirado do armazenamento");
-            await AsyncStorage.removeItem("auth_token");
-          }
-
-          // Opção 1: Cancela a requisição
-          const controller = new AbortController();
-          controller.abort();
-          return { ...config, signal: controller.signal };
-        } else {
-          // Imprimir mais detalhes sobre o token para ajudar no diagnóstico
-          const tokenFirstPart = token.substring(0, 15);
-          const tokenLastPart = token.substring(token.length - 15);
-          console.log(
-            `Token válido incluído na requisição: ${tokenFirstPart}...${tokenLastPart}`
-          );
-          console.log(`URL requisitada: ${config.url}`);
-
-          // Garantir que o formato do token seja exatamente como o backend espera
-          config.headers.Authorization = `Bearer ${token.trim()}`;
-
-          // Verificar se o header foi definido corretamente
-          console.log(
-            "Authorization header:",
-            config.headers.Authorization.substring(0, 25) + "..."
-          );
         }
-      } else {
-        console.log("Endpoint público, não precisa de token");
       }
       return config;
     } catch (error) {
@@ -297,3 +205,20 @@ api.interceptors.request.use(
     return Promise.reject(error);
   }
 );
+
+// Rotas que dependem do ciclo recusam contas sem data da menstruação salva
+// (400 ou 404, conforme a rota). É o estado de toda conta nova até o Perfil
+// ser preenchido - não deve ser tratado nem logado como falha.
+const DETALHES_PERFIL_INCOMPLETO = [
+  "sem dados completos do ciclo",
+  "sem menstruação registrada",
+  "menstruação não cadastrada",
+];
+
+export function ehPerfilIncompleto(error: any): boolean {
+  const detalhe = error?.response?.data?.detail;
+  return (
+    typeof detalhe === "string" &&
+    DETALHES_PERFIL_INCOMPLETO.some((trecho) => detalhe.includes(trecho))
+  );
+}

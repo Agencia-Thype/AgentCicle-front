@@ -6,16 +6,20 @@ import React, {
   ReactNode,
 } from "react";
 import { AssinaturaStatus } from "../services/assinaturaService";
-import assinaturaService from "../services/assinaturaService";
+import assinaturaService, { type CompraLoja } from "../services/assinaturaService";
 import { Alert } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { auth } from "../services/firebase";
+import { garantirPerfilSincronizado } from "../services/authService";
+import { signOut } from "firebase/auth";
+import { COBRANCA_ATIVA } from "../config/monetizacao";
 
 interface AssinaturaContextData {
   status: AssinaturaStatus | null;
   loading: boolean;
   error: string | null;
   verificarStatus: (forceFetch?: boolean) => Promise<void>;
-  ativarAssinatura: (duracaoMeses?: number) => Promise<void>;
+  ativarAssinatura: (compra: CompraLoja) => Promise<void>;
   cancelarAssinatura: () => Promise<void>;
   temPermissaoPremium: boolean;
   podeUsarApp: boolean;
@@ -36,17 +40,22 @@ export function AssinaturaProvider({ children }: AssinaturaProviderProps) {
   const [error, setError] = useState<string | null>(null);
 
   // Valores derivados para simplificar uso na UI com verificações mais robustas
-  // Usar preferencialmente o novo campo statusTipo, mas manter compatibilidade com campos antigos
-  const temPermissaoPremium =
-    status?.statusTipo === "premium" || status?.podeUsarPremium === true;
-  const podeUsarApp =
-    (status?.statusTipo &&
-      status?.statusTipo !== "trial_expirado" &&
-      status?.statusTipo !== "expirado") ||
-    status?.podeUsarRecursosBasicos === true;
-  const estaNoPeriodoTrial =
-    status?.statusTipo === "trial" ||
-    (status?.trialAtivo === true && status?.diasRestantesTrial > 0);
+  // Usar preferencialmente o novo campo statusTipo, mas manter compatibilidade com campos antigos.
+  // No modo gratuito tudo é liberado e nada indica trial - inclusive se um
+  // status antigo tiver sobrado no cache local do aparelho.
+  const temPermissaoPremium = !COBRANCA_ATIVA
+    ? true
+    : status?.statusTipo === "premium" || status?.podeUsarPremium === true;
+  const podeUsarApp = !COBRANCA_ATIVA
+    ? true
+    : (status?.statusTipo &&
+        status?.statusTipo !== "trial_expirado" &&
+        status?.statusTipo !== "expirado") ||
+      status?.podeUsarRecursosBasicos === true;
+  const estaNoPeriodoTrial = !COBRANCA_ATIVA
+    ? false
+    : status?.statusTipo === "trial" ||
+      (status?.trialAtivo === true && status?.diasRestantesTrial > 0);
 
   // Função para validar e corrigir inconsistências no status
   const validarStatusAssinatura = (
@@ -255,9 +264,8 @@ export function AssinaturaProvider({ children }: AssinaturaProviderProps) {
       setLoading(true);
       setError(null);
 
-      // Verificar se o usuário tem token antes de consultar
-      const token = await AsyncStorage.getItem("auth_token");
-      if (!token) {
+      // Verificar se o usuário está autenticado antes de consultar
+      if (!auth.currentUser) {
         console.log(
           "[AssinaturaContext] Verificação de status ignorada - usuário não está logado"
         );
@@ -272,6 +280,9 @@ export function AssinaturaProvider({ children }: AssinaturaProviderProps) {
       );
 
       try {
+        // A inicialização deste contexto não espera o AuthContext: sem isso a
+        // 1ª consulta pode chegar antes de a usuária existir no backend (404).
+        await garantirPerfilSincronizado();
         const statusAtualizado = await assinaturaService.verificarStatus();
         const statusValidado = validarStatusAssinatura(statusAtualizado);
 
@@ -326,9 +337,9 @@ export function AssinaturaProvider({ children }: AssinaturaProviderProps) {
         // Erros específicos de API
         if (apiError.response?.status === 401) {
           console.warn(
-            "[AssinaturaContext] Token inválido na verificação de status - limpando token"
+            "[AssinaturaContext] Token do Firebase rejeitado na verificação de status - deslogando"
           );
-          await AsyncStorage.removeItem("auth_token");
+          await signOut(auth);
           setStatus(null);
           throw new Error("Token inválido ou expirado");
         } else {
@@ -358,12 +369,19 @@ export function AssinaturaProvider({ children }: AssinaturaProviderProps) {
     }
   };
 
-  const ativarAssinatura = async (duracaoMeses: number = 1) => {
+  const ativarAssinatura = async (compra: CompraLoja) => {
+    // Trava de segurança: no modo gratuito não existe compra a processar, e
+    // nenhum alerta de assinatura pode chegar à tela.
+    if (!COBRANCA_ATIVA) {
+      console.warn("[AssinaturaContext] Cobrança desligada, ativação ignorada");
+      return;
+    }
+
     try {
       setLoading(true);
       setError(null);
 
-      const resposta = await assinaturaService.ativarAssinatura(duracaoMeses);
+      const resposta = await assinaturaService.ativarAssinatura(compra);
 
       // Atualiza o status após ativação
       if (resposta.status) {
@@ -425,6 +443,11 @@ export function AssinaturaProvider({ children }: AssinaturaProviderProps) {
   };
 
   const cancelarAssinatura = async () => {
+    if (!COBRANCA_ATIVA) {
+      console.warn("[AssinaturaContext] Cobrança desligada, cancelamento ignorado");
+      return;
+    }
+
     try {
       setLoading(true);
       setError(null);
@@ -494,9 +517,18 @@ export function AssinaturaProvider({ children }: AssinaturaProviderProps) {
   useEffect(() => {
     const carregarStatusSalvo = async () => {
       try {
-        // Primeiro verificar se o usuário está autenticado
-        const token = await AsyncStorage.getItem("auth_token");
-        if (!token) {
+        // Aguarda o Firebase restaurar a sessão (onAuthStateChanged dispara
+        // uma vez assim que souber se há usuário logado ou não)
+        const usuarioAtual = await new Promise<import("firebase/auth").User | null>(
+          (resolve) => {
+            const unsubscribe = auth.onAuthStateChanged((firebaseUser) => {
+              unsubscribe();
+              resolve(firebaseUser);
+            });
+          }
+        );
+
+        if (!usuarioAtual) {
           console.log(
             "[AssinaturaContext] Usuário não está autenticado. Não carregando status salvo."
           );

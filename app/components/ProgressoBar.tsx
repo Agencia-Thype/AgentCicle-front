@@ -2,6 +2,7 @@ import React, { useEffect, useRef } from "react";
 import { View, Text, StyleSheet, Animated } from "react-native";
 import { MaterialIcons } from "@expo/vector-icons";
 import { FontAwesome5 } from "@expo/vector-icons";
+import { palette } from "../theme/colors";
 
 interface Props {
   step: number; // de 1 a 4
@@ -40,7 +41,7 @@ export function ProgressBar({ step }: Props) {
       <View style={styles.iconsContainer}>
         {etapas.map((etapa, index) => {
           const isActive = step >= index + 1;
-          const color = isActive ? "#A56C6C" : "#D3B8B8";
+          const color = isActive ? palette.purple : palette.glassBorder;
 
           return (
             <View key={index} style={styles.item}>
@@ -97,19 +98,19 @@ const styles = StyleSheet.create({
   },
   barBackground: {
     height: 8,
-    backgroundColor: "#FDECEC",
+    backgroundColor: "rgba(214, 69, 63, 0.1)",
     borderRadius: 10,
     overflow: "hidden",
   },
   barFill: {
     height: 8,
-    backgroundColor: "#A56C6C",
+    backgroundColor: palette.textSecondary,
     borderRadius: 10,
   },
   percentText: {
     marginTop: 6,
     fontSize: 12,
-    color: "#5C3B3B",
+    color: palette.textPrimary,
     textAlign: "right",
     fontWeight: "500",
   },

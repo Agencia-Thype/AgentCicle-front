@@ -3,14 +3,20 @@
   "compilerOptions": {
     "strict": true,
     "skipLibCheck": true,
-    "baseUrl": ".",
     "paths": {
-      "app/*": ["app/*"]
-    }
+      "app/*": [
+        "app/*"
+      ]
+    },
+    "baseUrl": ".",
+    "ignoreDeprecations": "6.0",
+    "types": [
+      "jest",
+      "node"
+    ]
   },
   "exclude": [
     "node_modules",
-    "**/node_modules/*",
-    "**/expo-av/*"
+    "**/node_modules/*"
   ]
 }

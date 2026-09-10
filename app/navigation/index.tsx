@@ -1,13 +1,15 @@
-import React, { useState, useEffect } from "react";
-import { NavigationContainer } from "@react-navigation/native";
+import React, { useEffect } from "react";
+import {
+  NavigationContainer,
+  createNavigationContainerRef,
+} from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import HomeScreen from "../screens/Home/HomeScreen";
 import ForgotPasswordScreen from "../screens/ForgotPassword/ForgotPasswordScreen";
 import LoginScreen from "../screens/login/loginScreen";
 import RegisterScreen from "../screens/register/registerScreen";
-import ValidarCodigoScreen from "../screens/ValidarCodigo/validarCodigoScreen";
 import ValidarEmailScreen from "../screens/ValidarCodigo/validarEmailScreen";
+import { useAuth } from "../contexts/AuthContext";
 import CalendarioScreen from "../screens/Calendario/CalendarioScreen";
 import PerfilScreen from "../screens/Perfil/PerfilScreen";
 import TreinoDoDia from "../screens/Treino/TreinoDoDiaScreen";
@@ -31,7 +33,6 @@ export type RootStackParamList = {
       }
     | undefined;
   ForgotPassword: undefined;
-  ValidarCodigo: { email: string };
   ValidarEmail: { email: string };
   Calendario: undefined;
   Perfil: undefined;
@@ -46,6 +47,16 @@ export type RootStackParamList = {
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
+const navigationRef = createNavigationContainerRef<RootStackParamList>();
+
+// Telas que funcionam sem sessão (ValidarEmail vem logo após o cadastro).
+const ROTAS_PUBLICAS: (keyof RootStackParamList)[] = [
+  "Login",
+  "Register",
+  "ForgotPassword",
+  "ValidarEmail",
+];
+
 const transparentHeaderOptions = {
   headerTransparent: true,
   headerTitleStyle: { color: "#fff" },
@@ -53,42 +64,24 @@ const transparentHeaderOptions = {
 };
 
 export function Routes() {
-  // Determinar a tela inicial baseada na autenticação
-  const [initialRouteName, setInitialRouteName] =
-    useState<keyof RootStackParamList>("Login");
-  const [isReady, setIsReady] = useState(false);
+  // A tela inicial é determinada pelo AuthContext (fonte única de verdade
+  // do estado de autenticação, já resolvido antes de Routes ser montado).
+  const { isAuthenticated } = useAuth();
+  const initialRouteName: keyof RootStackParamList = isAuthenticated ? "Home" : "Login";
 
-  // Verificar autenticação ao iniciar
+  // initialRouteName só vale na montagem. Se a sessão acabar depois (token
+  // recusado pelo backend, sessão expirada), a pilha continuava nas telas
+  // logadas e cada requisição saía sem token: 401 "Not authenticated".
   useEffect(() => {
-    const checkAuth = async () => {
-      try {
-        const token = await AsyncStorage.getItem("auth_token");
-
-        if (token) {
-          console.log("Token encontrado, iniciando na Home");
-          setInitialRouteName("Home");
-        } else {
-          console.log("Nenhum token encontrado, iniciando no Login");
-          setInitialRouteName("Login");
-        }
-      } catch (error) {
-        console.error("Erro ao verificar token:", error);
-        setInitialRouteName("Login");
-      } finally {
-        setIsReady(true);
-      }
-    };
-
-    checkAuth();
-  }, []);
-
-  // Mostrar nada enquanto verifica autenticação
-  if (!isReady) {
-    return null;
-  }
+    if (isAuthenticated || !navigationRef.isReady()) return;
+    const rotaAtual = navigationRef.getCurrentRoute()?.name;
+    if (rotaAtual && !ROTAS_PUBLICAS.includes(rotaAtual)) {
+      navigationRef.reset({ index: 0, routes: [{ name: "Login" }] });
+    }
+  }, [isAuthenticated]);
 
   return (
-    <NavigationContainer>
+    <NavigationContainer ref={navigationRef}>
       <Stack.Navigator initialRouteName={initialRouteName}>
         <Stack.Screen
           name="Login"
@@ -98,7 +91,7 @@ export function Routes() {
         <Stack.Screen
           name="Register"
           component={RegisterScreen}
-          options={{ title: "Cadastro", ...transparentHeaderOptions }}
+          options={{ headerShown: false }}
         />
         <Stack.Screen
           name="Home"
@@ -109,11 +102,6 @@ export function Routes() {
           name="ForgotPassword"
           component={ForgotPasswordScreen}
           options={{ title: "Recuperar Senha", ...transparentHeaderOptions }}
-        />
-        <Stack.Screen
-          name="ValidarCodigo"
-          component={ValidarCodigoScreen}
-          options={{ headerShown: false }}
         />
         <Stack.Screen
           name="ValidarEmail"
@@ -128,11 +116,7 @@ export function Routes() {
         <Stack.Screen
           name="Perfil"
           component={PerfilScreen}
-          options={{
-            headerTitle: "",
-            headerTransparent: true,
-            headerTintColor: "#5C3B3B",
-          }}
+          options={{ headerShown: false }}
         />
         <Stack.Screen
           name="TreinoDoDia"

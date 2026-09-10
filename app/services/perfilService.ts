@@ -1,4 +1,4 @@
-import { api } from "./api";
+import { api, ehPerfilIncompleto } from "./api";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Platform } from "react-native";
 
@@ -196,7 +196,13 @@ export async function sincronizarFase(): Promise<any> {
       ...response.data,
       de_cache: false,
     };
-  } catch (error) {
+  } catch (error: any) {
+    // Conta nova, ainda sem data da menstruação/duração do ciclo: estado
+    // esperado até o perfil ser salvo, não uma falha.
+    if (ehPerfilIncompleto(error)) {
+      return { fase: "", mensagem: "", de_cache: false, perfil_incompleto: true };
+    }
+
     console.error("Erro ao sincronizar fase:", error);
 
     // Em caso de erro de conectividade, tenta usar o cache
@@ -274,4 +280,34 @@ export async function verificarMudancaFase(): Promise<{
 export async function getFaseCiclo() {
   // Usamos a sincronização para garantir dados atualizados com fallback para cache
   return sincronizarFase();
+}
+
+/**
+ * Exclui permanentemente a conta da usuária e todos os seus dados.
+ *
+ * Exigência obrigatória da App Store (5.1.1(v)) e do Google Play para
+ * aplicativos com criação de conta. O backend identifica a conta pelo token,
+ * então não há como excluir a conta de outra pessoa.
+ */
+export async function excluirConta(): Promise<void> {
+  const response = await api.delete("/usuario/me");
+
+  // A instância do axios usa validateStatus: () => true, então o status
+  // precisa ser conferido manualmente.
+  if (response.status < 200 || response.status >= 300) {
+    throw new Error(
+      response.data?.detail || "Não foi possível excluir a conta."
+    );
+  }
+
+  // Limpa qualquer resquício local dos dados da usuária.
+  await AsyncStorage.multiRemove([
+    CACHE_PERFIL_KEY,
+    CACHE_FASE_KEY,
+    CACHE_MENSAGEM_KEY,
+    CACHE_ULTIMA_SYNC_KEY,
+    NOTIFICACAO_FASE_KEY,
+    "assinatura_status",
+    "primeiro_acesso",
+  ]);
 }

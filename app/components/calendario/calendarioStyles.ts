@@ -1,18 +1,21 @@
 import { StyleSheet } from "react-native";
+import { palette, radius } from "../../theme/colors";
 
 export const calendarioStyles = StyleSheet.create({
   overlay: {
     flex: 1,
-    backgroundColor: "rgba(0,0,0,0.4)",
+    backgroundColor: "rgba(43, 27, 68, 0.4)",
     justifyContent: "center",
     alignItems: "center",
   },
   modal: {
-    backgroundColor: "#FFF0F0",
+    backgroundColor: palette.white,
     padding: 20,
-    borderRadius: 20,
+    borderRadius: radius.xl,
     width: "90%",
     maxHeight: "70%",
+    borderWidth: 1,
+    borderColor: palette.glassBorder,
   },
   header: {
     flexDirection: "row",
@@ -23,7 +26,7 @@ export const calendarioStyles = StyleSheet.create({
   headerText: {
     fontSize: 18,
     fontWeight: "bold",
-    color: "#5C3B3B",
+    color: palette.textPrimary,
   },
   grid: {
     flexDirection: "row",
@@ -36,12 +39,12 @@ export const calendarioStyles = StyleSheet.create({
     height: 36,
     marginVertical: 6,
     borderRadius: 18,
-    backgroundColor: "#F9E6E6",
+    backgroundColor: palette.glass,
     justifyContent: "center",
     alignItems: "center",
   },
   dayText: {
-    color: "#5C3B3B",
+    color: palette.textPrimary,
     fontWeight: "bold",
   },
   dayBoxPlaceholder: {
@@ -52,24 +55,24 @@ export const calendarioStyles = StyleSheet.create({
     backgroundColor: "transparent",
   },
   diaSelecionado: {
-    backgroundColor: "#91766E",
+    backgroundColor: palette.purple,
   },
   diaHoje: {
-    borderColor: "#5C3B3B",
+    borderColor: palette.purple,
     borderWidth: 1.5,
   },
   diaMenstruacao: {
     borderWidth: 2,
-    borderColor: "#D9534F",
+    borderColor: "#E08D8D",
     borderStyle: "dotted",
   },
   diaFolicular: {
-    backgroundColor: "#A7D7C5",
+    backgroundColor: palette.sageLight,
   },
   diaOvulatoria: {
-    backgroundColor: "#F4C06D",
+    backgroundColor: palette.gold,
   },
   diaLutea: {
-    backgroundColor: "#D6B0C4",
+    backgroundColor: palette.purpleLight,
   },
 });

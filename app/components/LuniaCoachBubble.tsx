@@ -8,6 +8,7 @@ import {
   StyleSheet,
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
+import { palette } from "../theme/colors";
 
 interface Props {
   visivel: boolean;
@@ -91,7 +92,7 @@ const styles = StyleSheet.create({
     marginBottom: -10,
   },
   balao: {
-    backgroundColor: "#FFF0F5",
+    backgroundColor: palette.bgSoft,
     padding: 18,
     borderRadius: 20,
     shadowColor: "#000",
@@ -103,12 +104,12 @@ const styles = StyleSheet.create({
   },
   titulo: {
     fontSize: 16,
-    color: "#5C3B3B",
+    color: palette.textPrimary,
     marginBottom: 6,
   },
   texto: {
     fontSize: 14,
-    color: "#5C3B3B",
+    color: palette.textPrimary,
     textAlign: "center",
     lineHeight: 22,
   },
@@ -118,13 +119,13 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   botaoPrimario: {
-    backgroundColor: "#A56C6C",
+    backgroundColor: palette.textSecondary,
     paddingHorizontal: 14,
     paddingVertical: 8,
     borderRadius: 12,
   },
   botaoSecundario: {
-    backgroundColor: "#EADADA",
+    backgroundColor: palette.glassBorder,
     paddingHorizontal: 14,
     paddingVertical: 8,
     borderRadius: 12,
@@ -134,7 +135,7 @@ const styles = StyleSheet.create({
     fontWeight: "600",
   },
   textoBotaoSecundario: {
-    color: "#5C3B3B",
+    color: palette.textPrimary,
     fontWeight: "600",
   },
 });

@@ -23,6 +23,15 @@ export interface AssinaturaStatus {
   statusTipo?: "trial" | "premium" | "expirado" | "trial_expirado";
 }
 
+/**
+ * Prova de compra emitida pela loja, obtida via StoreKit (iOS) ou
+ * Play Billing (Android). Nunca montada no cliente.
+ */
+export interface CompraLoja {
+  plataforma: "ios" | "android";
+  tokenCompra: string;
+}
+
 export const assinaturaService = {
   /**
    * Verifica o status atual do usuário (trial/assinatura)
@@ -82,7 +91,7 @@ export const assinaturaService = {
       }
 
       // Extrair cabeçalho de cache, se disponível
-      const cacheControl = response.headers?.["cache-control"];
+      const cacheControl = String(response.headers?.["cache-control"] ?? "");
       if (cacheControl) {
         console.log(
           "[AssinaturaService] Cabeçalho Cache-Control recebido:",
@@ -127,9 +136,13 @@ export const assinaturaService = {
    * Ativa a assinatura premium para o usuário
    * @param duracaoMeses Duração da assinatura em meses
    */
-  ativarAssinatura: async (duracaoMeses: number = 1) => {
+  ativarAssinatura: async (compra: CompraLoja) => {
+    // O backend valida o recibo junto à App Store / Google Play antes de
+    // gravar qualquer coisa. Enviar só a duração, como na versão antiga,
+    // é rejeitado com 422.
     const response = await api.post("/assinatura/ativar", {
-      duracao_meses: duracaoMeses,
+      plataforma: compra.plataforma,
+      token_compra: compra.tokenCompra,
     });
     return response.data;
   },
