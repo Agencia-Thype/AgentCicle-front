@@ -31,7 +31,8 @@ interface KegelTemporizadorModalProps {
   exercicio: ExercicioKegel;
   visible: boolean;
   onClose: () => void;
-  onComplete: () => void;
+  /** Exercício terminado. `silencioso`: salvar sem mostrar a mensagem de parabéns. */
+  onComplete: (opcoes?: { silencioso?: boolean }) => void;
 }
 
 const ROTULO_DO_ESTADO: Record<EstadoKegel, string> = {
@@ -143,11 +144,15 @@ export function KegelTemporizadorModal({
               <Text style={styles.completedTitle}>Exercício Concluído!</Text>
               <Text style={styles.completedText}>{exercicio.nome}</Text>
 
-              <TouchableOpacity style={styles.completedButton} onPress={onComplete}>
+              <TouchableOpacity style={styles.completedButton} onPress={() => onComplete()}>
                 <Text style={styles.completedButtonText}>Continuar</Text>
               </TouchableOpacity>
 
-              <TouchableOpacity style={styles.completedCloseButton} onPress={onClose}>
+              {/* O exercício já terminou: fechar também salva, só sem a mensagem. */}
+              <TouchableOpacity
+                style={styles.completedCloseButton}
+                onPress={() => onComplete({ silencioso: true })}
+              >
                 <Text style={styles.completedCloseButtonText}>Fechar</Text>
               </TouchableOpacity>
             </View>

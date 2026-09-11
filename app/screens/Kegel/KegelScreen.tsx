@@ -173,8 +173,8 @@ export default function KegelScreen() {
     setMostrarTemporizador(true);
   };
 
-  // Devolve os pontos ganhos: cada exercício pontua uma vez por dia.
-  const registrarConclusao = async (exercicio: ExercicioKegel): Promise<number> => {
+  // Resposta do servidor, ou null se não salvou. Cada exercício pontua uma vez por dia.
+  const registrarConclusao = async (exercicio: ExercicioKegel) => {
     try {
       const response = await api.post("/kegel/concluir-exercicio", {
         nivel: exercicio.nivel,
@@ -190,11 +190,65 @@ export default function KegelScreen() {
 
       // Recarregar treino atual para atualizar progresso
       await carregarTreino();
-      return pontos;
+      return { ...response.data, pontos_ganhos: pontos } as {
+        pontos_ganhos: number;
+        nivel_concluido?: boolean;
+      };
     } catch (error) {
       console.error("Erro ao registrar conclusão:", error);
-      return 0;
+      return null;
     }
+  };
+
+  /**
+   * Fim do exercício, venha do "Continuar" ou do "Fechar": o exercício terminou
+   * nos dois casos e precisa ser salvo. Antes o "Fechar" só fechava a tela, e o
+   * exercício ficava sem check-in.
+   */
+  const finalizarExercicio = async (
+    exercicio: ExercicioKegel,
+    { silencioso = false }: { silencioso?: boolean } = {}
+  ) => {
+    setMostrarTemporizador(false);
+    setExercicioSelecionado(null);
+
+    // Status de antes de salvar: é o que diz se este exercício fechou o nível.
+    const nivelJaConcluido = !!statusNiveis?.[exercicio.nivel]?.concluido;
+    const resultado = await registrarConclusao(exercicio);
+
+    if (!resultado) {
+      Alert.alert(
+        "Não foi possível salvar",
+        "O exercício não foi registrado. Verifique sua conexão e tente de novo.",
+        [
+          { text: "Cancelar", style: "cancel" },
+          { text: "Tentar de novo", onPress: () => void finalizarExercicio(exercicio, { silencioso }) },
+        ]
+      );
+      return;
+    }
+
+    if (silencioso) return;
+
+    const pontos = resultado.pontos_ganhos;
+    let mensagem = "Parabéns! Exercício concluído com sucesso!";
+    if (pontos > 0) {
+      mensagem += `\n\n+${pontos} ponto${pontos !== 1 ? "s" : ""}`;
+    }
+
+    if (resultado.nivel_concluido && !nivelJaConcluido) {
+      if (exercicio.nivel === "iniciante") {
+        mensagem += "\n\n🎉 Você completou todos os exercícios do nível Iniciante!";
+        mensagem += "\n\nNível Intermediário desbloqueado!";
+      } else if (exercicio.nivel === "intermediario") {
+        mensagem += "\n\n🎉 Você completou todos os exercícios do nível Intermediário!";
+        mensagem += "\n\nNível Avançado desbloqueado!";
+      } else if (exercicio.nivel === "avancado") {
+        mensagem += "\n\n🎉 Você completou todos os exercícios do nível Avançado!";
+      }
+    }
+
+    Alert.alert("Parabéns!", mensagem);
   };
 
   const getNivelLabel = (nivel: string) => {
@@ -555,37 +609,8 @@ export default function KegelScreen() {
             setMostrarTemporizador(false);
             setExercicioSelecionado(null);
           }}
-          onComplete={async () => {
-            if (exercicioSelecionado) {
-              const pontos = await registrarConclusao(exercicioSelecionado);
-
-              const nivelStatus = statusNiveis;
-              let mensagem = "Parabéns! Exercício concluído com sucesso!";
-              if (pontos > 0) {
-                mensagem += `\n\n+${pontos} ponto${pontos !== 1 ? "s" : ""}`;
-              }
-
-              if (exercicioSelecionado.nivel === "iniciante") {
-                if (nivelStatus?.iniciante?.concluido) {
-                  mensagem +=
-                    "\n\n🎉 Você completou todos os exercícios do nível Iniciante!";
-                  mensagem += "\n\nNível Intermediário desbloqueado!";
-                }
-              }
-
-              if (exercicioSelecionado.nivel === "intermediario") {
-                if (nivelStatus?.intermediario?.concluido) {
-                  mensagem +=
-                    "\n\n🎉 Você completou todos os exercícios do nível Intermediário!";
-                  mensagem += "\n\nNível Avançado desbloqueado!";
-                }
-              }
-
-              Alert.alert("Parabéns!", mensagem);
-            }
-
-            setMostrarTemporizador(false);
-            setExercicioSelecionado(null);
+          onComplete={(opcoes) => {
+            if (exercicioSelecionado) void finalizarExercicio(exercicioSelecionado, opcoes);
           }}
         />
       )}
