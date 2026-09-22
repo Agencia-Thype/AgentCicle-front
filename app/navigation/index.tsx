@@ -19,6 +19,10 @@ import FaseCompletaScreen from "../screens/IA/faseCompletaScreen";
 import RelatorioMensalScreen from "../screens/Relatorio/RelatorioMensalScreen";
 import DiagnosticoScreen from "../screens/Diagnostico/DiagnosticoScreen";
 import KegelScreen from "../screens/Kegel/KegelScreen";
+import RotinaScreen from "../screens/Rotina/RotinaScreen";
+import AdicionarItemScreen from "../screens/Rotina/AdicionarItemScreen";
+import AguaScreen from "../screens/Rotina/AguaScreen";
+import HistoricoRotinaScreen from "../screens/Rotina/HistoricoRotinaScreen";
 import { withPremiumCheck } from "../utils/withPremiumCheck";
 
 // Tipos das rotas
@@ -43,6 +47,11 @@ export type RootStackParamList = {
   RelatorioMensal: undefined;
   Diagnostico: undefined;
   Kegel: undefined;
+  Rotina: undefined;
+  /** Sem itemId, cadastra um item novo. */
+  AdicionarItemRotina: { itemId?: number } | undefined;
+  AguaDoDia: undefined;
+  HistoricoRotina: undefined;
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -151,6 +160,26 @@ export function Routes() {
         <Stack.Screen
           name="Kegel"
           component={KegelScreen}
+          options={{ headerShown: false }}
+        />
+        <Stack.Screen
+          name="Rotina"
+          component={RotinaScreen}
+          options={{ headerShown: false }}
+        />
+        <Stack.Screen
+          name="AdicionarItemRotina"
+          component={AdicionarItemScreen}
+          options={{ headerShown: false }}
+        />
+        <Stack.Screen
+          name="AguaDoDia"
+          component={AguaScreen}
+          options={{ headerShown: false }}
+        />
+        <Stack.Screen
+          name="HistoricoRotina"
+          component={HistoricoRotinaScreen}
           options={{ headerShown: false }}
         />
       </Stack.Navigator>

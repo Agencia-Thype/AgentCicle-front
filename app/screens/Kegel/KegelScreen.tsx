@@ -454,6 +454,7 @@ export default function KegelScreen() {
             label="Treinos"
             onPress={() => ir("TreinoDoDia")}
           />
+          <Nav icon="pill" label="Rotina" onPress={() => ir("Rotina")} />
           <Nav
             icon="account-outline"
             label="Perfil"

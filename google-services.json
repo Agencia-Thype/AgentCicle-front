@@ -1,0 +1,54 @@
+{
+  "project_info": {
+    "project_number": "460293722206",
+    "project_id": "ciclica-5d6d6",
+    "storage_bucket": "ciclica-5d6d6.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:460293722206:android:355acfc992fc70f33aa4cf",
+        "android_client_info": {
+          "package_name": "io.zurve.ciclica"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "460293722206-fkabb97qgn6hcmlb29vulrpots4brjkr.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "io.zurve.ciclica",
+            "certificate_hash": "8aea71c1610806df149ee5fba86c394373c0aca1"
+          }
+        },
+        {
+          "client_id": "460293722206-sb8alm4d3k973r7mcvp796jcjggbjtbf.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCOtsbR9raKNsGOQINJkKTljxAhX9VIQwg"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "460293722206-sb8alm4d3k973r7mcvp796jcjggbjtbf.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "460293722206-j2cinrv6g15eu44oubif9lrs1mhqavlv.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "io.zurve.ciclica"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

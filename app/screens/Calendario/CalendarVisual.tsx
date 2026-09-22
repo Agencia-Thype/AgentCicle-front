@@ -75,7 +75,7 @@ export default function CalendarVisual(props: Props) {
           </TouchableOpacity>
         </ScrollView>
 
-        <View style={[styles.bottomNav, compact && styles.bottomNavCompact, dense && styles.bottomNavDense]}><Nav icon="home-outline" label="Início" onPress={() => navigate("Home")} /><Nav icon="calendar-month" label="Ciclo" active /><Nav icon="meditation" label="Kegel" onPress={() => navigate("Kegel")} /><Nav icon="dumbbell" label="Treinos" onPress={() => navigate("TreinoDoDia")} /><Nav icon="account-outline" label="Perfil" onPress={() => navigate("Perfil")} /></View>
+        <View style={[styles.bottomNav, compact && styles.bottomNavCompact, dense && styles.bottomNavDense]}><Nav icon="home-outline" label="Início" onPress={() => navigate("Home")} /><Nav icon="calendar-month" label="Ciclo" active /><Nav icon="meditation" label="Kegel" onPress={() => navigate("Kegel")} /><Nav icon="dumbbell" label="Treinos" onPress={() => navigate("TreinoDoDia")} /><Nav icon="pill" label="Rotina" onPress={() => navigate("Rotina")} /><Nav icon="account-outline" label="Perfil" onPress={() => navigate("Perfil")} /></View>
       </SafeAreaView>
     </AppBackground>
   );

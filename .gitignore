@@ -10,6 +10,10 @@ web-build/
 expo-env.d.ts
 
 # Native
+# Pastas geradas por "expo prebuild" / "expo run:android" a partir do app.json
+# (Continuous Native Generation). Não versionar: são recriadas.
+/android
+/ios
 *.orig.*
 *.jks
 *.p8
@@ -24,6 +28,10 @@ expo-env.d.ts
 npm-debug.*
 yarn-debug.*
 yarn-error.*
+expo-*.stdout.log
+expo-*.stderr.log
+.codex-*.png
+.claude/
 
 # macOS
 .DS_Store

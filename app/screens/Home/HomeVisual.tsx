@@ -16,6 +16,7 @@ import { MaterialCommunityIcons, MaterialIcons } from "@expo/vector-icons";
 import AppBackground from "../../components/AppBackground";
 import ClasseLunarModal from "../../components/classeLunarModal";
 import { MarcaDaguaOrganica } from "../../components/FormaOrganica";
+import CardRotina from "./CardRotina";
 import { palette } from "../../theme/colors";
 import { replicaStyles as styles } from "./homeReplicaStyles";
 
@@ -35,8 +36,12 @@ type Props = {
   menuAberto: boolean;
   onAbrirMenu: () => void;
   onFecharMenu: () => void;
+  onSair: () => Promise<void>;
   onAbrirClasse: () => void;
   onFecharClasse: () => void;
+  /** Dias restantes do teste grátis; null quando não há o que avisar. */
+  avisoTrial?: { dias: number } | null;
+  onAssinar?: () => void;
 };
 
 const dias = ["Seg", "Ter", "Qua", "Qui", "Sex", "Sáb", "Dom"];
@@ -57,8 +62,11 @@ export default function HomeVisual({
   menuAberto,
   onAbrirMenu,
   onFecharMenu,
+  onSair,
   onAbrirClasse,
   onFecharClasse,
+  avisoTrial,
+  onAssinar,
 }: Props) {
   const { width } = useWindowDimensions();
   const compact = width < 380;
@@ -76,6 +84,7 @@ export default function HomeVisual({
               ["calendar-month-outline", "Ciclo", "Calendario"],
               ["dumbbell", "Treinos", "TreinoDoDia"],
               ["flower-tulip-outline", "Kegel", "Kegel"],
+              ["pill", "Minha rotina", "Rotina"],
               ["account-outline", "Perfil", "Perfil"],
             ].map(([icon, label, route]) => (
               <TouchableOpacity key={label} style={styles.drawerItem} onPress={() => { onFecharMenu(); navegar(route); }}>
@@ -83,6 +92,15 @@ export default function HomeVisual({
                 <Text style={styles.drawerText}>{label}</Text>
               </TouchableOpacity>
             ))}
+            <TouchableOpacity
+              style={[styles.drawerItem, styles.drawerLogout]}
+              onPress={onSair}
+              accessibilityRole="button"
+              accessibilityLabel="Sair da conta"
+            >
+              <MaterialIcons name="logout" size={23} color={palette.error} />
+              <Text style={[styles.drawerText, styles.drawerLogoutText]}>Sair</Text>
+            </TouchableOpacity>
           </View>
         </TouchableOpacity>
       </Modal>
@@ -116,6 +134,17 @@ export default function HomeVisual({
         />
 
         <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+          {avisoTrial && (
+            <TouchableOpacity style={styles.trialAviso} onPress={onAssinar} activeOpacity={0.85}>
+              <MaterialCommunityIcons name="clock-alert-outline" size={22} color="#8A5A00" />
+              <Text style={styles.trialTexto}>
+                {avisoTrial.dias > 0
+                  ? `Teste grátis: ${avisoTrial.dias} dia${avisoTrial.dias === 1 ? "" : "s"} restante${avisoTrial.dias === 1 ? "" : "s"}`
+                  : "Seu teste grátis termina hoje"}
+              </Text>
+              <Text style={styles.trialAcao}>Assinar</Text>
+            </TouchableOpacity>
+          )}
           <View style={styles.hero}>
             <MarcaDaguaOrganica color={palette.purple} style={styles.heroWatermark} />
             <View style={[styles.heroRow, compact && styles.heroRowCompact]}>
@@ -151,7 +180,6 @@ export default function HomeVisual({
                     <Text style={styles.nextPhaseLabel}>Próxima fase</Text>
                     <Text style={styles.nextPhaseValue}>em 5 dias</Text>
                   </View>
-                  <MaterialIcons name="chevron-right" size={23} color={palette.purpleDark} />
                 </TouchableOpacity>
               </View>
             </View>
@@ -183,6 +211,8 @@ export default function HomeVisual({
             onPress={() => navegar("Kegel")}
             compact={compact}
           />
+
+          <CardRotina onAbrir={() => navegar("Rotina")} estilo={styles.rotinaCard} />
 
           <View style={styles.progressCard}>
             <View style={[styles.progressHeader, compact && styles.progressHeaderCompact]}>
@@ -231,6 +261,7 @@ export default function HomeVisual({
           <NavItem label="Ciclo" icon="calendar-month-outline" onPress={() => navegar("Calendario")} />
           <NavItem label="Kegel" icon="meditation" onPress={() => navegar("Kegel")} />
           <NavItem label="Treinos" icon="dumbbell" onPress={() => navegar("TreinoDoDia")} />
+          <NavItem label="Rotina" icon="pill" onPress={() => navegar("Rotina")} />
           <NavItem label="Perfil" icon="account-outline" onPress={() => navegar("Perfil")} />
         </View>
       </SafeAreaView>

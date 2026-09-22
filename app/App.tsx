@@ -25,6 +25,17 @@ import {
 import { View, ActivityIndicator } from "react-native";
 import { palette } from "./theme/colors";
 import { COBRANCA_ATIVA } from "./config/monetizacao";
+import { configurarNotificacoes } from "./services/notificacoes";
+import {
+  assinar,
+  conectarLoja,
+  desconectarLoja,
+  PRODUTOS,
+  type PlanoAssinatura,
+} from "./services/compras";
+
+// Lembretes da rotina aparecem mesmo com o app aberto.
+configurarNotificacoes();
 
 function AppContent() {
   const { verificarStatus, status, podeUsarApp, loading } = useAssinatura();
@@ -39,23 +50,34 @@ function AppContent() {
   }, [isAuthenticated]);
 
   /**
-   * Ponto único onde a compra in-app deve ser disparada quando a monetização
-   * for ligada: abrir StoreKit (iOS) ou Play Billing (Android), obter o recibo
-   * e repassá-lo ao backend, que valida junto à loja antes de liberar.
+   * Conecta à loja quando a cobrança está ligada e há alguém logado.
    *
-   * Lança de propósito enquanto não estiver implementado, para que um botão de
-   * compra não vá ao ar sem cobrar de fato.
+   * Além de preparar a compra, é o que recolhe pagamentos que ficaram no meio
+   * do caminho: a loja reenvia a compra e o servidor é avisado sozinho.
    */
-  const comprarAssinatura = async () => {
-    throw new Error(
-      "Compra in-app não implementada. Integre StoreKit / Play Billing antes de ligar COBRANCA_ATIVA."
-    );
+  useEffect(() => {
+    if (!COBRANCA_ATIVA || !isAuthenticated) return;
+    void conectarLoja();
+    return () => {
+      void desconectarLoja();
+    };
+  }, [isAuthenticated]);
+
+  /**
+   * Compra pela loja: StoreKit no iOS, Play Billing no Android. O recibo vai
+   * para o servidor, que confere junto à loja antes de liberar o premium.
+   */
+  const comprarAssinatura = async (plano: PlanoAssinatura = PRODUTOS.mensal) => {
+    await assinar(plano);
+    // O premium só vale depois que o servidor confirma o recibo, no ouvinte de
+    // compras; reconsultar traz o status já validado.
+    await verificarStatus(true);
   };
 
-  const handleUpgrade = async () => {
+  const handleUpgrade = async (plano: PlanoAssinatura = PRODUTOS.mensal) => {
     setIsVisible(false);
     try {
-      await comprarAssinatura();
+      await comprarAssinatura(plano);
       Toast.show({
         type: "success",
         text1: "Assinatura ativada!",

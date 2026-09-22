@@ -19,7 +19,20 @@
       },
       "env": {
         "EXPO_PUBLIC_API_URL": "https://api.agentcicle.com",
-        "EXPO_PUBLIC_COBRANCA_ATIVA": "false"
+        "EXPO_PUBLIC_COBRANCA_ATIVA": "false",
+        "EXPO_PUBLIC_FIREBASE_API_KEY": "AIzaSyCOtsbR9raKNsGOQINJkKTljxAhX9VIQwg",
+        "EXPO_PUBLIC_FIREBASE_ANDROID_API_KEY": "AIzaSyCOtsbR9raKNsGOQINJkKTljxAhX9VIQwg",
+        "EXPO_PUBLIC_FIREBASE_IOS_API_KEY": "AIzaSyDw1qDohb4y5dTUI9ySO3leYhY1eXNAdFs",
+        "EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN": "ciclica-5d6d6.firebaseapp.com",
+        "EXPO_PUBLIC_FIREBASE_PROJECT_ID": "ciclica-5d6d6",
+        "EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET": "ciclica-5d6d6.firebasestorage.app",
+        "EXPO_PUBLIC_FIREBASE_MESSAGING_SENDER_ID": "460293722206",
+        "EXPO_PUBLIC_FIREBASE_APP_ID": "1:460293722206:android:355acfc992fc70f33aa4cf",
+        "EXPO_PUBLIC_FIREBASE_ANDROID_APP_ID": "1:460293722206:android:355acfc992fc70f33aa4cf",
+        "EXPO_PUBLIC_FIREBASE_IOS_APP_ID": "1:460293722206:ios:ad2e8cc481fcc08b3aa4cf",
+        "EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID": "460293722206-sb8alm4d3k973r7mcvp796jcjggbjtbf.apps.googleusercontent.com",
+        "EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID": "460293722206-fkabb97qgn6hcmlb29vulrpots4brjkr.apps.googleusercontent.com",
+        "EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID": "460293722206-j2cinrv6g15eu44oubif9lrs1mhqavlv.apps.googleusercontent.com"
       }
     },
     "production": {
@@ -29,7 +42,20 @@
       },
       "env": {
         "EXPO_PUBLIC_API_URL": "https://api.agentcicle.com",
-        "EXPO_PUBLIC_COBRANCA_ATIVA": "false"
+        "EXPO_PUBLIC_COBRANCA_ATIVA": "false",
+        "EXPO_PUBLIC_FIREBASE_API_KEY": "AIzaSyCOtsbR9raKNsGOQINJkKTljxAhX9VIQwg",
+        "EXPO_PUBLIC_FIREBASE_ANDROID_API_KEY": "AIzaSyCOtsbR9raKNsGOQINJkKTljxAhX9VIQwg",
+        "EXPO_PUBLIC_FIREBASE_IOS_API_KEY": "AIzaSyDw1qDohb4y5dTUI9ySO3leYhY1eXNAdFs",
+        "EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN": "ciclica-5d6d6.firebaseapp.com",
+        "EXPO_PUBLIC_FIREBASE_PROJECT_ID": "ciclica-5d6d6",
+        "EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET": "ciclica-5d6d6.firebasestorage.app",
+        "EXPO_PUBLIC_FIREBASE_MESSAGING_SENDER_ID": "460293722206",
+        "EXPO_PUBLIC_FIREBASE_APP_ID": "1:460293722206:android:355acfc992fc70f33aa4cf",
+        "EXPO_PUBLIC_FIREBASE_ANDROID_APP_ID": "1:460293722206:android:355acfc992fc70f33aa4cf",
+        "EXPO_PUBLIC_FIREBASE_IOS_APP_ID": "1:460293722206:ios:ad2e8cc481fcc08b3aa4cf",
+        "EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID": "460293722206-sb8alm4d3k973r7mcvp796jcjggbjtbf.apps.googleusercontent.com",
+        "EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID": "460293722206-fkabb97qgn6hcmlb29vulrpots4brjkr.apps.googleusercontent.com",
+        "EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID": "460293722206-j2cinrv6g15eu44oubif9lrs1mhqavlv.apps.googleusercontent.com"
       }
     }
   },

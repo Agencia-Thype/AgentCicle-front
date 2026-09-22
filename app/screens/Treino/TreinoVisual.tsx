@@ -94,6 +94,7 @@ export default function TreinoVisual(props: Props) {
           <NavItem label="Ciclo" icon="calendar-month-outline" onPress={() => props.onNavigate("Calendario")} />
           <NavItem label="Kegel" icon="meditation" onPress={() => props.onNavigate("Kegel")} />
           <NavItem label="Treinos" icon="dumbbell" active onPress={() => props.onNavigate("TreinoDoDia")} />
+          <NavItem label="Rotina" icon="pill" onPress={() => props.onNavigate("Rotina")} />
           <NavItem label="Perfil" icon="account-outline" onPress={() => props.onNavigate("Perfil")} />
         </View>
       </SafeAreaView>
