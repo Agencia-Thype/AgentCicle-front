@@ -18,7 +18,7 @@
         "buildType": "apk"
       },
       "env": {
-        "EXPO_PUBLIC_API_URL": "https://api.agentcicle.com",
+        "EXPO_PUBLIC_API_URL": "https://api.ciclicaapp.com.br",
         "EXPO_PUBLIC_COBRANCA_ATIVA": "false",
         "EXPO_PUBLIC_FIREBASE_API_KEY": "AIzaSyCOtsbR9raKNsGOQINJkKTljxAhX9VIQwg",
         "EXPO_PUBLIC_FIREBASE_ANDROID_API_KEY": "AIzaSyCOtsbR9raKNsGOQINJkKTljxAhX9VIQwg",
@@ -41,7 +41,7 @@
         "buildType": "app-bundle"
       },
       "env": {
-        "EXPO_PUBLIC_API_URL": "https://api.agentcicle.com",
+        "EXPO_PUBLIC_API_URL": "https://api.ciclicaapp.com.br",
         "EXPO_PUBLIC_COBRANCA_ATIVA": "false",
         "EXPO_PUBLIC_FIREBASE_API_KEY": "AIzaSyCOtsbR9raKNsGOQINJkKTljxAhX9VIQwg",
         "EXPO_PUBLIC_FIREBASE_ANDROID_API_KEY": "AIzaSyCOtsbR9raKNsGOQINJkKTljxAhX9VIQwg",
