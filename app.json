@@ -12,7 +12,10 @@
       "bundleIdentifier": "io.zurve.ciclica",
       "googleServicesFile": "./GoogleService-Info.plist",
       "buildNumber": "1",
-      "usesAppleSignIn": true
+      "usesAppleSignIn": true,
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
     },
     "android": {
       "package": "io.zurve.ciclica",

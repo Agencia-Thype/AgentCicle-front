@@ -26,9 +26,9 @@ const FRAMES = {
     require("../assets/01 Neutra/Lunia Neutra_04.png"),
   ],
   esforco: [
-    require("../assets/02 Esforço/Lunia Esforço_01.png"),
-    require("../assets/02 Esforço/Lunia Esforço_02.png"),
-    require("../assets/02 Esforço/Lunia Esforço_03.png"),
+    require("../assets/02 Esforco/Lunia Esforco_01.png"),
+    require("../assets/02 Esforco/Lunia Esforco_02.png"),
+    require("../assets/02 Esforco/Lunia Esforco_03.png"),
   ],
   forte: [
     require("../assets/03 Forte/Lunia Forte_02.png"),
