@@ -48,21 +48,21 @@ export const replicaStyles = StyleSheet.create({
   nextPhaseCopy: { flex: 1, justifyContent: "center" },
   nextPhaseLabel: { fontFamily: fonts.body, fontSize: 11, lineHeight: 13, color: "#765D80" },
   nextPhaseValue: { fontFamily: fonts.bodyBold, fontSize: 13, lineHeight: 16, color: palette.purpleDark },
-  activityCard: { minHeight: 124, borderRadius: 20, backgroundColor: "rgba(255,253,251,.9)", borderWidth: 1, borderColor: "#E6DCE8", padding: 11, flexDirection: "row", alignItems: "center", gap: 11 },
-  activityCardCompact: { minHeight: 184, padding: 17, alignItems: "flex-start", paddingBottom: 72 },
+  activityCard: { minHeight: 124, borderRadius: 20, backgroundColor: "rgba(255,253,251,.9)", borderWidth: 1, borderColor: "#E6DCE8", padding: 14, flexDirection: "row", alignItems: "center", gap: 12 },
+  activityCardCompact: { flexDirection: "column", alignItems: "stretch", gap: 14, padding: 16 },
+  activityMain: { flex: 1, flexDirection: "row", alignItems: "flex-start", gap: 12 },
   roundIcon: { width: 52, height: 52, borderRadius: 26, alignItems: "center", justifyContent: "center", flexShrink: 0 },
   activityCopy: { flex: 1, minWidth: 0 },
-  activityCopyCompact: { paddingRight: 0 },
   activityTitle: { fontFamily: fonts.title, fontSize: 17, lineHeight: 20, color: palette.purpleDark },
   activitySubtitle: { fontFamily: fonts.body, fontSize: 11, color: "#625982", marginTop: 1 },
   metaRow: { flexDirection: "row", alignItems: "center", flexWrap: "wrap", columnGap: 10, rowGap: 3, marginTop: 5 },
   metaItem: { flexDirection: "row", alignItems: "center", gap: 4 },
   metaText: { fontFamily: fonts.body, fontSize: 10, color: "#655B83" },
   activityDescription: { fontFamily: fonts.body, fontSize: 10, lineHeight: 14, color: "#796D8C", marginTop: 4 },
-  activityAction: { width: 128, flexShrink: 0, alignSelf: "stretch", alignItems: "flex-end", justifyContent: "space-between" },
-  activityActionCompact: { position: "absolute", left: 17, right: 17, bottom: 15, height: 46, alignSelf: "auto", flexDirection: "row-reverse", alignItems: "center" },
-  activityButton: { minWidth: 128, paddingHorizontal: 12, paddingVertical: 10, borderRadius: 16, backgroundColor: palette.purple },
-  activityButtonText: { fontFamily: fonts.bodyBold, fontSize: 11, color: "#fff", textAlign: "center" },
+  // Mesmo formato do "Saiba mais" do topo: pílula com texto e seta dentro.
+  activityButton: { flexShrink: 0, height: 40, paddingHorizontal: 14, borderRadius: 20, backgroundColor: palette.purple, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8 },
+  activityButtonCompact: { height: 44, borderRadius: 22 },
+  activityButtonText: { fontFamily: fonts.bodyBold, fontSize: 13, color: "#fff" },
   // Cartão da rotina: mesma casca dos cartões desta Home, com altura livre
   // porque a legenda cresce quando há próxima dose e barra de água.
   // Faixa do teste grátis: só existe com a cobrança ligada.

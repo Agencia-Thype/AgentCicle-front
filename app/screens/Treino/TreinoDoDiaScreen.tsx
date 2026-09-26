@@ -168,14 +168,33 @@ export default function TreinoDoDiaScreen() {
     const exerciciosConcluidos = treino
       .filter((_, index) => checks[index])
       .map((ex) => ex.exercicio);
+    let data: any;
     try {
       const response = await api.post("/treino-dia/concluir", {
         tipo_treino: tipoTreino,
         percentual,
         exercicios_concluidos: exerciciosConcluidos,
       });
-      const data = response.data;
+      data = response.data;
       if (!data) throw new Error("Resposta inválida do servidor.");
+    } catch (error: any) {
+      const detalhe = error?.response?.data?.detail;
+      const status = error?.response?.status;
+      if (typeof detalhe !== "string") console.error("Erro ao salvar progresso:", error);
+      Alert.alert(
+        "Erro",
+        typeof detalhe === "string"
+          ? detalhe
+          : error.message === "Network Error"
+            ? "Erro de conexão."
+            : `Erro ao salvar progresso${status ? ` (código ${status})` : ""}.`
+      );
+      return;
+    }
+
+    // Daqui em diante o treino JÁ está salvo: uma falha na animação ou no
+    // cache local não pode aparecer como "erro ao salvar".
+    try {
 
       // A pontuação acompanha a conclusão: desmarcar exercícios tira pontos.
       const ganhos = Number(data.pontos_ganhos) || 0;
@@ -194,15 +213,8 @@ export default function TreinoDoDiaScreen() {
       } else if (!automatico) {
         Alert.alert("Progresso salvo", `Treino em ${data.percentual}%. Sua pontuação não mudou.`);
       }
-    } catch (error: any) {
-      const detalhe = error?.response?.data?.detail;
-      if (typeof detalhe !== "string") console.error("Erro ao salvar progresso:", error);
-      Alert.alert(
-        "Erro",
-        typeof detalhe === "string"
-          ? detalhe
-          : error.message === "Network Error" ? "Erro de conexão." : "Erro ao salvar progresso."
-      );
+    } catch (error) {
+      console.warn("Treino salvo, mas falhou a atualização da tela:", error);
     }
   };
 

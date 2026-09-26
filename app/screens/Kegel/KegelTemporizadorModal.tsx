@@ -14,7 +14,7 @@ import * as Haptics from "expo-haptics";
 
 import LuniaAnimada from "../../components/LuniaAnimada";
 import { palette } from "../../theme/colors";
-import { calar, falaDaEtapa, falar } from "../../utils/voz";
+import { calar, falaDaEtapa, falar, prepararAudio } from "../../utils/voz";
 import { useKegelEngine } from "../../hooks/useKegelEngine";
 import type { EstadoKegel, EtapaKegel, ExercicioKegel } from "./kegel.types";
 import { fonts } from "../../theme/fonts";
@@ -73,7 +73,8 @@ export function KegelTemporizadorModal({
 
   // Fechar a tela nunca deixa a voz falando sozinha.
   useEffect(() => {
-    if (!visible) calar();
+    if (visible) void prepararAudio();
+    else calar();
     return calar;
   }, [visible]);
 

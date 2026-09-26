@@ -1,7 +1,8 @@
 import { falaDaEtapa } from "../../utils/voz";
 import type { EstadoKegel, EtapaKegel } from "../../screens/Kegel/kegel.types";
 
-jest.mock("expo-speech", () => ({ speak: jest.fn(), stop: jest.fn() }));
+jest.mock("expo-speech", () => ({ speak: jest.fn(), stop: jest.fn(), getAvailableVoicesAsync: jest.fn(async () => []), VoiceQuality: { Enhanced: "Enhanced" } }));
+jest.mock("expo-audio", () => ({ setAudioModeAsync: jest.fn(), createAudioPlayer: jest.fn() }));
 
 function etapa(estado: EstadoKegel, rotulo = ""): EtapaKegel {
   return {

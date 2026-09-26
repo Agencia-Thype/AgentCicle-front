@@ -283,29 +283,33 @@ function ActivityCard(props: {
   icon: any; title: string; subtitle: string; time: string; level: string;
   description: string; button: string; tint: string; color: string; onPress: () => void; compact: boolean;
 }) {
+  // Em telas estreitas o botão desce para uma linha própria, ocupando a
+  // largura do cartão, em vez de disputar espaço com o texto.
   return (
     <TouchableOpacity style={[styles.activityCard, props.compact && styles.activityCardCompact]} onPress={props.onPress} activeOpacity={0.86}>
-      <View style={[styles.roundIcon, { backgroundColor: props.tint }]}>
-        <MaterialCommunityIcons name={props.icon} size={31} color={props.color} />
-      </View>
-      <View style={[styles.activityCopy, props.compact && styles.activityCopyCompact]}>
-        <Text style={styles.activityTitle}>{props.title}</Text>
-        <Text style={styles.activitySubtitle}>{props.subtitle}</Text>
-        <View style={styles.metaRow}>
-          <View style={styles.metaItem}>
-            <MaterialCommunityIcons name="clock-outline" size={18} color="#655B83" />
-            <Text style={styles.metaText}>{props.time}</Text>
-          </View>
-          <View style={styles.metaItem}>
-            <MaterialCommunityIcons name="signal-cellular-2" size={18} color="#655B83" />
-            <Text style={styles.metaText}>{props.level}</Text>
-          </View>
+      <View style={styles.activityMain}>
+        <View style={[styles.roundIcon, { backgroundColor: props.tint }]}>
+          <MaterialCommunityIcons name={props.icon} size={31} color={props.color} />
         </View>
-        <Text style={styles.activityDescription}>{props.description}</Text>
+        <View style={styles.activityCopy}>
+          <Text style={styles.activityTitle}>{props.title}</Text>
+          <Text style={styles.activitySubtitle}>{props.subtitle}</Text>
+          <View style={styles.metaRow}>
+            <View style={styles.metaItem}>
+              <MaterialCommunityIcons name="clock-outline" size={18} color="#655B83" />
+              <Text style={styles.metaText}>{props.time}</Text>
+            </View>
+            <View style={styles.metaItem}>
+              <MaterialCommunityIcons name="signal-cellular-2" size={18} color="#655B83" />
+              <Text style={styles.metaText}>{props.level}</Text>
+            </View>
+          </View>
+          <Text style={styles.activityDescription}>{props.description}</Text>
+        </View>
       </View>
-      <View style={[styles.activityAction, props.compact && styles.activityActionCompact]}>
-        <MaterialIcons name="chevron-right" size={29} color={palette.purpleDark} />
-        <View style={styles.activityButton}><Text style={styles.activityButtonText}>{props.button}</Text></View>
+      <View style={[styles.activityButton, props.compact && styles.activityButtonCompact]}>
+        <Text style={styles.activityButtonText}>{props.button}</Text>
+        <MaterialIcons name="arrow-forward" size={18} color="#fff" />
       </View>
     </TouchableOpacity>
   );

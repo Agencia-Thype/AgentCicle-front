@@ -38,6 +38,16 @@ import { useAuth } from "../../contexts/AuthContext";
 import { contaUsaApple, revogarTokenApple } from "../../services/authService";
 import { calcularImc, converterNumeroDecimal } from "../../utils/imc";
 
+/**
+ * "2026-09-12" vira meia-noite no fuso local. `new Date("2026-09-12")` seria
+ * meia-noite UTC, que no Brasil ainda é o dia 11 - a data salva aparecia um
+ * dia antes.
+ */
+function dataLocal(valor: string): Date {
+  const [ano, mes, dia] = valor.slice(0, 10).split("-").map(Number);
+  return new Date(ano, mes - 1, dia);
+}
+
 type PerfilScreenProps = NativeStackScreenProps<RootStackParamList, "Perfil">;
 
 export default function PerfilScreen({ navigation }: PerfilScreenProps) {
@@ -125,16 +135,31 @@ export default function PerfilScreen({ navigation }: PerfilScreenProps) {
         const perfil = await getPerfil();
         if (perfil && ativo) {
           setAltura(perfil.altura?.toString().replace(".", ",") || "");
-          setPeso(perfil.peso_atual?.toString() || "");
+          setPeso(perfil.peso_atual?.toString().replace(".", ",") || "");
+          if (perfil.objetivo) {
+            // Objetivo salvo fora da lista atual (texto antigo): entra na lista
+            // para aparecer selecionado, em vez de o campo parecer vazio.
+            setItensObjetivo((itens) =>
+              itens.some((item) => item.value === perfil.objetivo)
+                ? itens
+                : [...itens, { label: perfil.objetivo, value: perfil.objetivo }]
+            );
+          }
           setObjetivo(perfil.objetivo || "");
           setDuracaoCiclo(perfil.duracao_ciclo?.toString() || "28");
           if (perfil.data_menstruacao) {
-            const data = new Date(perfil.data_menstruacao);
-            setDataMenstruacao(data);
+            setDataMenstruacao(dataLocal(perfil.data_menstruacao));
           }
         }
       } catch (error) {
         console.log("Erro ao buscar perfil:", error);
+        if (ativo) {
+          Toast.show({
+            type: "error",
+            text1: "Não foi possível carregar seu perfil",
+            text2: "Verifique sua conexão e abra o Perfil de novo.",
+          });
+        }
       }
       };
 
