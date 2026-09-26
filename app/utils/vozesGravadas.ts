@@ -1,18 +1,18 @@
 /**
  * Gravações da voz guia do Kegel, uma por fala.
  *
- * Enquanto uma fala não tiver gravação, o app usa a síntese de voz do
- * aparelho. Para trocar pela voz humana: coloque o arquivo em
- * assets/sounds/voz/ e descomente a linha correspondente.
+ * Voz "Dora" (pt-BR, feminina), gerada com o modelo Kokoro-82M (licença
+ * Apache 2.0, uso comercial liberado), em velocidade 0.9. Uma fala sem
+ * gravação aqui cai na síntese de voz do aparelho.
  *
  * Os arquivos devem ser curtos (menos de 1 segundo de fala, sem silêncio no
  * começo), porque as fases rápidas do protocolo duram 1 segundo.
  */
 export const VOZES_GRAVADAS: Record<string, number> = {
-  // Contrai: require("../assets/sounds/voz/contrai.mp3"),
-  // Solta: require("../assets/sounds/voz/solta.mp3"),
-  // Relaxa: require("../assets/sounds/voz/relaxa.mp3"),
-  // Segura: require("../assets/sounds/voz/segura.mp3"),
-  // "Mais forte": require("../assets/sounds/voz/mais_forte.mp3"),
-  // "Muito bem!": require("../assets/sounds/voz/muito_bem.mp3"),
+  Contrai: require("../assets/sounds/voz/contrai.wav"),
+  Solta: require("../assets/sounds/voz/solta.wav"),
+  Relaxa: require("../assets/sounds/voz/relaxa.wav"),
+  Segura: require("../assets/sounds/voz/segura.wav"),
+  "Mais forte": require("../assets/sounds/voz/mais_forte.wav"),
+  "Muito bem!": require("../assets/sounds/voz/muito_bem.wav"),
 };
