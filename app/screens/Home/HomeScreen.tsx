@@ -18,6 +18,8 @@ import { usePremiumModal } from "../../utils/premiumModalController";
 import { useAuth } from "../../contexts/AuthContext";
 import { COBRANCA_ATIVA } from "../../config/monetizacao";
 import HomeVisual from "./HomeVisual";
+import LunIAModal from "../../components/LunIA/LuniaModal";
+import FloatingLuniaCoach from "../../components/LunIA/LuniaFloatingMessage";
 
 type Props = NativeStackScreenProps<RootStackParamList, "Home">;
 
@@ -25,6 +27,7 @@ export default function HomeScreen({ route }: Props) {
   // Parâmetros recebidos da navegação
   const params = route.params;
   const [menuVisible, setMenuVisible] = useState(false);
+  const [mostrarLunia, setMostrarLunia] = useState(false);
   // Usando o novo hook para gerenciamento da fase lunar
   const {
     fase: faseLunar,
@@ -240,6 +243,7 @@ export default function HomeScreen({ route }: Props) {
   }, []);
 
   return (
+    <>
     <HomeVisual
       navigation={navigation}
       fase={faseLunar}
@@ -269,5 +273,19 @@ export default function HomeScreen({ route }: Props) {
       avisoTrial={avisoTrial}
       onAssinar={() => showModal()}
     />
+    {/* Lunia flutuante, como nas demais telas principais. O padrão de
+        bottomOffset já a deixa acima da barra de navegação. */}
+    <FloatingLuniaCoach
+      userName=""
+      mostrarAssistente={mostrarLunia}
+      onAbrirAssistente={() => setMostrarLunia(true)}
+    />
+    <LunIAModal
+      visivel={mostrarLunia}
+      onFechar={() => setMostrarLunia(false)}
+      fase={faseLunar}
+      userName=""
+    />
+    </>
   );
 }
