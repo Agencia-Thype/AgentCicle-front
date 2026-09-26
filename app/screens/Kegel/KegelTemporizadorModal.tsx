@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
   Modal,
   ScrollView,
@@ -14,7 +14,7 @@ import * as Haptics from "expo-haptics";
 
 import LuniaAnimada from "../../components/LuniaAnimada";
 import { palette } from "../../theme/colors";
-import { criarBipe, tocarDoInicio, type AudioPlayer } from "../../utils/som";
+import { calar, falaDaEtapa, falar } from "../../utils/voz";
 import { useKegelEngine } from "../../hooks/useKegelEngine";
 import type { EstadoKegel, EtapaKegel, ExercicioKegel } from "./kegel.types";
 import { fonts } from "../../theme/fonts";
@@ -66,32 +66,26 @@ export function KegelTemporizadorModal({
   onClose,
   onComplete,
 }: KegelTemporizadorModalProps) {
-  const bipeEsforcoRef = useRef<AudioPlayer | null>(null);
-  const bipeDescansoRef = useRef<AudioPlayer | null>(null);
+  /** Voz guiando o exercício ("Contrai", "Solta", "Relaxa"). */
+  const [vozLigada, setVozLigada] = useState(true);
+  const vozLigadaRef = useRef(vozLigada);
+  vozLigadaRef.current = vozLigada;
 
+  // Fechar a tela nunca deixa a voz falando sozinha.
   useEffect(() => {
-    try {
-      bipeEsforcoRef.current = criarBipe(require("../../assets/sounds/beep_execucao.mp3"));
-      bipeDescansoRef.current = criarBipe(require("../../assets/sounds/beep_descanso.mp3"));
-    } catch (e) {
-      console.warn("Erro ao carregar sons", e);
-    }
-
-    return () => {
-      bipeEsforcoRef.current?.remove();
-      bipeDescansoRef.current?.remove();
-      bipeEsforcoRef.current = null;
-      bipeDescansoRef.current = null;
-    };
-  }, []);
+    if (!visible) calar();
+    return calar;
+  }, [visible]);
 
   /**
-   * Som e vibração a cada troca de fase, para o exercício poder ser feito sem
+   * Voz e vibração a cada troca de fase, para o exercício poder ser feito sem
    * olhar a tela o tempo todo.
    */
   const avisarTroca = useCallback((etapa: EtapaKegel, anterior: EtapaKegel | null) => {
     // A primeira etapa não precisa de aviso: a usuária acabou de abrir a tela.
     if (!anterior) return;
+
+    if (vozLigadaRef.current) falar(falaDaEtapa(etapa));
 
     if (etapa.estado === "boost") {
       // Duas batidas: "mais forte".
@@ -101,27 +95,25 @@ export function KegelTemporizadorModal({
         130
       );
       Vibration.vibrate([0, 90, 70, 90]);
-      void tocarDoInicio(bipeEsforcoRef.current);
       return;
     }
 
     if (etapa.estado === "contract") {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium).catch(() => undefined);
       Vibration.vibrate(120);
-      void tocarDoInicio(bipeEsforcoRef.current);
       return;
     }
 
     if (etapa.estado === "release" || etapa.estado === "rest") {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => undefined);
       Vibration.vibrate(60);
-      void tocarDoInicio(bipeDescansoRef.current);
     }
   }, []);
 
   const aoConcluir = useCallback(() => {
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => undefined);
     Vibration.vibrate([0, 120, 80, 120, 80, 200]);
+    if (vozLigadaRef.current) falar("Muito bem!");
   }, []);
 
   const motor = useKegelEngine(exercicio, {
@@ -131,6 +123,16 @@ export function KegelTemporizadorModal({
   });
 
   const { etapa, progresso, restanteMs, pausado, concluido } = motor;
+
+  // Pausou: a voz para junto com o exercício.
+  useEffect(() => {
+    if (pausado) calar();
+  }, [pausado]);
+
+  const alternarVoz = () => {
+    if (vozLigada) calar();
+    setVozLigada(!vozLigada);
+  };
 
   // ------------------------------------------------------------- concluído
   if (concluido) {
@@ -176,6 +178,14 @@ export function KegelTemporizadorModal({
             showsVerticalScrollIndicator={false}
           >
             <View style={styles.sheetHandle} />
+            <TouchableOpacity
+              style={styles.voiceToggle}
+              onPress={alternarVoz}
+              accessibilityRole="button"
+              accessibilityLabel={vozLigada ? "Desligar voz guia" : "Ligar voz guia"}
+            >
+              <Ionicons name={vozLigada ? "volume-high" : "volume-mute"} size={22} color="#8C5CAD" />
+            </TouchableOpacity>
             <Text style={styles.exerciseName}>{exercicio.nome}</Text>
             <View style={styles.counterRow}>
               <View style={styles.counterPill}><MaterialCommunityIcons name="layers-triple-outline" size={21} color="#8C5CAD" /><Text style={styles.counterText}>Série {etapa.serie} de {etapa.totalSeries}</Text></View>
@@ -259,6 +269,18 @@ const styles = StyleSheet.create({
   },
   modalScrollContent: {
     alignItems: "center",
+  },
+  voiceToggle: {
+    position: "absolute",
+    top: 0,
+    right: 0,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: "#F4EBF5",
+    alignItems: "center",
+    justifyContent: "center",
+    zIndex: 4,
   },
   sheetHandle: { width: 42, height: 5, borderRadius: 3, backgroundColor: "#DED9DB", marginBottom: 14 },
   header: {
