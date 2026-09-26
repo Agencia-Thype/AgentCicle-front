@@ -60,8 +60,13 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const logout = async () => {
     try {
       await signOut(auth);
-      await AsyncStorage.removeItem("assinatura_status");
-      await AsyncStorage.removeItem("primeiro_acesso");
+      await AsyncStorage.multiRemove([
+        "assinatura_status",
+        "primeiro_acesso",
+        "@AgentCicle:perfil_cache",
+        "@AgentCicle:rotina_hoje",
+        "@AgentCicle:rotina_itens",
+      ]);
     } catch (error) {
       console.error("Erro ao fazer logout:", error);
     }

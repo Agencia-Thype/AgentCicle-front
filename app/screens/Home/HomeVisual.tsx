@@ -28,9 +28,13 @@ type Props = {
   carregando: boolean;
   humor: string;
   progresso: number;
+  diasComTreino: boolean[];
   pontuacao: number;
   classe: string;
-  diasRestantes: number;
+  descricaoClasse: string;
+  proximaPontuacao: number | null;
+  pontosParaProxima: number;
+  proximaClasse: string | null;
   trofeuUri: any;
   modalAberto: boolean;
   menuAberto: boolean;
@@ -54,9 +58,13 @@ export default function HomeVisual({
   carregando,
   humor,
   progresso,
+  diasComTreino,
   pontuacao,
   classe,
-  diasRestantes,
+  descricaoClasse,
+  proximaPontuacao,
+  pontosParaProxima,
+  proximaClasse,
   trofeuUri,
   modalAberto,
   menuAberto,
@@ -70,6 +78,7 @@ export default function HomeVisual({
 }: Props) {
   const { width } = useWindowDimensions();
   const compact = width < 380;
+  const activityCompact = width < 430;
   const navegar = (rota: string) => navigation.navigate(rota);
 
   return (
@@ -127,10 +136,11 @@ export default function HomeVisual({
           onFechar={onFecharClasse}
           trofeuUri={trofeuUri}
           classeAtual={classe || "Lua Nova"}
-          descricaoClasse="Pequenos passos, grandes conquistas."
-          diasRestantes={diasRestantes}
-          proximaPontuacao={120}
-          proximaClasse={{ nome: "Lua Crescente", descricao: "Exploração e força para o novo ciclo." }}
+          descricaoClasse={descricaoClasse || "Início, constância e criação de novos hábitos."}
+          pontosAtuais={pontuacao}
+          pontosParaProxima={pontosParaProxima}
+          proximaPontuacao={proximaPontuacao}
+          proximaClasse={proximaClasse ? { nome: proximaClasse, descricao: "Continue somando pontos com seus cuidados diários." } : null}
         />
 
         <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
@@ -196,7 +206,7 @@ export default function HomeVisual({
             tint="#F2E9F4"
             color={palette.purpleDark}
             onPress={() => navegar("TreinoDoDia")}
-            compact={compact}
+            compact={activityCompact}
           />
           <ActivityCard
             icon="flower-tulip-outline"
@@ -209,12 +219,12 @@ export default function HomeVisual({
             tint="#EBF0E4"
             color={palette.sageDark}
             onPress={() => navegar("Kegel")}
-            compact={compact}
+            compact={activityCompact}
           />
 
           <CardRotina onAbrir={() => navegar("Rotina")} estilo={styles.rotinaCard} />
 
-          <View style={styles.progressCard}>
+          <View style={[styles.progressCard, compact && styles.progressCardCompact]}>
             <View style={[styles.progressHeader, compact && styles.progressHeaderCompact]}>
               <View style={[styles.roundIcon, { backgroundColor: "#F0EAF5" }]}>
                 <MaterialCommunityIcons name="chart-bar" size={29} color={palette.purpleDark} />
@@ -228,8 +238,8 @@ export default function HomeVisual({
             <View style={[styles.weekRow, compact && styles.weekRowCompact]}>
               {dias.map((dia, index) => (
                 <View key={dia} style={styles.weekDay}>
-                  <View style={[styles.dayCircle, index === 0 && styles.dayCircleActive]}>
-                    {index === 0 && <MaterialIcons name="check" size={17} color="#fff" />}
+                  <View style={[styles.dayCircle, diasComTreino[index] && styles.dayCircleActive]}>
+                    {diasComTreino[index] && <MaterialIcons name="check" size={17} color="#fff" />}
                   </View>
                   <Text style={styles.dayText}>{dia}</Text>
                 </View>
@@ -243,7 +253,7 @@ export default function HomeVisual({
             </View>
             <View style={styles.rewardCopy}>
               <Text style={styles.points}>★  {pontuacao || 0} pontos</Text>
-              <Text style={styles.className}>Classe atual: {classe || "Lua Minguante"}</Text>
+              <Text style={styles.className}>Classe atual: {classe || "Lua Nova"}</Text>
               <Text style={styles.rewardCaption}>Pequenos passos, grandes conquistas.</Text>
             </View>
             <MaterialIcons name="chevron-right" size={30} color="#999583" />
@@ -282,10 +292,14 @@ function ActivityCard(props: {
         <Text style={styles.activityTitle}>{props.title}</Text>
         <Text style={styles.activitySubtitle}>{props.subtitle}</Text>
         <View style={styles.metaRow}>
-          <MaterialCommunityIcons name="clock-outline" size={18} color="#655B83" />
-          <Text style={styles.metaText}>{props.time}</Text>
-          <MaterialCommunityIcons name="signal-cellular-2" size={18} color="#655B83" />
-          <Text style={styles.metaText}>{props.level}</Text>
+          <View style={styles.metaItem}>
+            <MaterialCommunityIcons name="clock-outline" size={18} color="#655B83" />
+            <Text style={styles.metaText}>{props.time}</Text>
+          </View>
+          <View style={styles.metaItem}>
+            <MaterialCommunityIcons name="signal-cellular-2" size={18} color="#655B83" />
+            <Text style={styles.metaText}>{props.level}</Text>
+          </View>
         </View>
         <Text style={styles.activityDescription}>{props.description}</Text>
       </View>

@@ -64,7 +64,7 @@ export default function TreinoVisual(props: Props) {
 
           <TouchableOpacity style={styles.startButton} onPress={props.onStart}>
             <Ionicons name="play" size={29} color="#fff" />
-            <Text style={styles.startButtonText}>{props.progressoSalvo ? "Progresso salvo!" : "Iniciar treino"}</Text>
+            <Text style={styles.startButtonText}>{props.progressoSalvo ? "Progresso salvo!" : "Salvar progresso"}</Text>
           </TouchableOpacity>
 
           <View style={styles.sectionHeader}>

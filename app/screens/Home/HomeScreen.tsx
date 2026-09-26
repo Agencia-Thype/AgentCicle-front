@@ -36,10 +36,14 @@ export default function HomeScreen({ route }: Props) {
   // Cor, gradiente e leitura do corpo da fase atual.
   const identidade = identidadeDaFase(faseLunar);
   const [progressoSemanal, setProgressoSemanal] = useState<number>(0);
+  const [diasComTreino, setDiasComTreino] = useState<boolean[]>(Array(7).fill(false));
   const [trofeuUri, setTrofeuUri] = useState<any>(null);
   const [pontuacao, setPontuacao] = useState<number>(0);
   const [classeAtual, setClasseAtual] = useState<string>("");
-  const [diasRestantes, setDiasRestantes] = useState<number>(0);
+  const [descricaoClasse, setDescricaoClasse] = useState<string>("");
+  const [proximaPontuacao, setProximaPontuacao] = useState<number | null>(null);
+  const [pontosParaProxima, setPontosParaProxima] = useState<number>(0);
+  const [proximaClasse, setProximaClasse] = useState<string | null>(null);
   const [descricao, setDescricao] = useState<string>("");
   const [modalAberto, setModalAberto] = useState(false);
   const navigation =
@@ -127,7 +131,17 @@ export default function HomeScreen({ route }: Props) {
       const response = await api.get("/pontuacao");
       setPontuacao(response.data.pontos_mes);
       setClasseAtual(response.data.classe);
-      setDiasRestantes(response.data.dias_restantes);
+      setDescricaoClasse(response.data.descricao_classe || "");
+      setProximaPontuacao(response.data.proxima_pontuacao ?? null);
+      setPontosParaProxima(response.data.pontos_para_proxima || 0);
+      setProximaClasse(response.data.proxima_classe ?? null);
+      const trofeus: Record<string, any> = {
+        "Lua Nova": require("../../assets/lua_nova.png"),
+        "Lua Crescente": require("../../assets/lua_crescente.png"),
+        "Lua Cheia": require("../../assets/lua_cheia.png"),
+        "Lua Minguante": require("../../assets/lua_minguante.png"),
+      };
+      setTrofeuUri(trofeus[response.data.classe] || trofeus["Lua Nova"]);
     } catch (error) {
       console.log("Erro ao atualizar pontuação:", error);
     }
@@ -141,6 +155,20 @@ export default function HomeScreen({ route }: Props) {
       });
       console.log("✅ Progresso semanal:", response.data.media_percentual);
       setProgressoSemanal(response.data.media_percentual);
+      const diasConcluidos = new Set<string>(response.data.dias_concluidos || []);
+      const inicioSemana = new Date(`${inicio}T12:00:00`);
+      setDiasComTreino(
+        Array.from({ length: 7 }, (_, index) => {
+          const dia = new Date(inicioSemana);
+          dia.setDate(inicioSemana.getDate() + index);
+          const chave = [
+            dia.getFullYear(),
+            String(dia.getMonth() + 1).padStart(2, "0"),
+            String(dia.getDate()).padStart(2, "0"),
+          ].join("-");
+          return diasConcluidos.has(chave);
+        })
+      );
     } catch (error) {
       if (!ehPerfilIncompleto(error)) {
         console.error("❌ Erro ao buscar progresso semanal:", error);
@@ -154,7 +182,7 @@ export default function HomeScreen({ route }: Props) {
         const perfil = await getPerfil();
         await AsyncStorage.setItem("user", JSON.stringify(perfil));
 
-        const primeiraMenstruacao = new Date(perfil.data_primeira_menstruacao);
+        const primeiraMenstruacao = new Date(perfil.data_menstruacao);
         const hoje = new Date();
         const meses =
           (hoje.getFullYear() - primeiraMenstruacao.getFullYear()) * 12 +
@@ -220,9 +248,13 @@ export default function HomeScreen({ route }: Props) {
       carregando={carregando}
       humor={identidade.humor}
       progresso={progressoSemanal}
+      diasComTreino={diasComTreino}
       pontuacao={pontuacao}
       classe={classeAtual}
-      diasRestantes={diasRestantes}
+      descricaoClasse={descricaoClasse}
+      proximaPontuacao={proximaPontuacao}
+      pontosParaProxima={pontosParaProxima}
+      proximaClasse={proximaClasse}
       trofeuUri={trofeuUri}
       modalAberto={modalAberto}
       menuAberto={menuVisible}

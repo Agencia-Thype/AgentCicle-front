@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import {
   View,
   Text,
@@ -59,6 +59,9 @@ export default function TreinoDoDiaScreen() {
   const navigation = useNavigation<NavigationProp>();
   const [mostrarLunia, setMostrarLunia] = useState(false);
   const [userName, setUserName] = useState("");
+  const checkedRef = useRef<{ [key: number]: boolean }>({});
+  const filaSalvamentoRef = useRef<Promise<void>>(Promise.resolve());
+  const versaoChecksRef = useRef(0);
 
   useEffect(() => {
     async function buscarTreino() {
@@ -111,6 +114,7 @@ export default function TreinoDoDiaScreen() {
           novosChecks[i] = true;
         }
       }
+      checkedRef.current = novosChecks;
       setChecked(novosChecks);
     } catch (error) {
       console.error("Erro ao buscar treinos marcados:", error);
@@ -118,14 +122,27 @@ export default function TreinoDoDiaScreen() {
   }
 
   const toggleCheck = (index: number) => {
-    setChecked((prev) => ({ ...prev, [index]: !prev[index] }));
+    const novosChecks = {
+      ...checkedRef.current,
+      [index]: !checkedRef.current[index],
+    };
+    checkedRef.current = novosChecks;
+    versaoChecksRef.current += 1;
+    const versao = versaoChecksRef.current;
+    setChecked(novosChecks);
     setProgressoSalvo(false);
+
+    // Cada check já é uma conclusão. Serializar evita que dois toques rápidos
+    // cheguem fora de ordem e deixem no banco um estado anterior.
+    filaSalvamentoRef.current = filaSalvamentoRef.current
+      .catch(() => undefined)
+      .then(() => salvarProgresso(novosChecks, true, versao));
   };
 
-  const calcularProgresso = () => {
+  const calcularProgresso = (checks = checkedRef.current) => {
     const total = treino.length;
     if (!total) return 0;
-    const feitos = Object.values(checked).filter(Boolean).length;
+    const feitos = Object.values(checks).filter(Boolean).length;
     return Math.round((feitos / total) * 100);
   };
 
@@ -135,17 +152,21 @@ export default function TreinoDoDiaScreen() {
     Animated.spring(moedaAnim, { toValue: 1, useNativeDriver: true }).start();
   };
 
-  const salvarProgresso = async () => {
+  const salvarProgresso = async (
+    checks = checkedRef.current,
+    automatico = false,
+    versao = versaoChecksRef.current
+  ) => {
     if (!fase || !tipoTreino) {
       Alert.alert("Erro", "Fase ou tipo de treino não encontrado.");
       return;
     }
-    const percentual = calcularProgresso();
-    if (percentual === 0 && !jaSalvoHoje) {
+    const percentual = calcularProgresso(checks);
+    if (percentual === 0 && !jaSalvoHoje && !automatico) {
       return Alert.alert("Ops!", "Você ainda não marcou nenhum exercício como feito.");
     }
     const exerciciosConcluidos = treino
-      .filter((_, index) => checked[index])
+      .filter((_, index) => checks[index])
       .map((ex) => ex.exercicio);
     try {
       const response = await api.post("/treino-dia/concluir", {
@@ -159,16 +180,18 @@ export default function TreinoDoDiaScreen() {
       // A pontuação acompanha a conclusão: desmarcar exercícios tira pontos.
       const ganhos = Number(data.pontos_ganhos) || 0;
       setJaSalvoHoje(true);
-      setProgressoSalvo(true);
-      if (ganhos !== 0) await AsyncStorage.setItem("atualizarHome", "true");
+      if (versao === versaoChecksRef.current) setProgressoSalvo(true);
+      // O percentual semanal muda mesmo quando a pontuação continua na mesma
+      // faixa, então a Home deve ser atualizada em todo salvamento.
+      await AsyncStorage.setItem("atualizarHome", "true");
 
       if (ganhos > 0) {
         setPontosGanho(ganhos);
         animarMoeda();
-      } else if (ganhos < 0) {
+      } else if (!automatico && ganhos < 0) {
         const perdidos = Math.abs(ganhos);
         Alert.alert("Progresso atualizado", `Treino em ${data.percentual}%: ${perdidos} ponto${perdidos !== 1 ? "s" : ""} a menos.`);
-      } else {
+      } else if (!automatico) {
         Alert.alert("Progresso salvo", `Treino em ${data.percentual}%. Sua pontuação não mudou.`);
       }
     } catch (error: any) {
@@ -209,7 +232,7 @@ export default function TreinoDoDiaScreen() {
           }
         }}
         onToggle={toggleCheck}
-        onStart={salvarProgresso}
+        onStart={() => void salvarProgresso()}
         onNavigate={(route) => (navigation.navigate as any)(route)}
         onPlay={(ex) => {
           setExercicioSelecionado({
@@ -316,7 +339,7 @@ export default function TreinoDoDiaScreen() {
                   opacity: progressoSalvo ? 0.6 : 1,
                 },
               ]}
-              onPress={salvarProgresso}
+              onPress={() => void salvarProgresso()}
             >
               <Text style={globalStyles.buttonText}>
                 {progressoSalvo ? "Progresso salvo!" : "Salvar progresso"}

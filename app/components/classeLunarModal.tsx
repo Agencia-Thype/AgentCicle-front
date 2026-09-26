@@ -10,8 +10,9 @@ interface ClasseLunarModalProps {
   trofeuUri: any;
   classeAtual: string;
   descricaoClasse: string;
-  diasRestantes: number;
-  proximaPontuacao: number;
+  pontosAtuais: number;
+  pontosParaProxima: number;
+  proximaPontuacao: number | null;
   proximaClasse: {
     nome: string;
     descricao: string;
@@ -24,7 +25,8 @@ export default function ClasseLunarModal({
   trofeuUri,
   classeAtual,
   descricaoClasse,
-  diasRestantes,
+  pontosAtuais,
+  pontosParaProxima,
   proximaPontuacao,
   proximaClasse,
 }: ClasseLunarModalProps) {
@@ -39,13 +41,13 @@ export default function ClasseLunarModal({
         <View style={styles.bloco}>
           <Text style={styles.blocoEmoji}>🌙</Text>
           <Text style={styles.blocoTexto}>
-            Você está na fase{" "}
+            Você está na classe{" "}
             <Text style={styles.blocoDestaque}>{classeAtual}</Text>, uma etapa
             que representa{" "}
             <Text style={styles.blocoDestaque}>
               {descricaoClasse.toLowerCase()}
             </Text>
-            . Essa fase é perfeita para alinhar seus hábitos com o seu bem-estar
+            . Essa classe representa sua constância com o seu bem-estar
             emocional e físico.
           </Text>
         </View>
@@ -53,11 +55,11 @@ export default function ClasseLunarModal({
         <View style={styles.bloco}>
           <Text style={styles.blocoEmoji}>⏳</Text>
           <Text style={styles.blocoTexto}>
-            <Text style={styles.blocoDestaque}>Período da fase:</Text> você
-            permanecerá nessa fase por mais{" "}
-            <Text style={styles.blocoDestaque}>{diasRestantes} dias</Text> ou
-            até atingir{" "}
-            <Text style={styles.blocoDestaque}>{proximaPontuacao} pontos</Text>.
+            <Text style={styles.blocoDestaque}>Seu progresso:</Text>{" "}
+            <Text style={styles.blocoDestaque}>{pontosAtuais} pontos</Text> acumulados.
+            {proximaPontuacao !== null
+              ? <> Faltam <Text style={styles.blocoDestaque}>{pontosParaProxima} pontos</Text> para atingir a próxima classe em {proximaPontuacao} pontos.</>
+              : <> Você alcançou a classe lunar mais alta.</>}
           </Text>
         </View>
 
@@ -78,9 +80,9 @@ export default function ClasseLunarModal({
             registrado, você pode ganhar até{" "}
             <Text style={styles.blocoDestaque}>20 pontos</Text>. Sentimentos
             rendem <Text style={styles.blocoDestaque}>2 pontos</Text> por dia.
-            Ao atingir <Text style={styles.blocoDestaque}>100%</Text> da semana,
-            você conquista uma{" "}
-            <Text style={styles.blocoDestaque}>Medalha Lunar 🥇</Text>.
+            Exercícios de Kegel completos rendem até{" "}
+            <Text style={styles.blocoDestaque}>10 pontos por dia</Text>.{" "}
+            A soma dessas atividades define sua classe lunar.
           </Text>
         </View>
 

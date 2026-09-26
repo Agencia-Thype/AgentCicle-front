@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useRef } from "react";
+import React, { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import {
   View,
   Text,
@@ -36,6 +36,7 @@ import { useFaseLunar } from "../../hooks/useFaseLunar";
 import { palette } from "../../theme/colors";
 import { useAuth } from "../../contexts/AuthContext";
 import { contaUsaApple, revogarTokenApple } from "../../services/authService";
+import { calcularImc, converterNumeroDecimal } from "../../utils/imc";
 
 type PerfilScreenProps = NativeStackScreenProps<RootStackParamList, "Perfil">;
 
@@ -45,7 +46,6 @@ export default function PerfilScreen({ navigation }: PerfilScreenProps) {
   const [objetivo, setObjetivo] = useState("");
   const [dataMenstruacao, setDataMenstruacao] = useState(new Date());
   const [duracaoCiclo, setDuracaoCiclo] = useState("28");
-  const [imc, setImc] = useState<number | null>(null);
   const [showCalendarioModal, setShowCalendarioModal] = useState(false);
   const [isPrimeiroAcesso, setIsPrimeiroAcesso] = useState(false);
   const [excluindoConta, setExcluindoConta] = useState(false);
@@ -117,11 +117,13 @@ export default function PerfilScreen({ navigation }: PerfilScreenProps) {
     );
   };
 
-  useEffect(() => {
-    const carregarPerfil = async () => {
+  useFocusEffect(
+    useCallback(() => {
+      let ativo = true;
+      const carregarPerfil = async () => {
       try {
         const perfil = await getPerfil();
-        if (perfil) {
+        if (perfil && ativo) {
           setAltura(perfil.altura?.toString().replace(".", ",") || "");
           setPeso(perfil.peso_atual?.toString() || "");
           setObjetivo(perfil.objetivo || "");
@@ -134,21 +136,16 @@ export default function PerfilScreen({ navigation }: PerfilScreenProps) {
       } catch (error) {
         console.log("Erro ao buscar perfil:", error);
       }
-    };
+      };
 
-    carregarPerfil();
-  }, []);
+      carregarPerfil();
+      return () => {
+        ativo = false;
+      };
+    }, [])
+  );
 
-  useEffect(() => {
-    if (altura && peso) {
-      const alt = parseFloat(altura.replace(",", "."));
-      const p = parseFloat(peso);
-      if (alt > 0 && p > 0) {
-        const resultado = p / (alt * alt);
-        setImc(resultado ? parseFloat(resultado.toFixed(1)) : null);
-      }
-    }
-  }, [altura, peso]);
+  const imc = useMemo(() => calcularImc(altura, peso), [altura, peso]);
 
   const handleSalvar = async () => {
     if (!altura || !peso || !objetivo || !dataMenstruacao || !duracaoCiclo) {
@@ -159,10 +156,20 @@ export default function PerfilScreen({ navigation }: PerfilScreenProps) {
       return;
     }
 
+    const alturaNumerica = converterNumeroDecimal(altura);
+    const pesoNumerico = converterNumeroDecimal(peso);
+    if (alturaNumerica === null || pesoNumerico === null) {
+      Toast.show({
+        type: "error",
+        text1: "Informe altura e peso válidos",
+      });
+      return;
+    }
+
     try {
       const payload = {
-        altura: parseFloat(altura.replace(",", ".")),
-        peso_atual: parseFloat(peso),
+        altura: alturaNumerica,
+        peso_atual: pesoNumerico,
         objetivo,
         data_menstruacao: dataMenstruacao.toISOString().split("T")[0],
         duracao_ciclo: parseInt(duracaoCiclo),
@@ -231,6 +238,16 @@ export default function PerfilScreen({ navigation }: PerfilScreenProps) {
       return `${normalizado.slice(0, 1)},${normalizado.slice(1, 3)}`;
     }
     return normalizado;
+  };
+
+  const formatarPesoDigitado = (texto: string) => {
+    const normalizado = texto.replace(".", ",").replace(/[^0-9,]/g, "");
+    const [inteiro = "", decimal] = normalizado.split(",");
+    const inteiroLimitado = inteiro.slice(0, 3);
+
+    return decimal === undefined
+      ? inteiroLimitado
+      : `${inteiroLimitado},${decimal.slice(0, 2)}`;
   };
 
   const confirmarExclusaoDefinitiva = () => {
@@ -391,7 +408,7 @@ export default function PerfilScreen({ navigation }: PerfilScreenProps) {
           </View>
 
           {campoNumerico("accessibility-new", "Altura", "Em metros (ex.: 1,64)", "m", altura, (texto) => setAltura(formatarAlturaDigitada(texto)), "1,64")}
-          {campoNumerico("monitor-weight", "Peso", "Em kg (ex.: 60)", "kg", peso, setPeso, "60")}
+          {campoNumerico("monitor-weight", "Peso", "Em kg (ex.: 60)", "kg", peso, (texto) => setPeso(formatarPesoDigitado(texto)), "60")}
 
           <View style={[perfilStyles.card, { zIndex: 20 }]}>
             <View style={perfilStyles.iconCircle}><MaterialIcons name="track-changes" size={26} color={palette.purpleDark} /></View>
@@ -485,7 +502,7 @@ export default function PerfilScreen({ navigation }: PerfilScreenProps) {
           placeholder="Peso atual (kg)"
           placeholderTextColor={palette.textSecondary}
           value={peso}
-          onChangeText={setPeso}
+          onChangeText={(texto) => setPeso(formatarPesoDigitado(texto))}
           keyboardType="decimal-pad"
           style={perfilStyles.input}
         />

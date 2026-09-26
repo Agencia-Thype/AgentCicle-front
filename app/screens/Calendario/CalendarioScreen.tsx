@@ -13,6 +13,8 @@ import LunIAModal from "app/components/LunIA/LuniaModal";
 import FloatingLuniaCoach from "app/components/LunIA/LuniaFloatingMessage";
 import { palette } from "../../theme/colors";
 import CalendarVisual from "./CalendarVisual";
+import Toast from "react-native-toast-message";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const meses = [
   "Janeiro",
@@ -33,11 +35,12 @@ export default function CalendarioScreen() {
   const hoje = new Date();
   const navigation = useNavigation();
   const [mesAtual, setMesAtual] = useState(hoje.getMonth());
-  const anoAtual = hoje.getFullYear();
+  const [anoAtual, setAnoAtual] = useState(hoje.getFullYear());
   const [dataUltimaMenstruacao, setDataUltimaMenstruacao] =
     useState<Date | null>(null);
   const [modalResumoVisible, setModalResumoVisible] = useState(false);
   const [resumoDia, setResumoDia] = useState<any>(null);
+  const [salvandoMenstruacao, setSalvandoMenstruacao] = useState(false);
 
   const diasNoMes = new Date(anoAtual, mesAtual + 1, 0).getDate();
   const dias = Array.from({ length: diasNoMes }, (_, i) => i + 1);
@@ -65,9 +68,17 @@ export default function CalendarioScreen() {
 
   const mudarMes = (direcao: number) => {
     let novoMes = mesAtual + direcao;
-    if (novoMes > 11) novoMes = 0;
-    if (novoMes < 0) novoMes = 11;
+    let novoAno = anoAtual;
+    if (novoMes > 11) {
+      novoMes = 0;
+      novoAno += 1;
+    }
+    if (novoMes < 0) {
+      novoMes = 11;
+      novoAno -= 1;
+    }
     setMesAtual(novoMes);
+    setAnoAtual(novoAno);
   };
 
   const handleSelecionarDia = async (dia: number) => {
@@ -93,6 +104,38 @@ export default function CalendarioScreen() {
     return {};
   };
 
+  const definirInicioMenstruacao = async (data: Date) => {
+    setSalvandoMenstruacao(true);
+    try {
+      const dataInicio = data.toISOString().split("T")[0];
+      const response = await api.post("/registrar-menstruacao", {
+        data_inicio: dataInicio,
+      });
+      const faseAtual = response.data?.fase_atual?.fase;
+
+      // Meio-dia evita que a conversão de fuso desloque a data selecionada.
+      setDataUltimaMenstruacao(new Date(`${dataInicio}T12:00:00`));
+      if (faseAtual) setFase(faseAtual);
+      setModalResumoVisible(false);
+      await AsyncStorage.setItem("atualizarHome", "true");
+
+      Toast.show({
+        type: "success",
+        text1: "Ciclo atualizado",
+        text2: `${data.toLocaleDateString("pt-BR")} foi definida como início da menstruação.`,
+      });
+    } catch (error: any) {
+      const detalhe = error?.response?.data?.detail;
+      Toast.show({
+        type: "error",
+        text1: "Não foi possível atualizar o ciclo",
+        text2: typeof detalhe === "string" ? detalhe : "Tente novamente.",
+      });
+    } finally {
+      setSalvandoMenstruacao(false);
+    }
+  };
+
   const diaDoCiclo = dataUltimaMenstruacao
     ? Math.max(1, Math.min(28, Math.floor((hoje.getTime() - dataUltimaMenstruacao.getTime()) / 86400000) + 1))
     : 14;
@@ -116,7 +159,13 @@ export default function CalendarioScreen() {
         onSelectDay={handleSelecionarDia}
         getDayStyle={getEstiloDia}
       />
-      <ResumoDiaModal visible={modalResumoVisible} onClose={() => setModalResumoVisible(false)} resumo={resumoDia} />
+      <ResumoDiaModal
+        visible={modalResumoVisible}
+        onClose={() => setModalResumoVisible(false)}
+        resumo={resumoDia}
+        onDefinirMenstruacao={definirInicioMenstruacao}
+        salvandoMenstruacao={salvandoMenstruacao}
+      />
       <FloatingLuniaCoach userName={userName} mostrarAssistente={mostrarLunia} bottomOffset={72} onAbrirAssistente={() => setMostrarLunia(true)} />
       <LunIAModal visivel={mostrarLunia} onFechar={() => setMostrarLunia(false)} fase={fase} userName={userName} />
     </>

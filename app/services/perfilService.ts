@@ -11,6 +11,13 @@ const NOTIFICACAO_FASE_KEY = "@AgentCicle:notificacao_fase";
 // Chave para armazenamento do perfil no AsyncStorage
 const CACHE_PERFIL_KEY = "@AgentCicle:perfil_cache";
 
+async function salvarPerfilNoCache(data: any): Promise<void> {
+  await AsyncStorage.setItem(
+    CACHE_PERFIL_KEY,
+    JSON.stringify({ data, timestamp: new Date().toISOString() })
+  );
+}
+
 export async function getPerfil() {
   try {
     // Tentar obter do servidor primeiro
@@ -18,13 +25,7 @@ export async function getPerfil() {
 
     // Se sucesso, armazenar em cache
     if (response.status >= 200 && response.status < 300) {
-      await AsyncStorage.setItem(
-        CACHE_PERFIL_KEY,
-        JSON.stringify({
-          data: response.data,
-          timestamp: new Date().toISOString(),
-        })
-      );
+      await salvarPerfilNoCache(response.data);
       console.log("✅ Perfil obtido com sucesso e salvo em cache");
       return response.data;
     } else {
@@ -38,39 +39,18 @@ export async function getPerfil() {
       const cachedData = await AsyncStorage.getItem(CACHE_PERFIL_KEY);
       if (cachedData) {
         const cache = JSON.parse(cachedData);
-        const cacheAge =
-          new Date().getTime() - new Date(cache.timestamp).getTime();
-        const cacheAgeHours = cacheAge / (1000 * 60 * 60);
-
-        // Verificar se o cache é recente (menos de 24 horas)
-        if (cacheAgeHours < 24) {
-          console.log("🔄 Usando cache de perfil devido a erro de conexão");
-          console.log(`⏱️ Cache de ${cacheAgeHours.toFixed(1)} horas atrás`);
-          return cache.data;
-        } else {
-          console.warn("⚠️ Cache de perfil expirado (mais de 24h)");
-        }
+        // Perfil é dado persistente: uma falha de rede nunca deve trocar os
+        // valores salvos por campos vazios, mesmo que o cache seja antigo.
+        console.log("🔄 Usando cache persistente de perfil devido a erro de conexão");
+        return cache.data;
       }
     } catch (cacheError) {
       console.error("Erro ao recuperar cache de perfil:", cacheError);
     }
 
-    // Se chegou aqui, não foi possível nem obter do servidor nem usar cache
-    // Retornar um perfil mínimo para não quebrar o app
-    const defaultPerfil = {
-      nome: "Usuário",
-      email: "",
-      altura: 0,
-      peso_atual: 0,
-      objetivo: "",
-      fase_ciclo: "Desconhecida",
-      duracao_ciclo: 28,
-      data_primeira_menstruacao: new Date().toISOString(),
-      offline: true, // Marcar como offline para informar ao app
-    };
-
-    console.warn("⚠️ Usando perfil padrão devido a falhas");
-    return defaultPerfil;
+    // Sem servidor e sem cache não há dado confiável. O chamador mostra o erro
+    // sem apagar os valores que já estiverem preenchidos na tela.
+    throw error;
   }
 }
 
@@ -83,6 +63,12 @@ export async function updatePerfil(dados: {
 }) {
   try {
     const response = await api.put("/perfil", dados);
+
+    // O PUT devolve uma mensagem, não o perfil completo. Mesclar o payload no
+    // último perfil conhecido evita restaurar o perfil vazio do primeiro acesso.
+    const cacheAtual = await AsyncStorage.getItem(CACHE_PERFIL_KEY);
+    const perfilAtual = cacheAtual ? JSON.parse(cacheAtual).data ?? {} : {};
+    await salvarPerfilNoCache({ ...perfilAtual, ...dados });
 
     // Verificar se houve alteração na fase
     if (response.data.fase_atualizada) {
