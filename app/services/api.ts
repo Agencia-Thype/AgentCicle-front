@@ -210,10 +210,16 @@ api.interceptors.response.use(
       }
     }
 
-    // Propagamos o erro para ser tratado localmente
+    // Propagamos o erro para ser tratado localmente. No app nativo o
+    // statusText vem vazio ("Erro 500: undefined"); o detail do backend é a
+    // mensagem que faz sentido para a usuária.
+    const detalhe = response.data?.detail;
     return Promise.reject({
       response: response,
-      message: `Erro ${response.status}: ${response.statusText}`,
+      message:
+        typeof detalhe === "string"
+          ? detalhe
+          : `Erro ${response.status}${response.statusText ? `: ${response.statusText}` : ""}`,
     });
   },
   (error) => {
