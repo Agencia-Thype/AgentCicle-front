@@ -303,16 +303,24 @@ export async function excluirConta(): Promise<void> {
     throw new Error(`Não foi possível confirmar sua sessão${codigo}. Verifique a conexão e tente de novo.`);
   }
 
-  const response = await api.delete("/usuario/me", {
-    headers: { Authorization: `Bearer ${token}` },
-  });
-
-  // A instância do axios usa validateStatus: () => true, então o status
-  // precisa ser conferido manualmente.
-  if (response.status < 200 || response.status >= 300) {
-    throw new Error(
-      response.data?.detail || "Não foi possível excluir a conta."
-    );
+  try {
+    await api.delete("/usuario/me", {
+      headers: { Authorization: `Bearer ${token}` },
+      // Apagar os dados e a conta no Firebase pode passar dos 30 s padrão;
+      // estourar o prazo mostrava erro com a conta já excluída.
+      timeout: 60000,
+    });
+  } catch (erro: any) {
+    // 404: a conta já não existe (ex.: uma tentativa anterior concluiu no
+    // servidor, mas a resposta não chegou). Para a usuária, isso é sucesso.
+    if (erro?.response?.status !== 404) {
+      if (erro?.code === "ECONNABORTED") {
+        throw new Error(
+          "O servidor demorou para responder. Tente de novo: se a conta já tiver sido excluída, o app confirma e sai."
+        );
+      }
+      throw new Error(erro?.message || "Não foi possível excluir a conta.");
+    }
   }
 
   // Limpa qualquer resquício local dos dados da usuária.
