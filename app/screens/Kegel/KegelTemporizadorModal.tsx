@@ -32,6 +32,12 @@ interface KegelTemporizadorModalProps {
   visible: boolean;
   onClose: () => void;
   onComplete: () => void;
+  /**
+   * Chamado uma vez, no instante em que o cronômetro termina. É aqui que a
+   * conclusão é registrada: não pode depender de qual botão a usuária toca
+   * depois (no último exercício do nível o natural é "Fechar").
+   */
+  onConcluido?: () => void;
 }
 
 const ROTULO_DO_ESTADO: Record<EstadoKegel, string> = {
@@ -65,7 +71,10 @@ export function KegelTemporizadorModal({
   visible,
   onClose,
   onComplete,
+  onConcluido,
 }: KegelTemporizadorModalProps) {
+  const onConcluidoRef = useRef(onConcluido);
+  onConcluidoRef.current = onConcluido;
   /** Voz guiando o exercício ("Contrai", "Solta", "Relaxa"). */
   const [vozLigada, setVozLigada] = useState(true);
   const vozLigadaRef = useRef(vozLigada);
@@ -112,6 +121,7 @@ export function KegelTemporizadorModal({
   }, []);
 
   const aoConcluir = useCallback(() => {
+    onConcluidoRef.current?.();
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => undefined);
     Vibration.vibrate([0, 120, 80, 120, 80, 200]);
     if (vozLigadaRef.current) falar("Muito bem!");

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
@@ -184,8 +184,11 @@ export default function KegelScreen() {
     setMostrarTemporizador(true);
   };
 
-  // Devolve os pontos ganhos: cada exercício pontua uma vez por dia.
-  const registrarConclusao = async (exercicio: ExercicioKegel): Promise<number> => {
+  /**
+   * Registra a conclusão no servidor. Devolve a resposta, ou null se falhou:
+   * quem chama precisa saber da falha para não parabenizar à toa.
+   */
+  const registrarConclusao = async (exercicio: ExercicioKegel): Promise<any | null> => {
     try {
       const response = await api.post("/kegel/concluir-exercicio", {
         nivel: exercicio.nivel,
@@ -196,16 +199,62 @@ export default function KegelScreen() {
       // A Home só relê a pontuação quando encontra esta flag.
       if (pontos > 0) await AsyncStorage.setItem("atualizarPontuacao", "true");
 
-      // Recarregar status dos níveis
-      await carregarStatusNiveis();
-
-      // Recarregar treino atual para atualizar progresso
-      await carregarTreino();
-      return pontos;
+      // Recarrega o progresso em segundo plano; o registro já está salvo.
+      carregarStatusNiveis();
+      carregarTreino();
+      return response.data ?? {};
     } catch (error) {
       console.error("Erro ao registrar conclusão:", error);
-      return 0;
+      return null;
     }
+  };
+
+  /** Registro disparado quando o cronômetro termina (um por exercício aberto). */
+  const conclusaoRef = useRef<Promise<any | null> | null>(null);
+
+  const aoTerminarCronometro = () => {
+    if (exercicioSelecionado && !conclusaoRef.current) {
+      conclusaoRef.current = registrarConclusao(exercicioSelecionado);
+    }
+  };
+
+  const mostrarResultado = async (exercicio: ExercicioKegel, conclusao: Promise<any | null>) => {
+    const dados = await conclusao;
+    if (!dados) {
+      Alert.alert(
+        "Não foi possível registrar",
+        "O exercício terminou, mas não conseguimos salvar a conclusão. Verifique sua conexão.",
+        [
+          { text: "Agora não", style: "cancel" },
+          {
+            text: "Tentar de novo",
+            onPress: () => mostrarResultado(exercicio, registrarConclusao(exercicio)),
+          },
+        ]
+      );
+      return;
+    }
+
+    const pontos = Number(dados.pontos_ganhos) || 0;
+    let mensagem = "Parabéns! Exercício concluído com sucesso!";
+    if (pontos > 0) {
+      mensagem += `\n\n+${pontos} ponto${pontos !== 1 ? "s" : ""}`;
+    }
+    // A resposta já diz se o nível foi completado agora.
+    if (dados.nivel_concluido && dados.mensagem_nivel) {
+      mensagem += `\n\n🎉 ${dados.mensagem_nivel}`;
+    }
+    Alert.alert("Parabéns!", mensagem);
+  };
+
+  const fecharTemporizador = () => {
+    const exercicio = exercicioSelecionado;
+    const conclusao = conclusaoRef.current;
+    conclusaoRef.current = null;
+    setMostrarTemporizador(false);
+    setExercicioSelecionado(null);
+    // Qualquer botão depois do fim mostra o resultado real do registro.
+    if (exercicio && conclusao) mostrarResultado(exercicio, conclusao);
   };
 
   const getNivelLabel = (nivel: string) => {
@@ -563,42 +612,9 @@ export default function KegelScreen() {
         <KegelTemporizadorModal
           exercicio={exercicioSelecionado}
           visible={mostrarTemporizador}
-          onClose={() => {
-            setMostrarTemporizador(false);
-            setExercicioSelecionado(null);
-          }}
-          onComplete={async () => {
-            if (exercicioSelecionado) {
-              const pontos = await registrarConclusao(exercicioSelecionado);
-
-              const nivelStatus = statusNiveis;
-              let mensagem = "Parabéns! Exercício concluído com sucesso!";
-              if (pontos > 0) {
-                mensagem += `\n\n+${pontos} ponto${pontos !== 1 ? "s" : ""}`;
-              }
-
-              if (exercicioSelecionado.nivel === "iniciante") {
-                if (nivelStatus?.iniciante?.concluido) {
-                  mensagem +=
-                    "\n\n🎉 Você completou todos os exercícios do nível Iniciante!";
-                  mensagem += "\n\nNível Intermediário desbloqueado!";
-                }
-              }
-
-              if (exercicioSelecionado.nivel === "intermediario") {
-                if (nivelStatus?.intermediario?.concluido) {
-                  mensagem +=
-                    "\n\n🎉 Você completou todos os exercícios do nível Intermediário!";
-                  mensagem += "\n\nNível Avançado desbloqueado!";
-                }
-              }
-
-              Alert.alert("Parabéns!", mensagem);
-            }
-
-            setMostrarTemporizador(false);
-            setExercicioSelecionado(null);
-          }}
+          onConcluido={aoTerminarCronometro}
+          onClose={fecharTemporizador}
+          onComplete={fecharTemporizador}
         />
       )}
       {!mostrarTemporizador && (
