@@ -1,6 +1,7 @@
 import { api, ehPerfilIncompleto } from "./api";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { daConta } from "./chaveDaConta";
+import { auth } from "./firebase";
 import { Platform } from "react-native";
 
 // Chaves para armazenamento no AsyncStorage
@@ -287,7 +288,24 @@ export async function getFaseCiclo() {
  * então não há como excluir a conta de outra pessoa.
  */
 export async function excluirConta(): Promise<void> {
-  const response = await api.delete("/usuario/me");
+  const usuario = auth.currentUser;
+  if (!usuario) {
+    throw new Error("Sua sessão expirou. Entre novamente para excluir a conta.");
+  }
+
+  // Token renovado agora, enviado explicitamente: uma ação definitiva não
+  // pode depender de um token em cache nem sair sem ele.
+  let token: string;
+  try {
+    token = await usuario.getIdToken(true);
+  } catch (erro: any) {
+    const codigo = erro?.code ? ` (${erro.code})` : "";
+    throw new Error(`Não foi possível confirmar sua sessão${codigo}. Verifique a conexão e tente de novo.`);
+  }
+
+  const response = await api.delete("/usuario/me", {
+    headers: { Authorization: `Bearer ${token}` },
+  });
 
   // A instância do axios usa validateStatus: () => true, então o status
   // precisa ser conferido manualmente.

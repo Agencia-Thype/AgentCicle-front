@@ -242,23 +242,43 @@ api.interceptors.response.use(
 // Interceptor para incluir o token do Firebase (renovado automaticamente pelo SDK)
 api.interceptors.request.use(
   async (config) => {
-    try {
-      if (!endpointsSemAuth.some((endpoint) => config.url?.includes(endpoint))) {
-        if (auth.currentUser) {
-          const token = await auth.currentUser.getIdToken();
-          config.headers.Authorization = `Bearer ${token}`;
-        } else {
-          console.warn(
-            "Nenhum usuário autenticado para endpoint protegido:",
-            config.url
-          );
-        }
-      }
-      return config;
-    } catch (error) {
-      console.error("Erro no interceptor:", error);
+    const protegido = !endpointsSemAuth.some((endpoint) => config.url?.includes(endpoint));
+    // Quem chama pode já ter mandado um token novo (ex.: exclusão de conta).
+    if (!protegido || config.headers.Authorization) return config;
+
+    const usuario = auth.currentUser;
+    if (!usuario) {
+      console.warn("Nenhum usuário autenticado para endpoint protegido:", config.url);
       return config;
     }
+
+    // Se o token não vier, o pedido NÃO pode sair sem ele: o backend responde
+    // 401 "Not authenticated" e o app desloga a usuária sem motivo real.
+    let token: string | null = null;
+    let falha: any = null;
+    try {
+      token = await usuario.getIdToken();
+    } catch (erro) {
+      console.warn("Falha ao obter o token; tentando renovar:", erro);
+      try {
+        token = await usuario.getIdToken(true);
+      } catch (erroRenovacao) {
+        falha = erroRenovacao;
+      }
+    }
+
+    if (!token) {
+      console.error("Sem token para", config.url, falha);
+      const codigo = falha?.code ? ` (${falha.code})` : "";
+      return Promise.reject({
+        config,
+        code: falha?.code,
+        message: `Não foi possível confirmar sua sessão${codigo}. Verifique a conexão e tente de novo.`,
+      });
+    }
+
+    config.headers.Authorization = `Bearer ${token}`;
+    return config;
   },
   (error) => {
     console.error("Erro na requisição:", error);
