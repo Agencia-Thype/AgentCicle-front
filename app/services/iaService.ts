@@ -2,6 +2,7 @@
 
 import { api } from "./api";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { daConta } from "./chaveDaConta";
 import { getFromCache, saveToCache } from "../utils/cacheHelper";
 import {
   shouldWaitBeforeRetry,
@@ -11,8 +12,8 @@ import {
 } from "../utils/errorBackoff";
 
 // Chaves para armazenamento de cache
-const CACHE_MENSAGEM_BALAO_KEY = "@AgentCicle:ia_mensagem_balao";
-const CACHE_MENSAGEM_BOAS_VINDAS_KEY = "@AgentCicle:ia_mensagem_boas_vindas";
+const CACHE_MENSAGEM_BALAO_KEY = () => daConta("@AgentCicle:ia_mensagem_balao");
+const CACHE_MENSAGEM_BOAS_VINDAS_KEY = () => daConta("@AgentCicle:ia_mensagem_boas_vindas");
 // A rota /ia/* chama o GPT-4-turbo no backend e passa de 10s com frequência.
 // Alinhado ao timeout da instância do axios (30s) para o abort não disparar
 // antes da resposta chegar.
@@ -44,8 +45,8 @@ export async function getMensagemIA(tipo: string): Promise<string> {
 
     const cacheKey =
       tipo === "balao"
-        ? CACHE_MENSAGEM_BALAO_KEY
-        : CACHE_MENSAGEM_BOAS_VINDAS_KEY;
+        ? CACHE_MENSAGEM_BALAO_KEY()
+        : CACHE_MENSAGEM_BOAS_VINDAS_KEY();
 
     const endpointKey =
       tipo === "balao"

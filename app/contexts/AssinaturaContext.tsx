@@ -9,6 +9,7 @@ import { AssinaturaStatus } from "../services/assinaturaService";
 import assinaturaService, { type CompraLoja } from "../services/assinaturaService";
 import { Alert } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { daConta } from "../services/chaveDaConta";
 import { auth } from "../services/firebase";
 import { garantirPerfilSincronizado } from "../services/authService";
 import { signOut } from "firebase/auth";
@@ -118,7 +119,7 @@ export function AssinaturaProvider({ children }: AssinaturaProviderProps) {
   const CACHE_DURATION_DEFAULT = 86400000; // 24 horas (em milissegundos) como fallback
   const CACHE_DURATION_TRIAL = 86400000; // 24 horas para usuários em trial
   const CACHE_DURATION_PREMIUM = 604800000; // 7 dias para usuários premium
-  const CACHE_KEY = "assinatura_status_cache";
+  const CACHE_KEY = () => daConta("assinatura_status_cache");
 
   // Função para determinar a duração adequada do cache com base no status
   const calcularDuracaoCache = (status: AssinaturaStatus): number => {
@@ -155,7 +156,7 @@ export function AssinaturaProvider({ children }: AssinaturaProviderProps) {
     try {
       // Verifica se já temos um status em cache válido
       const agora = Date.now();
-      const statusCacheStr = await AsyncStorage.getItem(CACHE_KEY);
+      const statusCacheStr = await AsyncStorage.getItem(CACHE_KEY());
 
       if (!statusCacheStr) {
         console.log(
@@ -234,7 +235,7 @@ export function AssinaturaProvider({ children }: AssinaturaProviderProps) {
 
       if (!deveBuscarStatus) {
         // Se não precisa verificar, carrega do cache
-        const statusCacheStr = await AsyncStorage.getItem(CACHE_KEY);
+        const statusCacheStr = await AsyncStorage.getItem(CACHE_KEY());
         if (statusCacheStr) {
           const statusCache = JSON.parse(statusCacheStr);
           const statusValidado = validarStatusAssinatura(statusCache.data);
@@ -313,10 +314,10 @@ export function AssinaturaProvider({ children }: AssinaturaProviderProps) {
 
         // Salvar status no AsyncStorage para uso offline
         await AsyncStorage.setItem(
-          "assinatura_status",
+          daConta("assinatura_status"),
           JSON.stringify(statusValidado)
         );
-        await AsyncStorage.setItem(CACHE_KEY, JSON.stringify(cacheObject));
+        await AsyncStorage.setItem(CACHE_KEY(), JSON.stringify(cacheObject));
 
         console.log(
           `[AssinaturaContext] Status atualizado com sucesso (válido até ${expireDate})`
@@ -352,7 +353,7 @@ export function AssinaturaProvider({ children }: AssinaturaProviderProps) {
 
       // Tente recuperar status salvo anteriormente
       try {
-        const statusSalvo = await AsyncStorage.getItem("assinatura_status");
+        const statusSalvo = await AsyncStorage.getItem(daConta("assinatura_status"));
         if (statusSalvo) {
           const statusParsed = JSON.parse(statusSalvo);
           // Mesmo para status salvo, validar consistência
@@ -390,7 +391,7 @@ export function AssinaturaProvider({ children }: AssinaturaProviderProps) {
 
         // Salvar no storage para uso offline
         await AsyncStorage.setItem(
-          "assinatura_status",
+          daConta("assinatura_status"),
           JSON.stringify(statusValidado)
         );
 
@@ -406,7 +407,7 @@ export function AssinaturaProvider({ children }: AssinaturaProviderProps) {
 
         // Salvar com info de cache
         await AsyncStorage.setItem(
-          CACHE_KEY,
+          CACHE_KEY(),
           JSON.stringify({
             data: statusValidado,
             timestamp: agora,
@@ -461,7 +462,7 @@ export function AssinaturaProvider({ children }: AssinaturaProviderProps) {
 
         // Salvar no storage para uso offline
         await AsyncStorage.setItem(
-          "assinatura_status",
+          daConta("assinatura_status"),
           JSON.stringify(statusValidado)
         );
 
@@ -477,7 +478,7 @@ export function AssinaturaProvider({ children }: AssinaturaProviderProps) {
 
         // Salvar com info de cache
         await AsyncStorage.setItem(
-          CACHE_KEY,
+          CACHE_KEY(),
           JSON.stringify({
             data: statusValidado,
             timestamp: agora,
@@ -557,7 +558,7 @@ export function AssinaturaProvider({ children }: AssinaturaProviderProps) {
         console.log(
           "[AssinaturaContext] Usando status em cache na inicialização"
         );
-        const statusCacheStr = await AsyncStorage.getItem(CACHE_KEY);
+        const statusCacheStr = await AsyncStorage.getItem(CACHE_KEY());
 
         if (statusCacheStr) {
           try {
@@ -584,7 +585,7 @@ export function AssinaturaProvider({ children }: AssinaturaProviderProps) {
               parseError
             );
             // Se o cache estiver corrompido, remover e buscar da API
-            await AsyncStorage.removeItem(CACHE_KEY);
+            await AsyncStorage.removeItem(CACHE_KEY());
             await verificarStatus(true);
           }
         } else {

@@ -11,6 +11,7 @@ import {
   updateProfile,
   type User,
 } from "firebase/auth";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import Toast from "react-native-toast-message";
 import { auth } from "./firebase";
 import { api } from "./api";
@@ -41,6 +42,21 @@ function mensagemErroFirebase(codigo: string): string {
 let nomePendente: string | null = null;
 let sincronizacao: { uid: string; promessa: Promise<void> } | null = null;
 
+const chaveSincronizada = (uid: string) => `@AgentCicle:sincronizada:${uid}`;
+
+/**
+ * A linha desta usuária já foi criada no backend a partir deste aparelho.
+ * Nesse caso a abertura do app não precisa esperar o /auth/sync: ele segue
+ * rodando em segundo plano, só para manter os dados em dia.
+ */
+export async function jaSincronizadaNesteAparelho(uid: string): Promise<boolean> {
+  try {
+    return (await AsyncStorage.getItem(chaveSincronizada(uid))) === "1";
+  } catch {
+    return false;
+  }
+}
+
 /**
  * Garante a linha da usuária no backend (POST /auth/sync) - sem ela todas as
  * rotas protegidas respondem 404. Precisa rodar em toda sessão, inclusive a
@@ -57,6 +73,7 @@ export function garantirPerfilSincronizado(): Promise<void> {
     .post("/auth/sync", { nome }, { timeout: 10000 })
     .then(() => {
       nomePendente = null;
+      AsyncStorage.setItem(chaveSincronizada(usuario.uid), "1").catch(() => {});
     })
     .catch((error) => {
       console.error("Erro ao sincronizar perfil com o backend:", error);

@@ -1,5 +1,6 @@
 import { api } from "./api";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { daConta } from "./chaveDaConta";
 
 /**
  * Rotina de cuidados: suplementos, vitaminas, medicamentos e hidratação.
@@ -107,8 +108,8 @@ export interface ConfigAgua {
   lembretes_ativos: boolean;
 }
 
-const CACHE_HOJE = "@AgentCicle:rotina_hoje";
-const CACHE_ITENS = "@AgentCicle:rotina_itens";
+const CACHE_HOJE = () => daConta("@AgentCicle:rotina_hoje");
+const CACHE_ITENS = () => daConta("@AgentCicle:rotina_itens");
 const CACHE_VALIDO_MS = 60_000;
 let requisicaoHoje: Promise<RotinaDoDia> | null = null;
 
@@ -127,13 +128,13 @@ async function salvarCache<T>(chave: string, data: T): Promise<T> {
 }
 
 async function carregarHoje(forcar = false): Promise<RotinaDoDia> {
-  const cache = await lerCache<RotinaDoDia>(CACHE_HOJE);
+  const cache = await lerCache<RotinaDoDia>(CACHE_HOJE());
   if (!forcar && cache && Date.now() - cache.timestamp < CACHE_VALIDO_MS) return cache.data;
   if (requisicaoHoje) return requisicaoHoje;
 
   requisicaoHoje = api
     .get<RotinaDoDia>("/rotina/hoje")
-    .then((resposta) => salvarCache(CACHE_HOJE, resposta.data))
+    .then((resposta) => salvarCache(CACHE_HOJE(), resposta.data))
     .catch((erro) => {
       if (cache) return cache.data;
       throw erro;
@@ -145,10 +146,10 @@ async function carregarHoje(forcar = false): Promise<RotinaDoDia> {
 }
 
 async function carregarItens(): Promise<ItemRotina[]> {
-  const cache = await lerCache<ItemRotina[]>(CACHE_ITENS);
+  const cache = await lerCache<ItemRotina[]>(CACHE_ITENS());
   try {
     const itens = (await api.get<{ itens: ItemRotina[] }>("/rotina/itens")).data.itens;
-    return salvarCache(CACHE_ITENS, itens);
+    return salvarCache(CACHE_ITENS(), itens);
   } catch (erro) {
     if (cache) return cache.data;
     throw erro;
@@ -156,13 +157,13 @@ async function carregarItens(): Promise<ItemRotina[]> {
 }
 
 async function atualizarItemNoCache(item: ItemRotina): Promise<void> {
-  const cache = await lerCache<ItemRotina[]>(CACHE_ITENS);
+  const cache = await lerCache<ItemRotina[]>(CACHE_ITENS());
   const itens = cache?.data ?? [];
   const atualizados = itens.some((atual) => atual.id === item.id)
     ? itens.map((atual) => (atual.id === item.id ? item : atual))
     : [...itens, item];
-  await salvarCache(CACHE_ITENS, atualizados);
-  await AsyncStorage.removeItem(CACHE_HOJE);
+  await salvarCache(CACHE_ITENS(), atualizados);
+  await AsyncStorage.removeItem(CACHE_HOJE());
 }
 
 export const rotinaService = {
@@ -175,7 +176,7 @@ export const rotinaService = {
       await atualizarItemNoCache(item);
       return item;
     } catch (erro) {
-      const cache = await lerCache<ItemRotina[]>(CACHE_ITENS);
+      const cache = await lerCache<ItemRotina[]>(CACHE_ITENS());
       const item = cache?.data.find((atual) => atual.id === id);
       if (item) return item;
       throw erro;
@@ -193,14 +194,14 @@ export const rotinaService = {
   },
   excluirItem: async (id: number) => {
     await api.delete(`/rotina/itens/${id}`);
-    const cache = await lerCache<ItemRotina[]>(CACHE_ITENS);
-    if (cache) await salvarCache(CACHE_ITENS, cache.data.filter((item) => item.id !== id));
-    await AsyncStorage.removeItem(CACHE_HOJE);
+    const cache = await lerCache<ItemRotina[]>(CACHE_ITENS());
+    if (cache) await salvarCache(CACHE_ITENS(), cache.data.filter((item) => item.id !== id));
+    await AsyncStorage.removeItem(CACHE_HOJE());
   },
 
   marcarDose: async (itemId: number, horario: string) => {
     const resumo = (await api.post<{ resumo: RotinaDoDia }>("/rotina/doses", { item_id: itemId, horario })).data.resumo;
-    return salvarCache(CACHE_HOJE, resumo);
+    return salvarCache(CACHE_HOJE(), resumo);
   },
   desfazerDose: async (itemId: number, horario: string) => {
     const resumo = (
@@ -209,26 +210,26 @@ export const rotinaService = {
         horario,
       })
     ).data.resumo;
-    return salvarCache(CACHE_HOJE, resumo);
+    return salvarCache(CACHE_HOJE(), resumo);
   },
 
   agua: async () => (await api.get<AguaDoDia>("/rotina/agua")).data,
   registrarAgua: async (ml: number) => {
     const agua = (await api.post<AguaDoDia>("/rotina/agua", { ml })).data;
-    const cache = await lerCache<RotinaDoDia>(CACHE_HOJE);
-    if (cache) await salvarCache(CACHE_HOJE, { ...cache.data, agua });
+    const cache = await lerCache<RotinaDoDia>(CACHE_HOJE());
+    if (cache) await salvarCache(CACHE_HOJE(), { ...cache.data, agua });
     return agua;
   },
   desfazerAgua: async (registroId: number) => {
     const agua = (await api.delete<AguaDoDia>(`/rotina/agua/${registroId}`)).data;
-    const cache = await lerCache<RotinaDoDia>(CACHE_HOJE);
-    if (cache) await salvarCache(CACHE_HOJE, { ...cache.data, agua });
+    const cache = await lerCache<RotinaDoDia>(CACHE_HOJE());
+    if (cache) await salvarCache(CACHE_HOJE(), { ...cache.data, agua });
     return agua;
   },
   configurarAgua: async (config: ConfigAgua) => {
     const agua = (await api.put<AguaDoDia>("/rotina/agua/config", config)).data;
-    const cache = await lerCache<RotinaDoDia>(CACHE_HOJE);
-    if (cache) await salvarCache(CACHE_HOJE, { ...cache.data, agua });
+    const cache = await lerCache<RotinaDoDia>(CACHE_HOJE());
+    if (cache) await salvarCache(CACHE_HOJE(), { ...cache.data, agua });
     return agua;
   },
 

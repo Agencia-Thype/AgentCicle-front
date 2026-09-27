@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
@@ -19,6 +19,7 @@ import AppBackground from "../../components/AppBackground";
 import type { RootStackParamList } from "../../navigation";
 import { sincronizarLembretesComAviso } from "../../services/notificacoes";
 import { mensagemDeErro, rotinaService, type AguaDoDia } from "../../services/rotinaService";
+import { CHAVES, lerDoDia, salvarDoDia } from "../../services/cacheDoDia";
 import { palette } from "../../theme/colors";
 import { BarraInferior, CabecalhoRotina, FraseLunia, SeletorDataHora } from "./RotinaComponentes";
 import { formatarLitros, horaDeDate } from "./rotinaFormato";
@@ -50,13 +51,31 @@ export default function AguaScreen() {
   const [salvando, setSalvando] = useState(false);
   const [configurando, setConfigurando] = useState(false);
 
+  const temAguaRef = useRef(false);
+
+  // Guarda a última hidratação vista hoje para a próxima abertura ser imediata.
+  useEffect(() => {
+    temAguaRef.current = !!agua;
+    if (agua) salvarDoDia(CHAVES.rotinaAgua, agua);
+  }, [agua]);
+
   const carregar = useCallback(async () => {
+    // Abre na hora com o último estado de hoje; a rede só atualiza por baixo.
+    if (!temAguaRef.current) {
+      const salva = await lerDoDia<AguaDoDia>(CHAVES.rotinaAgua);
+      if (salva && !temAguaRef.current) {
+        temAguaRef.current = true;
+        setAgua(salva);
+        setCarregando(false);
+      }
+    }
     try {
       setFalhou(false);
       setAgua(await rotinaService.agua());
     } catch (error) {
       console.warn("Erro ao carregar a hidratação:", error);
-      setFalhou(true);
+      // Com dados na tela, uma falha de rede não vira tela de erro.
+      if (!temAguaRef.current) setFalhou(true);
     } finally {
       setCarregando(false);
     }

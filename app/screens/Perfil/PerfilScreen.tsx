@@ -25,6 +25,7 @@ import { perfilStyles } from "./PerfilStyles";
 import {
   updatePerfil,
   getPerfil,
+  getPerfilSalvo,
   sincronizarFase,
   excluirConta,
 } from "../../services/perfilService";
@@ -130,27 +131,35 @@ export default function PerfilScreen({ navigation }: PerfilScreenProps) {
   useFocusEffect(
     useCallback(() => {
       let ativo = true;
+      const aplicarPerfil = (perfil: any) => {
+        setAltura(perfil.altura?.toString().replace(".", ",") || "");
+        setPeso(perfil.peso_atual?.toString().replace(".", ",") || "");
+        if (perfil.objetivo) {
+          // Objetivo salvo fora da lista atual (texto antigo): entra na lista
+          // para aparecer selecionado, em vez de o campo parecer vazio.
+          setItensObjetivo((itens) =>
+            itens.some((item) => item.value === perfil.objetivo)
+              ? itens
+              : [...itens, { label: perfil.objetivo, value: perfil.objetivo }]
+          );
+        }
+        setObjetivo(perfil.objetivo || "");
+        setDuracaoCiclo(perfil.duracao_ciclo?.toString() || "28");
+        if (perfil.data_menstruacao) {
+          setDataMenstruacao(dataLocal(perfil.data_menstruacao));
+        }
+      };
+
       const carregarPerfil = async () => {
+      // Abre com o perfil salvo no aparelho; a rede só confirma.
+      let chegouDaRede = false;
+      getPerfilSalvo().then((salvo) => {
+        if (salvo && ativo && !chegouDaRede) aplicarPerfil(salvo);
+      });
       try {
         const perfil = await getPerfil();
-        if (perfil && ativo) {
-          setAltura(perfil.altura?.toString().replace(".", ",") || "");
-          setPeso(perfil.peso_atual?.toString().replace(".", ",") || "");
-          if (perfil.objetivo) {
-            // Objetivo salvo fora da lista atual (texto antigo): entra na lista
-            // para aparecer selecionado, em vez de o campo parecer vazio.
-            setItensObjetivo((itens) =>
-              itens.some((item) => item.value === perfil.objetivo)
-                ? itens
-                : [...itens, { label: perfil.objetivo, value: perfil.objetivo }]
-            );
-          }
-          setObjetivo(perfil.objetivo || "");
-          setDuracaoCiclo(perfil.duracao_ciclo?.toString() || "28");
-          if (perfil.data_menstruacao) {
-            setDataMenstruacao(dataLocal(perfil.data_menstruacao));
-          }
-        }
+        chegouDaRede = true;
+        if (perfil && ativo) aplicarPerfil(perfil);
       } catch (error) {
         console.log("Erro ao buscar perfil:", error);
         if (ativo) {

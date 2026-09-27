@@ -4,7 +4,7 @@ import { MaterialCommunityIcons, MaterialIcons } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
 import AppBackground from "../../components/AppBackground";
 import { api, ehPerfilIncompleto } from "../../services/api";
-import { verificarServidorOnline } from "../../services/healthCheck";
+import { CHAVES, lerDoDia, salvarDoDia } from "../../services/cacheDoDia";
 import { palette } from "../../theme/colors";
 import { faseCompletaStyles as styles } from "./faseCompletaStyles";
 
@@ -22,7 +22,26 @@ export default function FaseCompletaScreen() {
   // Vem de /fase-atual/detalhes. Antes o "Dia 14 de 28" era fixo no código.
   const [ciclo, setCiclo] = useState<{ dia: number | null; duracao: number }>({ dia: null, duracao: 28 });
 
-  useEffect(() => { (async () => { try { if (!(await verificarServidorOnline())) return; const res = await api.get("/fase-atual/detalhes"); if (res.data?.fase_atual) setFase(res.data.fase_atual); if (res.data?.descricao) setDescricao(res.data.descricao); if (res.data?.dia_do_ciclo) setCiclo({ dia: res.data.dia_do_ciclo, duracao: res.data.duracao_ciclo || 28 }); } catch (error) { if (!ehPerfilIncompleto(error)) console.error("Erro ao buscar fase:", error); } })(); }, []);
+  useEffect(() => {
+    const aplicar = (dados: any) => {
+      if (dados?.fase_atual) setFase(dados.fase_atual);
+      if (dados?.descricao) setDescricao(dados.descricao);
+      if (dados?.dia_do_ciclo) setCiclo({ dia: dados.dia_do_ciclo, duracao: dados.duracao_ciclo || 28 });
+    };
+    // Abre com a fase de hoje já conhecida; a rede só confirma.
+    let chegouDaRede = false;
+    lerDoDia<any>(CHAVES.faseDetalhes).then(salvo => { if (salvo && !chegouDaRede) aplicar(salvo); });
+    (async () => {
+      try {
+        const res = await api.get("/fase-atual/detalhes");
+        chegouDaRede = true;
+        aplicar(res.data);
+        salvarDoDia(CHAVES.faseDetalhes, res.data);
+      } catch (error) {
+        if (!ehPerfilIncompleto(error)) console.error("Erro ao buscar fase:", error);
+      }
+    })();
+  }, []);
 
   const enviarPergunta = async (texto = pergunta) => {
     const enviada = texto.trim(); if (!enviada || carregando) return;
@@ -31,10 +50,6 @@ export default function FaseCompletaScreen() {
     setPergunta(""); setCarregando(true);
     setTimeout(() => scrollRef.current?.scrollToEnd({ animated: true }), 80);
     try {
-      if (!(await verificarServidorOnline())) {
-        setMensagens(atual => [...atual, { id: `assistant-${Date.now()}`, role: "assistant", text: "Não foi possível conectar ao servidor. Verifique sua conexão.", time: agora }]);
-        return;
-      }
       const res = await api.post("/ia/conversar", { pergunta: enviada });
       setMensagens(atual => [...atual, { id: `assistant-${Date.now()}`, role: "assistant", text: res.data?.resposta || "A LunIA respondeu, mas não conseguimos exibir a mensagem.", time: agora }]);
     } catch {

@@ -1,4 +1,4 @@
-import axios from "axios";
+import axios, { type AxiosAdapter, type AxiosResponse } from "axios";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Platform } from "react-native";
 import { PremiumModalController } from "../utils/premiumModalController";
@@ -27,9 +27,61 @@ const getBaseURL = () => {
   return "http://localhost:8000";
 };
 
+// Cache curto de GETs em memória. Chamadas iguais em andamento são
+// compartilhadas (a Home dispara as mesmas rotas por caminhos diferentes) e a
+// resposta fica valendo por alguns minutos, o que faz a primeira abertura de
+// uma tela pré-carregada ser instantânea. Qualquer POST/PUT/PATCH/DELETE limpa
+// tudo, então uma tela nunca mostra dado anterior a uma alteração da usuária.
+const GET_CACHE_TTL_MS = 2 * 60 * 1000;
+const adapterPadrao = axios.getAdapter(axios.defaults.adapter);
+const cacheGet = new Map<
+  string,
+  { expiraEm: number; resposta: Promise<AxiosResponse> }
+>();
+
+export const limparCacheGet = () => cacheGet.clear();
+
+const adapterComCache: AxiosAdapter = (config) => {
+  if ((config.method || "get").toLowerCase() !== "get") {
+    // /auth/sync roda em toda abertura e não muda nada que as telas mostram.
+    if (config.url === "/auth/sync") return adapterPadrao(config);
+    // Limpa antes e depois: um GET que começou durante a escrita não pode
+    // deixar no cache a versão anterior a ela.
+    cacheGet.clear();
+    return adapterPadrao(config).finally(() => cacheGet.clear());
+  }
+  // Requisições canceláveis não são compartilhadas: o abort de uma derrubaria
+  // as outras que estivessem esperando a mesma resposta.
+  if (config.signal || config.cancelToken) {
+    return adapterPadrao(config);
+  }
+
+  const chave = `${auth.currentUser?.uid ?? "anon"} ${axios.getUri(config)}`;
+  const agora = Date.now();
+  const existente = cacheGet.get(chave);
+  if (existente && existente.expiraEm > agora) {
+    return existente.resposta.then((r) => ({ ...r, config }));
+  }
+
+  const resposta = adapterPadrao(config).then(
+    (r) => {
+      if (r.status < 200 || r.status >= 300) cacheGet.delete(chave);
+      return r;
+    },
+    (erro) => {
+      cacheGet.delete(chave);
+      throw erro;
+    }
+  );
+  cacheGet.set(chave, { expiraEm: agora + GET_CACHE_TTL_MS, resposta });
+  // Cópia rasa por chamador: o axios reescreve response.data ao transformar.
+  return resposta.then((r) => ({ ...r, config }));
+};
+
 // Criar instância da API
 export const api = axios.create({
   baseURL: getBaseURL(),
+  adapter: adapterComCache,
   timeout: 30000, // 30 segundos de timeout (aumentado de 10s)
   // Adicionar headers comuns
   headers: {
@@ -130,7 +182,9 @@ api.interceptors.response.use(
     // Interceptar erro 403 (Forbidden) - pode ser relacionado à assinatura premium.
     // No modo gratuito o backend não bloqueia por assinatura, e a UI não pode
     // abrir modal de upgrade em hipótese alguma.
-    if (COBRANCA_ATIVA && response.status === 403) {
+    // Pedidos de fundo (aquecimento das telas) não abrem modal.
+    const silencioso = (response.config as any)?.silencioso === true;
+    if (COBRANCA_ATIVA && response.status === 403 && !silencioso) {
       console.warn(`Acesso negado (403) para ${response.config.url}`);
 
       // Verifica primeiro se o erro 403 é relacionado à assinatura e não à autenticação

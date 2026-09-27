@@ -17,6 +17,7 @@ import { useNavigation } from "@react-navigation/native";
 import { globalStyles, themeColors } from "../../theme/global";
 import AppBackground from "../../components/AppBackground";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { daConta } from "../../services/chaveDaConta";
 import { useAuth } from "../../contexts/AuthContext";
 import { auth } from "../../services/firebase";
 
@@ -445,13 +446,13 @@ export default function DiagnosticoScreen() {
 
       // Verificar cache do perfil
       const perfilCache = await AsyncStorage.getItem(
-        "@AgentCicle:perfil_cache"
+        daConta("@AgentCicle:perfil_cache")
       );
       const faseCache = await AsyncStorage.getItem(
-        "@AgentCicle:fase_ciclo_cache"
+        daConta("@AgentCicle:fase_ciclo_cache")
       );
       const faseDetalhesCache = await AsyncStorage.getItem(
-        "@AgentCicle:fase_detalhes_cache"
+        daConta("@AgentCicle:fase_detalhes_cache")
       );
 
       let detalhes = "";
@@ -504,10 +505,10 @@ export default function DiagnosticoScreen() {
 
       // Verificar cache das mensagens da IA
       const cacheMensagemBalao = await AsyncStorage.getItem(
-        "@AgentCicle:ia_mensagem_balao"
+        daConta("@AgentCicle:ia_mensagem_balao")
       );
       const cacheMensagemBoasVindas = await AsyncStorage.getItem(
-        "@AgentCicle:ia_mensagem_boas_vindas"
+        daConta("@AgentCicle:ia_mensagem_boas_vindas")
       );
 
       let detalhes = "";
@@ -552,16 +553,16 @@ export default function DiagnosticoScreen() {
     try {
       // Lista de chaves para limpar
       const cachesParaLimpar = [
-        "@AgentCicle:perfil_cache",
-        "@AgentCicle:fase_ciclo_cache",
-        "@AgentCicle:fase_detalhes_cache",
-        "@AgentCicle:fase_atual",
-        "@AgentCicle:mensagem_fase",
-        "@AgentCicle:ultima_sincronizacao",
-        "@AgentCicle:notificacao_fase",
+        daConta("@AgentCicle:perfil_cache"),
+        daConta("@AgentCicle:fase_ciclo_cache"),
+        daConta("@AgentCicle:fase_detalhes_cache"),
+        daConta("@AgentCicle:fase_atual"),
+        daConta("@AgentCicle:mensagem_fase"),
+        daConta("@AgentCicle:ultima_sincronizacao"),
+        daConta("@AgentCicle:notificacao_fase"),
         "@AppErrors:500",
-        "@AgentCicle:ia_mensagem_balao",
-        "@AgentCicle:ia_mensagem_boas_vindas",
+        daConta("@AgentCicle:ia_mensagem_balao"),
+        daConta("@AgentCicle:ia_mensagem_boas_vindas"),
       ];
 
       // Remover cada item de cache
@@ -592,8 +593,8 @@ export default function DiagnosticoScreen() {
     try {
       // Lista de chaves para limpar (apenas IA)
       const cachesParaLimpar = [
-        "@AgentCicle:ia_mensagem_balao",
-        "@AgentCicle:ia_mensagem_boas_vindas",
+        daConta("@AgentCicle:ia_mensagem_balao"),
+        daConta("@AgentCicle:ia_mensagem_boas_vindas"),
       ];
 
       // Remover cada item de cache

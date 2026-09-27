@@ -19,6 +19,8 @@ import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { RootStackParamList } from "../../navigation";
 import { TreinoExercicio } from "../../interface/TreinoDoDiaInterface";
 import { api } from "../../services/api";
+import { CHAVES, lerDoDia, salvarDoDia } from "../../services/cacheDoDia";
+import { checksDoTreino } from "../../utils/treinoChecks";
 import { SafeAreaView } from "react-native-safe-area-context";
 import AppBackground from "../../components/AppBackground";
 import { AnimatedLogo } from "app/components/AnimatedLogo";
@@ -31,6 +33,16 @@ import { palette } from "../../theme/colors";
 import TreinoVisual from "./TreinoVisual";
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList, "TreinoDoDia">;
+
+// Último estado do treino visto hoje, para a tela abrir sem esperar a rede.
+type TreinoSalvo = {
+  exercicios: TreinoExercicio[];
+  fase: string;
+  tipoTreino: string;
+  checks: { [key: number]: boolean };
+  jaSalvoHoje: boolean;
+};
+const CHAVE_TREINO = CHAVES.treinoDia;
 type ExercicioTemporizador = {
   nome: string;
   series: number;
@@ -64,9 +76,26 @@ export default function TreinoDoDiaScreen() {
   const versaoChecksRef = useRef(0);
 
   useEffect(() => {
+    let temDadosDaRede = false;
+    lerDoDia<TreinoSalvo>(CHAVE_TREINO).then((salvo) => {
+      if (!salvo || temDadosDaRede || !salvo.exercicios?.length) return;
+      setTreino(salvo.exercicios);
+      setFase(salvo.fase);
+      setTipoTreino(salvo.tipoTreino);
+      calcularDuracaoTotal(salvo.exercicios);
+      // Não sobrescreve um toque que já tenha acontecido.
+      if (versaoChecksRef.current === 0) {
+        checkedRef.current = salvo.checks || {};
+        setChecked(salvo.checks || {});
+      }
+      setJaSalvoHoje(!!salvo.jaSalvoHoje);
+      setLoading(false);
+    });
+
     async function buscarTreino() {
       try {
         const response = await api.get("/treino-dia");
+        temDadosDaRede = true;
         setTreino(response.data.exercicios);
         setFase(response.data.fase);
         setTipoTreino(response.data.tipo_treino);
@@ -94,26 +123,25 @@ export default function TreinoDoDiaScreen() {
     setDuracaoTotal(Math.round(totalMin));
   };
 
+  useEffect(() => {
+    if (!treino.length || !fase || !tipoTreino) return;
+    salvarDoDia<TreinoSalvo>(CHAVE_TREINO, {
+      exercicios: treino,
+      fase,
+      tipoTreino,
+      checks: checked,
+      jaSalvoHoje,
+    });
+  }, [treino, fase, tipoTreino, checked, jaSalvoHoje]);
+
   async function buscarMarcadosHoje(exercicios: TreinoExercicio[]) {
+    const versaoInicial = versaoChecksRef.current;
     try {
       const response = await api.get("/treino-dia/marcados-hoje");
-      const { ja_salvo, percentual, exercicios_concluidos } = response.data;
-      setJaSalvoHoje(!!ja_salvo);
-
-      const novosChecks: { [key: number]: boolean } = {};
-      if (Array.isArray(exercicios_concluidos) && exercicios_concluidos.length) {
-        // Marca exatamente os exercícios feitos, pelo nome.
-        const feitos = new Set<string>(exercicios_concluidos);
-        exercicios.forEach((ex, index) => {
-          if (feitos.has(ex.exercicio)) novosChecks[index] = true;
-        });
-      } else {
-        // Check-ins de antes da migração só têm o percentual.
-        const quantidadeMarcada = Math.round(((percentual || 0) / 100) * exercicios.length);
-        for (let i = 0; i < quantidadeMarcada; i++) {
-          novosChecks[i] = true;
-        }
-      }
+      // A usuária marcou algo enquanto a resposta vinha: o toque dela vale mais.
+      if (versaoChecksRef.current !== versaoInicial) return;
+      setJaSalvoHoje(!!response.data.ja_salvo);
+      const novosChecks = checksDoTreino(exercicios, response.data);
       checkedRef.current = novosChecks;
       setChecked(novosChecks);
     } catch (error) {

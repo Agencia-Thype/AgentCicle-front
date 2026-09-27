@@ -8,6 +8,7 @@ import { globalStyles, themeColors } from "../../theme/global";
 import { AnimatedLogo } from "../../components/AnimatedLogo";
 import { getFasePorData } from "../../utils/cicloUtils";
 import { api } from "../../services/api";
+import { CHAVES, lerUltimo, salvarDoDia } from "../../services/cacheDoDia";
 import ResumoDiaModal from "app/components/resumoDiaModal";
 import LunIAModal from "app/components/LunIA/LuniaModal";
 import FloatingLuniaCoach from "app/components/LunIA/LuniaFloatingMessage";
@@ -49,15 +50,22 @@ export default function CalendarioScreen() {
   const [fase, setFase] = useState("folicular"); // valor padrão para evitar string vazia
 
   useEffect(() => {
+    const aplicar = (dados: any) => {
+      if (dados?.fase) setFase(dados.fase);
+      if (dados?.inicio_ciclo) setDataUltimaMenstruacao(new Date(dados.inicio_ciclo));
+    };
+    // Abre com o último ciclo conhecido; a rede só confirma.
+    let chegouDaRede = false;
+    lerUltimo<any>(CHAVES.faseCiclo).then((salvo) => {
+      if (salvo && !chegouDaRede) aplicar(salvo);
+    });
+
     async function buscarUltimaMenstruacao() {
       try {
         const resp = await api.get("/fase-ciclo");
-        const dataStr = resp.data?.inicio_ciclo;
-        const faseAtual = resp.data?.fase;
-        if (faseAtual) setFase(faseAtual);
-        if (dataStr) {
-          setDataUltimaMenstruacao(new Date(dataStr));
-        }
+        chegouDaRede = true;
+        aplicar(resp.data);
+        salvarDoDia(CHAVES.faseCiclo, resp.data);
       } catch (err) {
         console.error("Erro ao buscar fase:", err);
       }

@@ -11,6 +11,7 @@ import { BarChart } from "react-native-chart-kit";
 import { useNavigation } from "@react-navigation/native";
 import { MaterialIcons } from "@expo/vector-icons";
 import { api } from "../../services/api";
+import { CHAVES, lerUltimo, salvarDoDia } from "../../services/cacheDoDia";
 import AppBackground from "../../components/AppBackground";
 import { palette } from "../../theme/colors";
 import { fonts } from "../../theme/fonts";
@@ -24,11 +25,18 @@ export default function RelatorioMensalScreen() {
 
   useEffect(() => {
     const buscarRelatorio = async () => {
+      const now = new Date();
+      const mes = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+      // Abre com o último relatório do mês já visto; a rede só atualiza.
+      const salvo = await lerUltimo<any>(CHAVES.relatorioMensal(mes));
+      if (salvo) {
+        setRelatorio(salvo);
+        setLoading(false);
+      }
       try {
-        const now = new Date();
-        const mes = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
         const response = await api.get(`/relatorio/mensal?mes=${mes}`);
         setRelatorio(response.data);
+        salvarDoDia(CHAVES.relatorioMensal(mes), response.data);
       } catch (error) {
         console.error("Erro ao buscar relatório:", error);
       } finally {

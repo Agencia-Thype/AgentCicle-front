@@ -7,6 +7,7 @@ import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import AppBackground from "../../components/AppBackground";
 import type { RootStackParamList } from "../../navigation";
 import { rotinaService, type DiaHistorico, type HistoricoRotina } from "../../services/rotinaService";
+import { CHAVES, lerUltimo, salvarDoDia } from "../../services/cacheDoDia";
 import { palette } from "../../theme/colors";
 import { BarraInferior, CabecalhoRotina } from "./RotinaComponentes";
 import { DIAS_SEMANA_CURTO, dataDeISO, dataPorExtenso, formatarLitros } from "./rotinaFormato";
@@ -35,17 +36,29 @@ export default function HistoricoRotinaScreen() {
 
   useEffect(() => {
     let ativo = true;
+    let chegouDaRede = false;
+    let mostrouSalvo = false;
     setCarregando(true);
+    // Abre com o último histórico deste período; a rede só atualiza.
+    lerUltimo<HistoricoRotina>(CHAVES.historicoRotina(periodo)).then((salvo) => {
+      if (!salvo || !ativo || chegouDaRede) return;
+      mostrouSalvo = true;
+      setHistorico(salvo);
+      setCarregando(false);
+    });
     rotinaService
       .historico(periodo)
       .then((dados) => {
+        chegouDaRede = true;
+        salvarDoDia(CHAVES.historicoRotina(periodo), dados);
         if (!ativo) return;
         setHistorico(dados);
         setFalhou(false);
       })
       .catch((error) => {
         console.warn("Erro ao carregar o histórico da rotina:", error);
-        if (ativo) setFalhou(true);
+        // Com o histórico salvo na tela, falha de rede não vira tela de erro.
+        if (ativo && !mostrouSalvo) setFalhou(true);
       })
       .finally(() => {
         if (ativo) setCarregando(false);

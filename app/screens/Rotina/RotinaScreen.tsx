@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
@@ -24,6 +24,7 @@ import {
   type RotinaDoDia,
   type StatusDose,
 } from "../../services/rotinaService";
+import { CHAVES, lerDoDia, salvarDoDia } from "../../services/cacheDoDia";
 import { palette } from "../../theme/colors";
 import { BarraInferior, CabecalhoRotina, FraseLunia } from "./RotinaComponentes";
 import {
@@ -72,13 +73,31 @@ export default function RotinaScreen() {
   const [mostrarItens, setMostrarItens] = useState(false);
   const [itens, setItens] = useState<ItemRotina[] | null>(null);
 
+  const temRotinaRef = useRef(false);
+
+  // Guarda a última rotina vista hoje para a próxima abertura ser imediata.
+  useEffect(() => {
+    temRotinaRef.current = !!rotina;
+    if (rotina) salvarDoDia(CHAVES.rotinaHoje, rotina);
+  }, [rotina]);
+
   const carregar = useCallback(async () => {
+    // Abre na hora com o último estado de hoje; a rede só atualiza por baixo.
+    if (!temRotinaRef.current) {
+      const salva = await lerDoDia<RotinaDoDia>(CHAVES.rotinaHoje);
+      if (salva && !temRotinaRef.current) {
+        temRotinaRef.current = true;
+        setRotina(salva);
+        setCarregando(false);
+      }
+    }
     try {
       setFalhou(false);
       setRotina(await rotinaService.hoje());
     } catch (error) {
       console.warn("Erro ao carregar a rotina:", error);
-      setFalhou(true);
+      // Com dados na tela, uma falha de rede não vira tela de erro.
+      if (!temRotinaRef.current) setFalhou(true);
     } finally {
       setCarregando(false);
     }

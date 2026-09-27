@@ -1,21 +1,32 @@
 import { api, ehPerfilIncompleto } from "./api";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { daConta } from "./chaveDaConta";
 import { Platform } from "react-native";
 
 // Chaves para armazenamento no AsyncStorage
-const CACHE_FASE_KEY = "@AgentCicle:fase_atual";
-const CACHE_MENSAGEM_KEY = "@AgentCicle:mensagem_fase";
-const CACHE_ULTIMA_SYNC_KEY = "@AgentCicle:ultima_sincronizacao";
-const NOTIFICACAO_FASE_KEY = "@AgentCicle:notificacao_fase";
+const CACHE_FASE_KEY = () => daConta("@AgentCicle:fase_atual");
+const CACHE_MENSAGEM_KEY = () => daConta("@AgentCicle:mensagem_fase");
+const CACHE_ULTIMA_SYNC_KEY = () => daConta("@AgentCicle:ultima_sincronizacao");
+const NOTIFICACAO_FASE_KEY = () => daConta("@AgentCicle:notificacao_fase");
 
 // Chave para armazenamento do perfil no AsyncStorage
-const CACHE_PERFIL_KEY = "@AgentCicle:perfil_cache";
+const CACHE_PERFIL_KEY = () => daConta("@AgentCicle:perfil_cache");
 
 async function salvarPerfilNoCache(data: any): Promise<void> {
   await AsyncStorage.setItem(
-    CACHE_PERFIL_KEY,
+    CACHE_PERFIL_KEY(),
     JSON.stringify({ data, timestamp: new Date().toISOString() })
   );
+}
+
+/** Último perfil salvo no aparelho (atualizado a cada leitura e edição). */
+export async function getPerfilSalvo(): Promise<any | null> {
+  try {
+    const cachedData = await AsyncStorage.getItem(CACHE_PERFIL_KEY());
+    return cachedData ? JSON.parse(cachedData).data ?? null : null;
+  } catch {
+    return null;
+  }
 }
 
 export async function getPerfil() {
@@ -36,7 +47,7 @@ export async function getPerfil() {
 
     // Tentar recuperar do cache se houver erro de servidor
     try {
-      const cachedData = await AsyncStorage.getItem(CACHE_PERFIL_KEY);
+      const cachedData = await AsyncStorage.getItem(CACHE_PERFIL_KEY());
       if (cachedData) {
         const cache = JSON.parse(cachedData);
         // Perfil é dado persistente: uma falha de rede nunca deve trocar os
@@ -66,7 +77,7 @@ export async function updatePerfil(dados: {
 
     // O PUT devolve uma mensagem, não o perfil completo. Mesclar o payload no
     // último perfil conhecido evita restaurar o perfil vazio do primeiro acesso.
-    const cacheAtual = await AsyncStorage.getItem(CACHE_PERFIL_KEY);
+    const cacheAtual = await AsyncStorage.getItem(CACHE_PERFIL_KEY());
     const perfilAtual = cacheAtual ? JSON.parse(cacheAtual).data ?? {} : {};
     await salvarPerfilNoCache({ ...perfilAtual, ...dados });
 
@@ -103,9 +114,9 @@ export async function atualizarCacheFase(
   mensagem: string
 ): Promise<void> {
   try {
-    await AsyncStorage.setItem(CACHE_FASE_KEY, fase);
-    await AsyncStorage.setItem(CACHE_MENSAGEM_KEY, mensagem);
-    await AsyncStorage.setItem(CACHE_ULTIMA_SYNC_KEY, new Date().toISOString());
+    await AsyncStorage.setItem(CACHE_FASE_KEY(), fase);
+    await AsyncStorage.setItem(CACHE_MENSAGEM_KEY(), mensagem);
+    await AsyncStorage.setItem(CACHE_ULTIMA_SYNC_KEY(), new Date().toISOString());
 
     console.log("💾 Cache de fase atualizado:", { fase, mensagem });
   } catch (error) {
@@ -131,7 +142,7 @@ export async function notificarMudancaFase(
 
     // Guardamos no AsyncStorage para que outros componentes possam verificar
     await AsyncStorage.setItem(
-      NOTIFICACAO_FASE_KEY,
+      NOTIFICACAO_FASE_KEY(),
       JSON.stringify(notificacao)
     );
 
@@ -147,7 +158,7 @@ export async function notificarMudancaFase(
 export async function sincronizarFase(): Promise<any> {
   try {
     // Verifica quando foi a última sincronização
-    const ultimaSync = await AsyncStorage.getItem(CACHE_ULTIMA_SYNC_KEY);
+    const ultimaSync = await AsyncStorage.getItem(CACHE_ULTIMA_SYNC_KEY());
     const agora = new Date();
 
     // Se já sincronizou nas últimas 4 horas, usa o cache
@@ -158,8 +169,8 @@ export async function sincronizarFase(): Promise<any> {
 
       if (diffHoras < 4) {
         console.log("🕒 Usando cache de fase (última sync há menos de 4h)");
-        const faseCache = await AsyncStorage.getItem(CACHE_FASE_KEY);
-        const mensagemCache = await AsyncStorage.getItem(CACHE_MENSAGEM_KEY);
+        const faseCache = await AsyncStorage.getItem(CACHE_FASE_KEY());
+        const mensagemCache = await AsyncStorage.getItem(CACHE_MENSAGEM_KEY());
 
         if (faseCache && mensagemCache) {
           return {
@@ -193,8 +204,8 @@ export async function sincronizarFase(): Promise<any> {
 
     // Em caso de erro de conectividade, tenta usar o cache
     try {
-      const faseCache = await AsyncStorage.getItem(CACHE_FASE_KEY);
-      const mensagemCache = await AsyncStorage.getItem(CACHE_MENSAGEM_KEY);
+      const faseCache = await AsyncStorage.getItem(CACHE_FASE_KEY());
+      const mensagemCache = await AsyncStorage.getItem(CACHE_MENSAGEM_KEY());
 
       if (faseCache && mensagemCache) {
         console.log("🔄 Usando cache de fase devido a erro de conexão");
@@ -228,7 +239,7 @@ export async function verificarMudancaFase(): Promise<{
 }> {
   try {
     // Buscamos o estado atual da notificação
-    const notificacaoString = await AsyncStorage.getItem(NOTIFICACAO_FASE_KEY);
+    const notificacaoString = await AsyncStorage.getItem(NOTIFICACAO_FASE_KEY());
 
     if (!notificacaoString) {
       return { mudou: false };
@@ -288,12 +299,12 @@ export async function excluirConta(): Promise<void> {
 
   // Limpa qualquer resquício local dos dados da usuária.
   await AsyncStorage.multiRemove([
-    CACHE_PERFIL_KEY,
-    CACHE_FASE_KEY,
-    CACHE_MENSAGEM_KEY,
-    CACHE_ULTIMA_SYNC_KEY,
-    NOTIFICACAO_FASE_KEY,
-    "assinatura_status",
+    CACHE_PERFIL_KEY(),
+    CACHE_FASE_KEY(),
+    CACHE_MENSAGEM_KEY(),
+    CACHE_ULTIMA_SYNC_KEY(),
+    NOTIFICACAO_FASE_KEY(),
+    daConta("assinatura_status"),
     "primeiro_acesso",
   ]);
 }

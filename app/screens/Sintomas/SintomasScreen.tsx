@@ -7,6 +7,7 @@ import { useNavigation } from "@react-navigation/native";
 import { useFocusEffect } from "@react-navigation/native";
 import AppBackground from "../../components/AppBackground";
 import { api } from "../../services/api";
+import { CHAVES, lerDoDia, salvarDoDia } from "../../services/cacheDoDia";
 import { palette } from "../../theme/colors";
 import { symptomsStyles as styles } from "./symptomsStyles";
 import FloatingLuniaCoach from "../../components/LunIA/LuniaFloatingMessage";
@@ -42,10 +43,20 @@ export default function SintomasScreen() {
   const [ciclo, setCiclo] = useState<{ dia: number | null; duracao: number }>({ dia: null, duracao: 28 });
 
   useEffect(() => {
+    const aplicar = (dados: any) => {
+      if (dados?.fase_atual) setFase(dados.fase_atual);
+      if (dados?.dia_do_ciclo) setCiclo({ dia: dados.dia_do_ciclo, duracao: dados.duracao_ciclo || 28 });
+    };
+    // Abre com a fase de hoje já conhecida; a rede só confirma.
+    let chegouDaRede = false;
+    lerDoDia<any>(CHAVES.faseDetalhes).then(salvo => {
+      if (salvo && !chegouDaRede) aplicar(salvo);
+    });
     api.get("/fase-atual/detalhes")
       .then(res => {
-        if (res.data?.fase_atual) setFase(res.data.fase_atual);
-        if (res.data?.dia_do_ciclo) setCiclo({ dia: res.data.dia_do_ciclo, duracao: res.data.duracao_ciclo || 28 });
+        chegouDaRede = true;
+        aplicar(res.data);
+        salvarDoDia(CHAVES.faseDetalhes, res.data);
       })
       .catch(() => undefined);
   }, []);

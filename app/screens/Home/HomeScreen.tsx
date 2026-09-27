@@ -1,5 +1,6 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { daConta } from "../../services/chaveDaConta";
 import { useNavigation, useFocusEffect } from "@react-navigation/native";
 import {
   NativeStackNavigationProp,
@@ -10,7 +11,10 @@ import { identidadeDaFase } from "../../theme/colors";
 import { auth } from "../../services/firebase";
 import { getPerfil } from "../../services/perfilService";
 import { getDetalhesFaseAtual } from "../../services/cicloService";
+import { AppState } from "react-native";
 import { api, ehPerfilIncompleto } from "../../services/api";
+import { aquecerTelas } from "../../services/aquecimento";
+import { CHAVES, lerDoDia, salvarDoDia } from "../../services/cacheDoDia";
 import { getWeekDateRange } from "../../utils/getWeekDateRange";
 import { useFaseLunar } from "../../hooks/useFaseLunar";
 import { useAssinatura } from "../../contexts/AssinaturaContext";
@@ -23,6 +27,8 @@ import FloatingLuniaCoach from "../../components/LunIA/LuniaFloatingMessage";
 
 type Props = NativeStackScreenProps<RootStackParamList, "Home">;
 
+const CACHE_PONTUACAO_KEY = () => daConta("home_pontuacao_cache");
+
 export default function HomeScreen({ route }: Props) {
   // Parâmetros recebidos da navegação
   const params = route.params;
@@ -33,7 +39,6 @@ export default function HomeScreen({ route }: Props) {
     fase: faseLunar,
     mensagem,
     carregando,
-    recarregar,
     perfilIncompleto,
   } = useFaseLunar();
   // Cor, gradiente e leitura do corpo da fase atual.
@@ -49,6 +54,8 @@ export default function HomeScreen({ route }: Props) {
   const [proximaClasse, setProximaClasse] = useState<string | null>(null);
   const [descricao, setDescricao] = useState<string>("");
   const [modalAberto, setModalAberto] = useState(false);
+  const pontuacaoDaRede = useRef(false);
+  const progressoDaRede = useRef(false);
   const navigation =
     useNavigation<NativeStackNavigationProp<RootStackParamList>>();
 
@@ -129,49 +136,64 @@ export default function HomeScreen({ route }: Props) {
     }, [params?.showTrialBanner, params?.justLoggedIn]) // Remover verificarStatus das dependências
   );
 
+  const aplicarPontuacao = (dados: any) => {
+    setPontuacao(dados.pontos_mes);
+    setClasseAtual(dados.classe);
+    setDescricaoClasse(dados.descricao_classe || "");
+    setProximaPontuacao(dados.proxima_pontuacao ?? null);
+    setPontosParaProxima(dados.pontos_para_proxima || 0);
+    setProximaClasse(dados.proxima_classe ?? null);
+    const trofeus: Record<string, any> = {
+      "Lua Nova": require("../../assets/lua_nova.png"),
+      "Lua Crescente": require("../../assets/lua_crescente.png"),
+      "Lua Cheia": require("../../assets/lua_cheia.png"),
+      "Lua Minguante": require("../../assets/lua_minguante.png"),
+    };
+    setTrofeuUri(trofeus[dados.classe] || trofeus["Lua Nova"]);
+  };
+
   const atualizarPontuacao = async () => {
     try {
       const response = await api.get("/pontuacao");
-      setPontuacao(response.data.pontos_mes);
-      setClasseAtual(response.data.classe);
-      setDescricaoClasse(response.data.descricao_classe || "");
-      setProximaPontuacao(response.data.proxima_pontuacao ?? null);
-      setPontosParaProxima(response.data.pontos_para_proxima || 0);
-      setProximaClasse(response.data.proxima_classe ?? null);
-      const trofeus: Record<string, any> = {
-        "Lua Nova": require("../../assets/lua_nova.png"),
-        "Lua Crescente": require("../../assets/lua_crescente.png"),
-        "Lua Cheia": require("../../assets/lua_cheia.png"),
-        "Lua Minguante": require("../../assets/lua_minguante.png"),
-      };
-      setTrofeuUri(trofeus[response.data.classe] || trofeus["Lua Nova"]);
+      pontuacaoDaRede.current = true;
+      aplicarPontuacao(response.data);
+      await AsyncStorage.setItem(
+        CACHE_PONTUACAO_KEY(),
+        JSON.stringify(response.data)
+      );
     } catch (error) {
       console.log("Erro ao atualizar pontuação:", error);
     }
   };
 
+  const aplicarProgresso = (dados: any, inicio: string) => {
+    setProgressoSemanal(dados.media_percentual);
+    const diasConcluidos = new Set<string>(dados.dias_concluidos || []);
+    const inicioSemana = new Date(`${inicio}T12:00:00`);
+    setDiasComTreino(
+      Array.from({ length: 7 }, (_, index) => {
+        const dia = new Date(inicioSemana);
+        dia.setDate(inicioSemana.getDate() + index);
+        const chave = [
+          dia.getFullYear(),
+          String(dia.getMonth() + 1).padStart(2, "0"),
+          String(dia.getDate()).padStart(2, "0"),
+        ].join("-");
+        return diasConcluidos.has(chave);
+      })
+    );
+  };
+
   const buscarProgresso = async () => {
+    const { inicio, fim } = getWeekDateRange();
     try {
-      const { inicio, fim } = getWeekDateRange();
-      const response = await api.get("/treino-dia/progresso-semanal", {
-        params: { inicio, fim },
-      });
-      console.log("✅ Progresso semanal:", response.data.media_percentual);
-      setProgressoSemanal(response.data.media_percentual);
-      const diasConcluidos = new Set<string>(response.data.dias_concluidos || []);
-      const inicioSemana = new Date(`${inicio}T12:00:00`);
-      setDiasComTreino(
-        Array.from({ length: 7 }, (_, index) => {
-          const dia = new Date(inicioSemana);
-          dia.setDate(inicioSemana.getDate() + index);
-          const chave = [
-            dia.getFullYear(),
-            String(dia.getMonth() + 1).padStart(2, "0"),
-            String(dia.getDate()).padStart(2, "0"),
-          ].join("-");
-          return diasConcluidos.has(chave);
-        })
+      // Mesma rota que o aquecimento grava (a query faz parte da chave do cache).
+      const response = await api.get(
+        `/treino-dia/progresso-semanal?inicio=${inicio}&fim=${fim}`
       );
+      progressoDaRede.current = true;
+      aplicarProgresso(response.data, inicio);
+      salvarDoDia(CHAVES.progressoSemanal, response.data);
     } catch (error) {
       if (!ehPerfilIncompleto(error)) {
         console.error("❌ Erro ao buscar progresso semanal:", error);
@@ -180,38 +202,68 @@ export default function HomeScreen({ route }: Props) {
   };
 
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const perfil = await getPerfil();
-        await AsyncStorage.setItem("user", JSON.stringify(perfil));
+    // Mostra a última pontuação conhecida enquanto a rede responde.
+    AsyncStorage.getItem(CACHE_PONTUACAO_KEY())
+      .then((salva) => {
+        if (salva && !pontuacaoDaRede.current) aplicarPontuacao(JSON.parse(salva));
+      })
+      .catch(() => {});
 
-        const primeiraMenstruacao = new Date(perfil.data_menstruacao);
-        const hoje = new Date();
-        const meses =
-          (hoje.getFullYear() - primeiraMenstruacao.getFullYear()) * 12 +
-          (hoje.getMonth() - primeiraMenstruacao.getMonth());
+    const carregarPerfil = async () => {
+      const perfil = await getPerfil();
+      const primeiraMenstruacao = new Date(perfil.data_menstruacao);
+      const hoje = new Date();
+      const meses =
+        (hoje.getFullYear() - primeiraMenstruacao.getFullYear()) * 12 +
+        (hoje.getMonth() - primeiraMenstruacao.getMonth());
 
-        let trofeu;
-        if (meses < 1) trofeu = require("../../assets/lua_nova.png");
-        else if (meses < 2) trofeu = require("../../assets/lua_crescente.png");
-        else if (meses < 3) trofeu = require("../../assets/lua_cheia.png");
-        else trofeu = require("../../assets/lua_minguante.png");
+      let trofeu;
+      if (meses < 1) trofeu = require("../../assets/lua_nova.png");
+      else if (meses < 2) trofeu = require("../../assets/lua_crescente.png");
+      else if (meses < 3) trofeu = require("../../assets/lua_cheia.png");
+      else trofeu = require("../../assets/lua_minguante.png");
 
-        setTrofeuUri(trofeu);
-        const ciclo = await getDetalhesFaseAtual();
-        // Não precisamos mais chamar setFase, pois o hook faz isso automaticamente
-        setDescricao(ciclo.descricao || mensagem || "");
-
-        // Recarregar dados da fase ao iniciar a tela
-        await recarregar();
-
-        await atualizarPontuacao();
-      } catch (error) {
-        console.log("Erro ao buscar dados:", error);
-      }
+      // Só um palpite até a pontuação chegar: o troféu vem da classe dela.
+      setTrofeuUri((atual: any) => atual ?? trofeu);
     };
 
-    fetchData();
+    lerDoDia<any>(CHAVES.faseDetalhes).then((salvo) => {
+      if (salvo?.descricao) setDescricao((atual) => atual || salvo.descricao);
+    });
+    lerDoDia<any>(CHAVES.progressoSemanal).then((salvo) => {
+      if (salvo && !progressoDaRede.current) {
+        aplicarProgresso(salvo, getWeekDateRange().inicio);
+      }
+    });
+
+    const carregarDescricao = async () => {
+      const ciclo = await getDetalhesFaseAtual();
+      if (!ciclo?.perfil_incompleto) {
+        salvarDoDia(CHAVES.faseDetalhes, ciclo);
+        // Com o ciclo em dia, já deixa as outras telas prontas para abrir.
+        aquecerTelas();
+      }
+      // A fase em si vem do useFaseLunar, que já carrega ao montar.
+      setDescricao(ciclo.descricao || mensagem || "");
+      return ciclo;
+    };
+
+    // Chamadas independentes: em paralelo, não uma esperando a outra.
+    Promise.allSettled([
+      carregarPerfil(),
+      carregarDescricao(),
+      atualizarPontuacao(),
+    ]).then((resultados) => {
+      for (const r of resultados) {
+        if (r.status === "rejected") console.log("Erro ao buscar dados:", r.reason);
+      }
+    });
+
+    // Voltando para o app (inclusive num dia novo), reaquece as telas.
+    const inscricao = AppState.addEventListener("change", (estado) => {
+      if (estado === "active") aquecerTelas();
+    });
+    return () => inscricao.remove();
   }, []);
 
   useFocusEffect(

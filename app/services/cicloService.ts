@@ -2,10 +2,11 @@
 
 import { api, ehPerfilIncompleto } from "./api";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { daConta } from "./chaveDaConta";
 
 // Chaves para armazenamento de cache
-const CACHE_FASE_CICLO_KEY = "@AgentCicle:fase_ciclo_cache";
-const CACHE_FASE_DETALHES_KEY = "@AgentCicle:fase_detalhes_cache";
+const CACHE_FASE_CICLO_KEY = () => daConta("@AgentCicle:fase_ciclo_cache");
+const CACHE_FASE_DETALHES_KEY = () => daConta("@AgentCicle:fase_detalhes_cache");
 
 export async function getFaseCiclo() {
   try {
@@ -15,7 +16,7 @@ export async function getFaseCiclo() {
     if (response.status >= 200 && response.status < 300) {
       // Salvar em cache se obtido com sucesso
       await AsyncStorage.setItem(
-        CACHE_FASE_CICLO_KEY,
+        CACHE_FASE_CICLO_KEY(),
         JSON.stringify({
           data: response.data,
           timestamp: new Date().toISOString(),
@@ -35,7 +36,7 @@ export async function getFaseCiclo() {
 
     // Tentar recuperar do cache
     try {
-      const cachedData = await AsyncStorage.getItem(CACHE_FASE_CICLO_KEY);
+      const cachedData = await AsyncStorage.getItem(CACHE_FASE_CICLO_KEY());
       if (cachedData) {
         const cache = JSON.parse(cachedData);
         console.log("🔄 Usando cache de fase devido a erro de conexão");
@@ -63,7 +64,7 @@ export async function getDetalhesFaseAtual() {
     if (response.status >= 200 && response.status < 300) {
       // Salvar em cache se obtido com sucesso
       await AsyncStorage.setItem(
-        CACHE_FASE_DETALHES_KEY,
+        CACHE_FASE_DETALHES_KEY(),
         JSON.stringify({
           data: response.data,
           timestamp: new Date().toISOString(),
@@ -83,7 +84,7 @@ export async function getDetalhesFaseAtual() {
 
     // Tentar recuperar do cache
     try {
-      const cachedData = await AsyncStorage.getItem(CACHE_FASE_DETALHES_KEY);
+      const cachedData = await AsyncStorage.getItem(CACHE_FASE_DETALHES_KEY());
       if (cachedData) {
         const cache = JSON.parse(cachedData);
         console.log(

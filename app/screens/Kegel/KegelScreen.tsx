@@ -17,6 +17,8 @@ import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import AppBackground from "../../components/AppBackground";
 import { RootStackParamList } from "../../navigation";
 import { api } from "../../services/api";
+import { CHAVES, lerUltimo, salvarDoDia } from "../../services/cacheDoDia";
+import { REVISAO_PROTOCOLO_KEGEL, rotaTreinoKegel } from "../../config/kegel";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { palette } from "../../theme/colors";
 import { KegelTemporizadorModal } from "./KegelTemporizadorModal";
@@ -83,9 +85,6 @@ const niveis: { value: NivelKegel; label: string }[] = [
   { value: "avancado", label: "Avançado" },
 ];
 
-// Alterar quando o protocolo terapêutico do backend mudar. Além de evitar uma
-// resposta em cache, faz o Fast Refresh buscar os novos tempos sem reiniciar o app.
-const REVISAO_PROTOCOLO_KEGEL = 4;
 
 export default function KegelScreen() {
   const navigation = useNavigation<NavigationProp>();
@@ -118,24 +117,36 @@ export default function KegelScreen() {
   }, [treino]);
 
   const carregarStatusNiveis = async () => {
+    lerUltimo<StatusNiveisResponse>(CHAVES.kegelStatusNiveis).then((salvo) => {
+      if (salvo) setStatusNiveis((atual) => atual ?? salvo);
+    });
     try {
       const response = await api.get("/kegel/status-niveis");
       setStatusNiveis(response.data);
+      salvarDoDia(CHAVES.kegelStatusNiveis, response.data);
     } catch (error) {
       console.error("Erro ao carregar status dos níveis:", error);
     }
   };
 
   const carregarTreino = async () => {
+    const chave = CHAVES.kegelTreino(nivelSelecionado, REVISAO_PROTOCOLO_KEGEL);
+    // O progresso do Kegel é acumulado por nível, não zera no dia: a tela abre
+    // na hora com a última versão vista e a rede só confirma por baixo.
+    const salvo = await lerUltimo<TreinoKegelResponse>(chave);
     try {
-      setLoading(true);
-      const response = await api.get(
-        `/kegel/treino-dia?nivel=${nivelSelecionado}&revisao=${REVISAO_PROTOCOLO_KEGEL}`
-      );
+      if (salvo) {
+        setTreino(salvo);
+        setLoading(false);
+      } else {
+        setLoading(true);
+      }
+      const response = await api.get(rotaTreinoKegel(nivelSelecionado));
       setTreino(response.data);
+      salvarDoDia(chave, response.data);
     } catch (error) {
       console.error("Erro ao carregar treino de Kegel:", error);
-      Alert.alert("Erro", "Não foi possível carregar os exercícios de Kegel.");
+      if (!salvo) Alert.alert("Erro", "Não foi possível carregar os exercícios de Kegel.");
     } finally {
       setLoading(false);
     }

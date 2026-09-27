@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { AppState, AppStateStatus } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { daConta } from "../services/chaveDaConta";
 import {
   sincronizarFase,
   verificarMudancaFase,
@@ -49,39 +50,34 @@ export function useFaseLunar() {
   // Função para carregar dados da fase com suporte a cache
   const carregarFase = useCallback(async (forceRefresh = false) => {
     try {
-      // Verifica se já temos um cache válido
-      if (!forceRefresh) {
-        const cacheStr = await AsyncStorage.getItem("fase_lunar_cache");
-        if (cacheStr) {
-          try {
-            const cache: FaseLunarCache = JSON.parse(cacheStr);
-            const agora = Date.now();
-
-            if (cache && cache.expireAt > agora) {
-              console.log(
-                "[useFaseLunar] Usando cache da fase lunar (válido por mais",
-                Math.round((cache.expireAt - agora) / 1000),
-                "segundos)"
-              );
-
-              setFaseLunar({
-                fase: cache.data.fase,
-                mensagem: cache.data.mensagem,
-                deCache: true,
-                carregando: false,
-                erro: null,
-                perfilIncompleto: false,
-              });
-              return;
-            }
-          } catch (e) {
-            console.error("[useFaseLunar] Erro ao parsear cache:", e);
+      // Qualquer fase salva já vai para a tela: a fase muda uma vez em dias,
+      // então mostrar a última conhecida é melhor que um "carregando". Se o
+      // cache ainda vale, nem busca; se venceu, a API atualiza por baixo.
+      let temCache = false;
+      const cacheStr = await AsyncStorage.getItem(daConta("fase_lunar_cache"));
+      if (cacheStr) {
+        try {
+          const cache: FaseLunarCache = JSON.parse(cacheStr);
+          if (cache?.data?.fase) {
+            temCache = true;
+            setFaseLunar({
+              fase: cache.data.fase,
+              mensagem: cache.data.mensagem,
+              deCache: true,
+              carregando: false,
+              erro: null,
+              perfilIncompleto: false,
+            });
+            if (!forceRefresh && cache.expireAt > Date.now()) return;
           }
+        } catch (e) {
+          console.error("[useFaseLunar] Erro ao parsear cache:", e);
         }
       }
 
-      // Se não temos cache ou forçou atualização, busca da API
-      setFaseLunar((prev) => ({ ...prev, carregando: true, erro: null }));
+      if (!temCache) {
+        setFaseLunar((prev) => ({ ...prev, carregando: true, erro: null }));
+      }
 
       const dados = await sincronizarFase();
 
@@ -90,7 +86,7 @@ export function useFaseLunar() {
       if (!dados.perfil_incompleto) {
         const agora = Date.now();
         await AsyncStorage.setItem(
-          "fase_lunar_cache",
+          daConta("fase_lunar_cache"),
           JSON.stringify({
             data: {
               fase: dados.fase,
@@ -147,7 +143,7 @@ export function useFaseLunar() {
 
         // Atualiza o cache também
         await AsyncStorage.setItem(
-          "fase_lunar_cache",
+          daConta("fase_lunar_cache"),
           JSON.stringify({
             data: {
               fase: resultado.fase,
