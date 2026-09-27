@@ -8,6 +8,7 @@ import { globalStyles, themeColors } from "../../theme/global";
 import { AnimatedLogo } from "../../components/AnimatedLogo";
 import { getFasePorData } from "../../utils/cicloUtils";
 import { api } from "../../services/api";
+import { dataLocalISO } from "../Rotina/rotinaFormato";
 import { CHAVES, lerUltimo, salvarDoDia } from "../../services/cacheDoDia";
 import ResumoDiaModal from "app/components/resumoDiaModal";
 import LunIAModal from "app/components/LunIA/LuniaModal";
@@ -93,7 +94,7 @@ export default function CalendarioScreen() {
     const dataDia = new Date(anoAtual, mesAtual, dia);
     try {
       const response = await api.get(
-        `/diario/resumo-do-dia?data=${dataDia.toISOString().split("T")[0]}`
+        `/diario/resumo-do-dia?data=${dataLocalISO(dataDia)}`
       );
       setResumoDia({ ...response.data, data: dataDia });
       setModalResumoVisible(true);
@@ -115,7 +116,7 @@ export default function CalendarioScreen() {
   const definirInicioMenstruacao = async (data: Date) => {
     setSalvandoMenstruacao(true);
     try {
-      const dataInicio = data.toISOString().split("T")[0];
+      const dataInicio = dataLocalISO(data);
       const response = await api.post("/registrar-menstruacao", {
         data_inicio: dataInicio,
       });

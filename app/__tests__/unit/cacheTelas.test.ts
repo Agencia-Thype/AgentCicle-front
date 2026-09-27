@@ -70,3 +70,28 @@ describe("checksDoTreino", () => {
     expect(checksDoTreino(exercicios, {})).toEqual({});
   });
 });
+
+import { getWeekDateRange } from "../../utils/getWeekDateRange";
+
+describe("getWeekDateRange", () => {
+  it("quinta à noite ainda é a semana de segunda a domingo", () => {
+    expect(getWeekDateRange(new Date(2026, 8, 24, 21, 30))).toEqual({
+      inicio: "2026-09-21",
+      fim: "2026-09-27",
+    });
+  });
+
+  it("domingo às 23h pertence à semana que começou na segunda anterior", () => {
+    expect(getWeekDateRange(new Date(2026, 8, 27, 23, 0))).toEqual({
+      inicio: "2026-09-21",
+      fim: "2026-09-27",
+    });
+  });
+
+  it("segunda de manhã abre a semana nova, atravessando o mês", () => {
+    expect(getWeekDateRange(new Date(2026, 8, 28, 0, 5))).toEqual({
+      inicio: "2026-09-28",
+      fim: "2026-10-04",
+    });
+  });
+});

@@ -9,6 +9,7 @@ import { MaterialIcons } from "@expo/vector-icons";
 import * as Animatable from "react-native-animatable";
 import { calendarioStyles as styles } from "./calendarioStyles";
 import { api, ehPerfilIncompleto } from "../../services/api";
+import { dataLocalISO } from "../../screens/Rotina/rotinaFormato";
 import Toast from "react-native-toast-message";
 import { getFasePorData, FaseCiclo } from "../../utils/cicloUtils";
 import { palette } from "../../theme/colors";
@@ -87,7 +88,7 @@ export default function CalendarioModal({ visible, onClose, onSelectDate }: Prop
   const registrarMenstruacao = async (data: Date) => {
     try {
       const response = await api.post("/registrar-menstruacao", {
-        data_inicio: data.toISOString().split("T")[0],
+        data_inicio: dataLocalISO(data),
       });
   
       const fase = response.data.fase_atual?.fase;

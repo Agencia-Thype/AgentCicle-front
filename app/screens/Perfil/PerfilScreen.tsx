@@ -37,6 +37,7 @@ import { useFaseLunar } from "../../hooks/useFaseLunar";
 import { palette } from "../../theme/colors";
 import { useAuth } from "../../contexts/AuthContext";
 import { contaUsaApple, revogarTokenApple } from "../../services/authService";
+import { dataLocalISO } from "../Rotina/rotinaFormato";
 import { calcularImc, converterNumeroDecimal } from "../../utils/imc";
 
 /**
@@ -205,7 +206,7 @@ export default function PerfilScreen({ navigation }: PerfilScreenProps) {
         altura: alturaNumerica,
         peso_atual: pesoNumerico,
         objetivo,
-        data_menstruacao: dataMenstruacao.toISOString().split("T")[0],
+        data_menstruacao: dataLocalISO(dataMenstruacao),
         duracao_ciclo: parseInt(duracaoCiclo),
       };
       const result = await updatePerfil(payload);
