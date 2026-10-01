@@ -11,13 +11,19 @@ import { calendarioStyles as styles } from "./calendarioStyles";
 import { api, ehPerfilIncompleto } from "../../services/api";
 import { dataLocalISO } from "../../screens/Rotina/rotinaFormato";
 import Toast from "react-native-toast-message";
-import { getFasePorData, FaseCiclo } from "../../utils/cicloUtils";
+import {
+  dataLocalDeISO,
+  duracaoCicloValida,
+  getFasePorData,
+  FaseCiclo,
+} from "../../utils/cicloUtils";
 import { palette } from "../../theme/colors";
 
 const meses = [
   "Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho",
   "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro",
 ];
+const diasDaSemana = ["D", "S", "T", "Q", "Q", "S", "S"];
 
 interface Props {
   visible: boolean;
@@ -32,7 +38,7 @@ export default function CalendarioModal({ visible, onClose, onSelectDate }: Prop
   const [dataSelecionada, setDataSelecionada] = useState<Date | null>(null);
   const [dataUltimaMenstruacao, setDataUltimaMenstruacao] = useState<Date | null>(null);
   const [primeiroDiaPermitido, setPrimeiroDiaPermitido] = useState<Date | null>(null);
-  const cicloDias = 28;
+  const [cicloDias, setCicloDias] = useState(28);
 
   const diasNoMes = new Date(anoAtual, mesAtual + 1, 0).getDate();
   const primeiroDiaSemana = new Date(anoAtual, mesAtual, 1).getDay();
@@ -49,8 +55,9 @@ export default function CalendarioModal({ visible, onClose, onSelectDate }: Prop
         const dataStr = response.data?.inicio_ciclo;
 
         if (dataStr) {
-          const data = new Date(dataStr);
+          const data = dataLocalDeISO(dataStr);
           setDataUltimaMenstruacao(data);
+          setCicloDias(duracaoCicloValida(response.data?.duracao_ciclo));
 
           const limite = new Date(data);
           limite.setDate(limite.getDate() - 30);
@@ -153,8 +160,13 @@ export default function CalendarioModal({ visible, onClose, onSelectDate }: Prop
           </TouchableOpacity>
 
           <View style={styles.grid}>
+            {diasDaSemana.map((nome, index) => (
+              <View key={`semana-${index}`} style={styles.dayCell}>
+                <Text style={styles.weekdayText}>{nome}</Text>
+              </View>
+            ))}
             {dias.map((dia, index) => {
-              if (!dia) return <View key={index} style={styles.dayBoxPlaceholder} />;
+              if (!dia) return <View key={index} style={styles.dayCell} />;
 
               const dataDia = new Date(anoAtual, mesAtual, dia);
               const isHoje = dataDia.toDateString() === hoje.toDateString();
@@ -177,13 +189,14 @@ export default function CalendarioModal({ visible, onClose, onSelectDate }: Prop
               }
 
               return (
-                <TouchableOpacity
-                  key={index}
-                  style={[styles.dayBox, estiloExtra]}
-                  onPress={() => handleSelectDay(dia)}
-                >
-                  <Text style={styles.dayText}>{dia}</Text>
-                </TouchableOpacity>
+                <View key={index} style={styles.dayCell}>
+                  <TouchableOpacity
+                    style={[styles.dayBox, estiloExtra]}
+                    onPress={() => handleSelectDay(dia)}
+                  >
+                    <Text style={styles.dayText}>{dia}</Text>
+                  </TouchableOpacity>
+                </View>
               );
             })}
           </View>

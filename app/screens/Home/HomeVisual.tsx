@@ -12,6 +12,7 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { MaterialCommunityIcons, MaterialIcons } from "@expo/vector-icons";
+import Svg, { Circle } from "react-native-svg";
 
 import AppBackground from "../../components/AppBackground";
 import ClasseLunarModal from "../../components/classeLunarModal";
@@ -27,6 +28,10 @@ type Props = {
   descricao: string;
   carregando: boolean;
   humor: string;
+  /** null enquanto os dados do ciclo não chegaram. */
+  diaDoCiclo: number | null;
+  duracaoCiclo: number | null;
+  diasParaProximaFase: number | null;
   progresso: number;
   diasComTreino: boolean[];
   pontuacao: number;
@@ -50,6 +55,29 @@ type Props = {
 
 const dias = ["Seg", "Ter", "Qua", "Qui", "Sex", "Sáb", "Dom"];
 
+/** Anel preenchido na proporção do ciclo já percorrido, começando do topo. */
+function AnelDoCiclo({ tamanho, espessura, fracao }: { tamanho: number; espessura: number; fracao: number }) {
+  const raio = (tamanho - espessura) / 2;
+  const circunferencia = 2 * Math.PI * raio;
+  const preenchido = circunferencia * Math.min(1, Math.max(0, fracao));
+  return (
+    <Svg width={tamanho} height={tamanho} style={styles.cycleRingSvg}>
+      <Circle cx={tamanho / 2} cy={tamanho / 2} r={raio} stroke="#EBD9E9" strokeWidth={espessura} fill="none" />
+      <Circle
+        cx={tamanho / 2}
+        cy={tamanho / 2}
+        r={raio}
+        stroke="#AE4F94"
+        strokeWidth={espessura}
+        strokeLinecap="round"
+        strokeDasharray={`${preenchido} ${circunferencia}`}
+        fill="none"
+        transform={`rotate(-90 ${tamanho / 2} ${tamanho / 2})`}
+      />
+    </Svg>
+  );
+}
+
 export default function HomeVisual({
   navigation,
   fase,
@@ -57,6 +85,9 @@ export default function HomeVisual({
   descricao,
   carregando,
   humor,
+  diaDoCiclo,
+  duracaoCiclo,
+  diasParaProximaFase,
   progresso,
   diasComTreino,
   pontuacao,
@@ -180,15 +211,24 @@ export default function HomeVisual({
 
               <View style={[styles.heroSide, compact && styles.heroSideCompact]}>
                 <View style={[styles.cycleRing, compact && styles.cycleRingCompact]}>
+                  <AnelDoCiclo
+                    tamanho={compact ? 108 : 96}
+                    espessura={compact ? 13 : 10}
+                    fracao={diaDoCiclo && duracaoCiclo ? diaDoCiclo / duracaoCiclo : 0}
+                  />
                   <Text style={styles.cycleSmall}>Dia</Text>
-                  <Text style={styles.cycleDay}>14</Text>
-                  <Text style={styles.cycleSmall}>de 28</Text>
+                  <Text style={styles.cycleDay}>{diaDoCiclo ?? "—"}</Text>
+                  {duracaoCiclo ? <Text style={styles.cycleSmall}>de {duracaoCiclo}</Text> : null}
                 </View>
                 <TouchableOpacity style={[styles.nextPhase, compact && styles.nextPhaseCompact]} onPress={() => navegar("Calendario")}>
                   <MaterialCommunityIcons name="calendar-month-outline" size={24} color={palette.purpleDark} />
                   <View style={styles.nextPhaseCopy}>
                     <Text style={styles.nextPhaseLabel}>Próxima fase</Text>
-                    <Text style={styles.nextPhaseValue}>em 5 dias</Text>
+                    <Text style={styles.nextPhaseValue}>
+                      {diasParaProximaFase == null
+                        ? "—"
+                        : `em ${diasParaProximaFase} dia${diasParaProximaFase === 1 ? "" : "s"}`}
+                    </Text>
                   </View>
                 </TouchableOpacity>
               </View>

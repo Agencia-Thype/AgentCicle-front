@@ -8,7 +8,8 @@ import { cycleStyles as styles } from "./cycleStyles";
 
 type Props = {
   navigation: any; month: string; monthIndex: number; year: number; daysInMonth: number; firstWeekday: number;
-  phase: string; cycleDay: number; nextPeriodDays: number; today: Date;
+  /** cycleDay e nextPeriodDays são null enquanto o ciclo não foi carregado. */
+  phase: string; cycleDay: number | null; cycleLength: number; nextPeriodDays: number | null; today: Date;
   onChangeMonth: (direction: number) => void; onSelectDay: (day: number) => void;
   getDayStyle: (date: Date) => object;
 };
@@ -46,11 +47,11 @@ export default function CalendarVisual(props: Props) {
             <View style={styles.phaseIcon}><MaterialCommunityIcons name="sprout-outline" size={39} color={palette.purpleDark} /></View>
             <View style={styles.phaseCopy}>
               <Text style={styles.phaseLabel}>Fase atual: <Text style={styles.phaseStrong}>{props.phase}</Text></Text>
-              <Text style={styles.cycleDay}>Dia {props.cycleDay} de 28</Text>
+              <Text style={styles.cycleDay}>{props.cycleDay ? `Dia ${props.cycleDay} de ${props.cycleLength}` : "—"}</Text>
               <Text style={styles.phaseCaption}>Mais energia e vitalidade hoje!</Text>
             </View>
             <View style={styles.phaseDivider} />
-            <View style={styles.nextPeriod}><MaterialCommunityIcons name="calendar-blank-outline" size={25} color={palette.purpleDark} /><View style={styles.nextPeriodCopy}><Text style={styles.nextPeriodLabel}>Próxima{`\n`}menstruação</Text><Text style={styles.nextPeriodValue}>em {props.nextPeriodDays} {props.nextPeriodDays === 1 ? "dia" : "dias"}</Text></View></View>
+            <View style={styles.nextPeriod}><MaterialCommunityIcons name="calendar-blank-outline" size={25} color={palette.purpleDark} /><View style={styles.nextPeriodCopy}><Text style={styles.nextPeriodLabel}>Próxima{`\n`}menstruação</Text><Text style={styles.nextPeriodValue}>{props.nextPeriodDays == null ? "—" : `em ${props.nextPeriodDays} ${props.nextPeriodDays === 1 ? "dia" : "dias"}`}</Text></View></View>
           </View>
 
           <View style={[styles.calendarCard, compact && styles.calendarCardCompact, dense && styles.calendarCardDense]}>

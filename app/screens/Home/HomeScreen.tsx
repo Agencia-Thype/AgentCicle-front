@@ -54,6 +54,13 @@ export default function HomeScreen({ route }: Props) {
   const [proximaClasse, setProximaClasse] = useState<string | null>(null);
   const [descricao, setDescricao] = useState<string>("");
   const [modalAberto, setModalAberto] = useState(false);
+  // Dia do ciclo, duração e dias até a próxima fase, de /fase-atual/detalhes.
+  const [ciclo, setCiclo] = useState<{
+    dia: number | null;
+    duracao: number | null;
+    diasParaProximaFase: number | null;
+  }>({ dia: null, duracao: null, diasParaProximaFase: null });
+  const cicloDaRede = useRef(false);
   const pontuacaoDaRede = useRef(false);
   const progressoDaRede = useRef(false);
   const navigation =
@@ -135,6 +142,26 @@ export default function HomeScreen({ route }: Props) {
       verificarStatusAssinatura();
     }, [params?.showTrialBanner, params?.justLoggedIn]) // Remover verificarStatus das dependências
   );
+
+  const aplicarCiclo = (dados: any) => {
+    if (!dados?.dia_do_ciclo) return;
+    setCiclo({
+      dia: dados.dia_do_ciclo,
+      duracao: dados.duracao_ciclo || 28,
+      diasParaProximaFase: dados.dias_para_proxima_fase ?? null,
+    });
+  };
+
+  const atualizarCiclo = async () => {
+    const dados = await getDetalhesFaseAtual();
+    // Resposta de cache/offline não conta como rede: pode ser de antes de a
+    // usuária mudar a data da menstruação ou a duração do ciclo.
+    if (!dados?.perfil_incompleto && !dados?.offline) {
+      cicloDaRede.current = true;
+      aplicarCiclo(dados);
+    }
+    return dados;
+  };
 
   const aplicarPontuacao = (dados: any) => {
     setPontuacao(dados.pontos_mes);
@@ -229,6 +256,7 @@ export default function HomeScreen({ route }: Props) {
 
     lerDoDia<any>(CHAVES.faseDetalhes).then((salvo) => {
       if (salvo?.descricao) setDescricao((atual) => atual || salvo.descricao);
+      if (!cicloDaRede.current) aplicarCiclo(salvo);
     });
     lerDoDia<any>(CHAVES.progressoSemanal).then((salvo) => {
       if (salvo && !progressoDaRede.current) {
@@ -237,7 +265,7 @@ export default function HomeScreen({ route }: Props) {
     });
 
     const carregarDescricao = async () => {
-      const ciclo = await getDetalhesFaseAtual();
+      const ciclo = await atualizarCiclo();
       if (!ciclo?.perfil_incompleto) {
         salvarDoDia(CHAVES.faseDetalhes, ciclo);
         // Com o ciclo em dia, já deixa as outras telas prontas para abrir.
@@ -274,6 +302,10 @@ export default function HomeScreen({ route }: Props) {
         const precisaAtualizarHome =
           await AsyncStorage.getItem("atualizarHome");
 
+        // O dia do ciclo muda quando ela edita o Perfil ou registra a
+        // menstruação no Calendário; ao voltar para a Home, busca de novo.
+        atualizarCiclo().catch(() => {});
+
         if (precisaAtualizarHome === "true") {
           // Atualiza tudo se pediu atualização geral
           await atualizarPontuacao();
@@ -303,6 +335,9 @@ export default function HomeScreen({ route }: Props) {
       descricao={descricao}
       carregando={carregando}
       humor={identidade.humor}
+      diaDoCiclo={ciclo.dia}
+      duracaoCiclo={ciclo.duracao}
+      diasParaProximaFase={ciclo.diasParaProximaFase}
       progresso={progressoSemanal}
       diasComTreino={diasComTreino}
       pontuacao={pontuacao}

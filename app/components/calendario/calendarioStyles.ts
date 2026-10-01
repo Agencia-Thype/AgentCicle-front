@@ -31,13 +31,22 @@ export const calendarioStyles = StyleSheet.create({
   grid: {
     flexDirection: "row",
     flexWrap: "wrap",
-    justifyContent: "space-between",
-    paddingHorizontal: 10,
+  },
+  // Sete colunas exatas: cada dia cai sob o seu dia da semana.
+  dayCell: {
+    width: `${100 / 7}%`,
+    height: 48,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  weekdayText: {
+    fontSize: 12,
+    fontWeight: "bold",
+    color: palette.textSecondary,
   },
   dayBox: {
     width: 36,
     height: 36,
-    marginVertical: 6,
     borderRadius: 18,
     backgroundColor: palette.glass,
     justifyContent: "center",
@@ -46,13 +55,6 @@ export const calendarioStyles = StyleSheet.create({
   dayText: {
     color: palette.textPrimary,
     fontWeight: "bold",
-  },
-  dayBoxPlaceholder: {
-    width: 36,
-    height: 36,
-    marginVertical: 6,
-    borderRadius: 18,
-    backgroundColor: "transparent",
   },
   diaSelecionado: {
     backgroundColor: palette.purple,

@@ -6,7 +6,12 @@ import { useNavigation } from "@react-navigation/native";
 import { calendarioStyles } from "./calendarioStyles";
 import { globalStyles, themeColors } from "../../theme/global";
 import { AnimatedLogo } from "../../components/AnimatedLogo";
-import { getFasePorData } from "../../utils/cicloUtils";
+import {
+  dataLocalDeISO,
+  duracaoCicloValida,
+  getFasePorData,
+  posicaoNoCiclo,
+} from "../../utils/cicloUtils";
 import { api } from "../../services/api";
 import { dataLocalISO } from "../Rotina/rotinaFormato";
 import { CHAVES, lerUltimo, salvarDoDia } from "../../services/cacheDoDia";
@@ -40,6 +45,8 @@ export default function CalendarioScreen() {
   const [anoAtual, setAnoAtual] = useState(hoje.getFullYear());
   const [dataUltimaMenstruacao, setDataUltimaMenstruacao] =
     useState<Date | null>(null);
+  // Duração do ciclo informada no Perfil; chega junto com /fase-ciclo.
+  const [duracaoCiclo, setDuracaoCiclo] = useState(28);
   const [modalResumoVisible, setModalResumoVisible] = useState(false);
   const [resumoDia, setResumoDia] = useState<any>(null);
   const [salvandoMenstruacao, setSalvandoMenstruacao] = useState(false);
@@ -53,7 +60,8 @@ export default function CalendarioScreen() {
   useEffect(() => {
     const aplicar = (dados: any) => {
       if (dados?.fase) setFase(dados.fase);
-      if (dados?.inicio_ciclo) setDataUltimaMenstruacao(new Date(dados.inicio_ciclo));
+      if (dados?.inicio_ciclo) setDataUltimaMenstruacao(dataLocalDeISO(dados.inicio_ciclo));
+      if (dados?.duracao_ciclo) setDuracaoCiclo(duracaoCicloValida(dados.duracao_ciclo));
     };
     // Abre com o último ciclo conhecido; a rede só confirma.
     let chegouDaRede = false;
@@ -105,7 +113,7 @@ export default function CalendarioScreen() {
 
   const getEstiloDia = (data: Date) => {
     if (!dataUltimaMenstruacao) return {};
-    const fase = getFasePorData(data, dataUltimaMenstruacao, 28);
+    const fase = getFasePorData(data, dataUltimaMenstruacao, duracaoCiclo);
     if (fase === "menstruacao") return calendarioStyles.diaMenstruacao;
     if (fase === "folicular") return calendarioStyles.diaFolicular;
     if (fase === "ovulatoria") return calendarioStyles.diaOvulatoria;
@@ -122,8 +130,7 @@ export default function CalendarioScreen() {
       });
       const faseAtual = response.data?.fase_atual?.fase;
 
-      // Meio-dia evita que a conversão de fuso desloque a data selecionada.
-      setDataUltimaMenstruacao(new Date(`${dataInicio}T12:00:00`));
+      setDataUltimaMenstruacao(dataLocalDeISO(dataInicio));
       if (faseAtual) setFase(faseAtual);
       setModalResumoVisible(false);
       await AsyncStorage.setItem("atualizarHome", "true");
@@ -145,10 +152,9 @@ export default function CalendarioScreen() {
     }
   };
 
-  const diaDoCiclo = dataUltimaMenstruacao
-    ? Math.max(1, Math.min(28, Math.floor((hoje.getTime() - dataUltimaMenstruacao.getTime()) / 86400000) + 1))
-    : 14;
-  const diasAteProximaMenstruacao = Math.max(0, 28 - diaDoCiclo + 1);
+  const posicao = dataUltimaMenstruacao
+    ? posicaoNoCiclo(hoje, dataUltimaMenstruacao, duracaoCiclo)
+    : null;
   const primeiroDiaSemana = new Date(anoAtual, mesAtual, 1).getDay();
 
   return (
@@ -161,8 +167,9 @@ export default function CalendarioScreen() {
         daysInMonth={diasNoMes}
         firstWeekday={primeiroDiaSemana}
         phase={fase ? fase.charAt(0).toUpperCase() + fase.slice(1) : "Ovulatória"}
-        cycleDay={diaDoCiclo}
-        nextPeriodDays={diasAteProximaMenstruacao}
+        cycleDay={posicao?.dia ?? null}
+        cycleLength={duracaoCiclo}
+        nextPeriodDays={posicao?.diasAteProximaMenstruacao ?? null}
         today={hoje}
         onChangeMonth={mudarMes}
         onSelectDay={handleSelecionarDia}
