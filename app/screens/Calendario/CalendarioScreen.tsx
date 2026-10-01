@@ -7,8 +7,10 @@ import { calendarioStyles } from "./calendarioStyles";
 import { globalStyles, themeColors } from "../../theme/global";
 import { AnimatedLogo } from "../../components/AnimatedLogo";
 import {
+  DURACAO_MENSTRUACAO_PADRAO,
   dataLocalDeISO,
   duracaoCicloValida,
+  ehDiaFertil,
   getFasePorData,
   posicaoNoCiclo,
 } from "../../utils/cicloUtils";
@@ -47,6 +49,7 @@ export default function CalendarioScreen() {
     useState<Date | null>(null);
   // Duração do ciclo informada no Perfil; chega junto com /fase-ciclo.
   const [duracaoCiclo, setDuracaoCiclo] = useState(28);
+  const [duracaoMenstruacao, setDuracaoMenstruacao] = useState(DURACAO_MENSTRUACAO_PADRAO);
   const [modalResumoVisible, setModalResumoVisible] = useState(false);
   const [resumoDia, setResumoDia] = useState<any>(null);
   const [salvandoMenstruacao, setSalvandoMenstruacao] = useState(false);
@@ -62,6 +65,7 @@ export default function CalendarioScreen() {
       if (dados?.fase) setFase(dados.fase);
       if (dados?.inicio_ciclo) setDataUltimaMenstruacao(dataLocalDeISO(dados.inicio_ciclo));
       if (dados?.duracao_ciclo) setDuracaoCiclo(duracaoCicloValida(dados.duracao_ciclo));
+      if (dados?.duracao_menstruacao) setDuracaoMenstruacao(dados.duracao_menstruacao);
     };
     // Abre com o último ciclo conhecido; a rede só confirma.
     let chegouDaRede = false;
@@ -113,10 +117,12 @@ export default function CalendarioScreen() {
 
   const getEstiloDia = (data: Date) => {
     if (!dataUltimaMenstruacao) return {};
-    const fase = getFasePorData(data, dataUltimaMenstruacao, duracaoCiclo);
+    const fase = getFasePorData(data, dataUltimaMenstruacao, duracaoCiclo, duracaoMenstruacao);
     if (fase === "menstruacao") return calendarioStyles.diaMenstruacao;
-    if (fase === "folicular") return calendarioStyles.diaFolicular;
     if (fase === "ovulatoria") return calendarioStyles.diaOvulatoria;
+    // A janela fértil se sobrepõe ao fim da folicular e ao começo da lútea;
+    // é o verde "Fértil" da legenda.
+    if (ehDiaFertil(data, dataUltimaMenstruacao, duracaoCiclo, duracaoMenstruacao)) return calendarioStyles.diaFolicular;
     if (fase === "lutea") return calendarioStyles.diaLutea;
     return {};
   };

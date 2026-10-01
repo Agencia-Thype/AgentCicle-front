@@ -15,9 +15,46 @@ function diasEntre(de: Date, ate: Date): number {
   return Math.round((b.getTime() - a.getTime()) / (1000 * 60 * 60 * 24));
 }
 
-/** Durações fora de 21-35 dias valem 28, como no backend. */
+/** Duração ausente ou absurda (fora de 10-60 dias) vale 28, como no backend. */
 export function duracaoCicloValida(duracao?: number | null): number {
-  return duracao && duracao >= 21 && duracao <= 35 ? duracao : 28;
+  return duracao && duracao >= 10 && duracao <= 60 ? duracao : 28;
+}
+
+export const DURACAO_MENSTRUACAO_PADRAO = 5;
+const DURACAO_FASE_LUTEA = 14;
+
+/**
+ * Limites das fases, em dias do ciclo contados a partir de 1. Mesma regra do
+ * backend (dividir_ciclo_em_fases): a ovulação é estimada 14 dias antes da
+ * próxima menstruação, então quem varia com a duração é a fase folicular.
+ * A janela fértil vai de 5 dias antes da ovulação até 1 dia depois.
+ */
+export function dividirCiclo(
+  duracaoCiclo: number = 28,
+  duracaoMenstruacao: number = DURACAO_MENSTRUACAO_PADRAO
+) {
+  const duracao = duracaoCicloValida(duracaoCiclo);
+  const menstruacaoFim = Math.max(1, Math.min(duracaoMenstruacao, duracao - 2));
+  const ovulacao = Math.max(duracao - DURACAO_FASE_LUTEA, menstruacaoFim + 1);
+  return {
+    duracao,
+    menstruacaoFim,
+    ovulacao,
+    janelaFertilInicio: Math.max(1, ovulacao - 5),
+    janelaFertilFim: Math.min(duracao, ovulacao + 1),
+  };
+}
+
+/** A data cai na janela fértil estimada do ciclo? */
+export function ehDiaFertil(
+  dataAlvo: Date,
+  dataMenstruacao: Date,
+  duracaoCiclo: number = 28,
+  duracaoMenstruacao: number = DURACAO_MENSTRUACAO_PADRAO
+): boolean {
+  const ciclo = dividirCiclo(duracaoCiclo, duracaoMenstruacao);
+  const { dia } = posicaoNoCiclo(dataAlvo, dataMenstruacao, ciclo.duracao);
+  return dia >= ciclo.janelaFertilInicio && dia <= ciclo.janelaFertilFim;
 }
 
 /**
@@ -41,40 +78,16 @@ export function posicaoNoCiclo(
 export function getFasePorData(
   dataAlvo: Date,
   dataMenstruacao: Date,
-  duracaoCiclo: number = 28
+  duracaoCiclo: number = 28,
+  duracaoMenstruacao: number = DURACAO_MENSTRUACAO_PADRAO
 ): FaseCiclo {
   if (!dataAlvo || !dataMenstruacao || isNaN(duracaoCiclo)) return null;
 
-  // Normaliza as datas para ignorar horário
-  const normalizar = (data: Date) => new Date(data.getFullYear(), data.getMonth(), data.getDate());
-  const alvo = normalizar(dataAlvo);
-  const inicio = normalizar(dataMenstruacao);
+  const ciclo = dividirCiclo(duracaoCiclo, duracaoMenstruacao);
+  const { dia } = posicaoNoCiclo(dataAlvo, dataMenstruacao, ciclo.duracao);
 
-  // Dias desde o início do ciclo
-  const diasDesdeInicio = diasEntre(inicio, alvo);
-  const diasDoCiclo = ((diasDesdeInicio % duracaoCiclo) + duracaoCiclo) % duracaoCiclo;
-
-  // Distribuição proporcional das fases
-  const diasMenstruacao = Math.round(duracaoCiclo * 0.18); // ~5 dias
-  const diasFolicular = Math.round(duracaoCiclo * 0.32);   // ~9 dias
-  const diasOvulatoria = Math.round(duracaoCiclo * 0.14);  // ~4 dias
-  const diasLutea = duracaoCiclo - (diasMenstruacao + diasFolicular + diasOvulatoria);
-
-  const fases = [
-    { nome: "menstruacao", duracao: diasMenstruacao },
-    { nome: "folicular", duracao: diasFolicular },
-    { nome: "ovulatoria", duracao: diasOvulatoria },
-    { nome: "lutea", duracao: diasLutea },
-  ];
-
-  // Determina em qual fase está o dia atual
-  let acumulado = 0;
-  for (const fase of fases) {
-    if (diasDoCiclo >= acumulado && diasDoCiclo < acumulado + fase.duracao) {
-      return fase.nome as FaseCiclo;
-    }
-    acumulado += fase.duracao;
-  }
-
-  return null;
+  if (dia <= ciclo.menstruacaoFim) return "menstruacao";
+  if (dia < ciclo.ovulacao) return "folicular";
+  if (dia === ciclo.ovulacao) return "ovulatoria";
+  return "lutea";
 }

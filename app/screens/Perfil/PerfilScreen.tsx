@@ -58,6 +58,8 @@ export default function PerfilScreen({ navigation }: PerfilScreenProps) {
   const [objetivo, setObjetivo] = useState("");
   const [dataMenstruacao, setDataMenstruacao] = useState(new Date());
   const [duracaoCiclo, setDuracaoCiclo] = useState("28");
+  // Dias de sangramento: define onde termina a fase de menstruação.
+  const [duracaoMenstruacao, setDuracaoMenstruacao] = useState(5);
   const [showCalendarioModal, setShowCalendarioModal] = useState(false);
   const [isPrimeiroAcesso, setIsPrimeiroAcesso] = useState(false);
   const [excluindoConta, setExcluindoConta] = useState(false);
@@ -146,6 +148,7 @@ export default function PerfilScreen({ navigation }: PerfilScreenProps) {
         }
         setObjetivo(perfil.objetivo || "");
         setDuracaoCiclo(perfil.duracao_ciclo?.toString() || "28");
+        setDuracaoMenstruacao(perfil.duracao_menstruacao || 5);
         if (perfil.data_menstruacao) {
           setDataMenstruacao(dataLocal(perfil.data_menstruacao));
         }
@@ -208,6 +211,7 @@ export default function PerfilScreen({ navigation }: PerfilScreenProps) {
         objetivo,
         data_menstruacao: dataLocalISO(dataMenstruacao),
         duracao_ciclo: parseInt(duracaoCiclo),
+        duracao_menstruacao: duracaoMenstruacao,
       };
       const result = await updatePerfil(payload);
 
@@ -463,6 +467,19 @@ export default function PerfilScreen({ navigation }: PerfilScreenProps) {
                 <TouchableOpacity onPress={() => { const valor = parseInt(duracaoCiclo) - 1; if (valor >= 21) setDuracaoCiclo(valor.toString()); }} style={perfilStyles.cicloButton}><Text style={perfilStyles.cicloButtonText}>−</Text></TouchableOpacity>
                 <Text style={perfilStyles.cicloValor}>{duracaoCiclo} dias</Text>
                 <TouchableOpacity onPress={() => { const valor = parseInt(duracaoCiclo) + 1; if (valor <= 35) setDuracaoCiclo(valor.toString()); }} style={perfilStyles.cicloButton}><Text style={perfilStyles.cicloButtonText}>+</Text></TouchableOpacity>
+              </View>
+            </View>
+          </View>
+
+          <View style={perfilStyles.card}>
+            <View style={perfilStyles.iconCircle}><MaterialIcons name="water-drop" size={25} color={palette.purpleDark} /></View>
+            <View style={perfilStyles.cardFull}>
+              <Text style={perfilStyles.label}>Duração da menstruação</Text>
+              <Text style={perfilStyles.helper}>Em média, quantos dias dura o seu sangramento?</Text>
+              <View style={perfilStyles.cicloControls}>
+                <TouchableOpacity onPress={() => setDuracaoMenstruacao((dias) => Math.max(2, dias - 1))} style={perfilStyles.cicloButton}><Text style={perfilStyles.cicloButtonText}>−</Text></TouchableOpacity>
+                <Text style={perfilStyles.cicloValor}>{duracaoMenstruacao} dias</Text>
+                <TouchableOpacity onPress={() => setDuracaoMenstruacao((dias) => Math.min(8, dias + 1))} style={perfilStyles.cicloButton}><Text style={perfilStyles.cicloButtonText}>+</Text></TouchableOpacity>
               </View>
             </View>
           </View>

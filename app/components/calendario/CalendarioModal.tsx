@@ -12,8 +12,10 @@ import { api, ehPerfilIncompleto } from "../../services/api";
 import { dataLocalISO } from "../../screens/Rotina/rotinaFormato";
 import Toast from "react-native-toast-message";
 import {
+  DURACAO_MENSTRUACAO_PADRAO,
   dataLocalDeISO,
   duracaoCicloValida,
+  ehDiaFertil,
   getFasePorData,
   FaseCiclo,
 } from "../../utils/cicloUtils";
@@ -39,6 +41,7 @@ export default function CalendarioModal({ visible, onClose, onSelectDate }: Prop
   const [dataUltimaMenstruacao, setDataUltimaMenstruacao] = useState<Date | null>(null);
   const [primeiroDiaPermitido, setPrimeiroDiaPermitido] = useState<Date | null>(null);
   const [cicloDias, setCicloDias] = useState(28);
+  const [menstruacaoDias, setMenstruacaoDias] = useState(DURACAO_MENSTRUACAO_PADRAO);
 
   const diasNoMes = new Date(anoAtual, mesAtual + 1, 0).getDate();
   const primeiroDiaSemana = new Date(anoAtual, mesAtual, 1).getDay();
@@ -58,6 +61,7 @@ export default function CalendarioModal({ visible, onClose, onSelectDate }: Prop
           const data = dataLocalDeISO(dataStr);
           setDataUltimaMenstruacao(data);
           setCicloDias(duracaoCicloValida(response.data?.duracao_ciclo));
+          setMenstruacaoDias(response.data?.duracao_menstruacao || DURACAO_MENSTRUACAO_PADRAO);
 
           const limite = new Date(data);
           limite.setDate(limite.getDate() - 30);
@@ -138,7 +142,7 @@ export default function CalendarioModal({ visible, onClose, onSelectDate }: Prop
   const getFaseCiclo = (data: Date): FaseCiclo => {
     if (!dataUltimaMenstruacao || !primeiroDiaPermitido) return null;
     if (data < primeiroDiaPermitido) return null;
-    return getFasePorData(data, dataUltimaMenstruacao, cicloDias);
+    return getFasePorData(data, dataUltimaMenstruacao, cicloDias, menstruacaoDias);
   };
 
   return (
@@ -178,10 +182,11 @@ export default function CalendarioModal({ visible, onClose, onSelectDate }: Prop
                 estiloExtra = styles.diaSelecionado;
               } else if (fase === "menstruacao") {
                 estiloExtra = styles.diaMenstruacao;
-              } else if (fase === "folicular") {
-                estiloExtra = styles.diaFolicular;
               } else if (fase === "ovulatoria") {
                 estiloExtra = styles.diaOvulatoria;
+              } else if (fase && dataUltimaMenstruacao && ehDiaFertil(dataDia, dataUltimaMenstruacao, cicloDias, menstruacaoDias)) {
+                // Janela fértil: verde, por cima da folicular e da lútea.
+                estiloExtra = styles.diaFolicular;
               } else if (fase === "lutea") {
                 estiloExtra = styles.diaLutea;
               } else if (isHoje) {

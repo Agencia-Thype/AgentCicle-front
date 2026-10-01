@@ -72,6 +72,7 @@ export async function updatePerfil(dados: {
   objetivo: string;
   data_menstruacao: string;
   duracao_ciclo: number;
+  duracao_menstruacao: number;
 }) {
   try {
     const response = await api.put("/perfil", dados);
