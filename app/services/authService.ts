@@ -31,6 +31,8 @@ function mensagemErroFirebase(codigo: string): string {
       return "Esse e-mail já está cadastrado.";
     case "auth/weak-password":
       return "Senha muito fraca. Use pelo menos 6 caracteres.";
+    case "auth/network-request-failed":
+      return "Sem conexão. Verifique a internet e tente de novo.";
     default:
       return "Não foi possível concluir. Tente novamente.";
   }

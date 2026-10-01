@@ -27,6 +27,7 @@ import {
   googleAuthConfig,
   googleConfigurado,
 } from "../../services/googleAuthConfig";
+import BotaoApple from "../../components/BotaoApple";
 import { useAssinatura } from "../../contexts/AssinaturaContext";
 import { fonts } from "../../theme/fonts";
 
@@ -237,6 +238,8 @@ export default function LoginScreen({ navigation }: Props) {
                   <Text style={styles.dividerText}>ou</Text>
                   <View style={styles.dividerLine} />
                 </View>
+
+                <BotaoApple onSucesso={irParaHomeAposLogin} />
 
                 <TouchableOpacity
                   style={styles.googleButton}
