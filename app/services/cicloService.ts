@@ -3,6 +3,7 @@
 import { api, ehPerfilIncompleto } from "./api";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { daConta } from "./chaveDaConta";
+import { limparCacheFase } from "./perfilService";
 
 // Chaves para armazenamento de cache
 const CACHE_FASE_CICLO_KEY = () => daConta("@AgentCicle:fase_ciclo_cache");
@@ -112,5 +113,6 @@ export async function getDetalhesFaseAtual() {
 
 export async function registrarMenstruacao(data_inicio: string) {
   const response = await api.post("/registrar-menstruacao", { data_inicio });
+  await limparCacheFase();
   return response.data;
 }

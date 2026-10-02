@@ -5,9 +5,9 @@ import { auth } from "./firebase";
 import { Platform } from "react-native";
 
 // Chaves para armazenamento no AsyncStorage
-const CACHE_FASE_KEY = () => daConta("@AgentCicle:fase_atual");
-const CACHE_MENSAGEM_KEY = () => daConta("@AgentCicle:mensagem_fase");
-const CACHE_ULTIMA_SYNC_KEY = () => daConta("@AgentCicle:ultima_sincronizacao");
+const CACHE_FASE_KEY = () => daConta("@AgentCicle:fase_atual_v2");
+const CACHE_MENSAGEM_KEY = () => daConta("@AgentCicle:mensagem_fase_v2");
+const CACHE_ULTIMA_SYNC_KEY = () => daConta("@AgentCicle:ultima_sincronizacao_v2");
 const NOTIFICACAO_FASE_KEY = () => daConta("@AgentCicle:notificacao_fase");
 
 // Chave para armazenamento do perfil no AsyncStorage
@@ -76,6 +76,7 @@ export async function updatePerfil(dados: {
 }) {
   try {
     const response = await api.put("/perfil", dados);
+    await limparCacheFase();
 
     // O PUT devolve uma mensagem, não o perfil completo. Mesclar o payload no
     // último perfil conhecido evita restaurar o perfil vazio do primeiro acesso.
@@ -105,6 +106,24 @@ export async function updatePerfil(dados: {
   } catch (error) {
     console.error("Erro ao atualizar perfil:", error);
     throw error;
+  }
+}
+
+/**
+ * Descarta a fase guardada no aparelho. Deve rodar sempre que algo que muda a
+ * fase for alterado (data da menstruação, duração do ciclo ou da menstruação):
+ * sem isso, a Home segue mostrando a fase antiga até o cache vencer.
+ */
+export async function limparCacheFase(): Promise<void> {
+  try {
+    await AsyncStorage.multiRemove([
+      CACHE_FASE_KEY(),
+      CACHE_MENSAGEM_KEY(),
+      CACHE_ULTIMA_SYNC_KEY(),
+      daConta("fase_lunar_cache"),
+    ]);
+  } catch (error) {
+    console.error("Erro ao limpar cache de fase:", error);
   }
 }
 
@@ -163,14 +182,17 @@ export async function sincronizarFase(): Promise<any> {
     const ultimaSync = await AsyncStorage.getItem(CACHE_ULTIMA_SYNC_KEY());
     const agora = new Date();
 
-    // Se já sincronizou nas últimas 4 horas, usa o cache
+    // Se já sincronizou há pouco, usa o cache. A fase muda na virada do dia e
+    // quando o ciclo é editado fora do app, então o cache é curto e um cache de
+    // ontem nunca vale.
     if (ultimaSync) {
       const ultimaSyncDate = new Date(ultimaSync);
       const diffHoras =
         (agora.getTime() - ultimaSyncDate.getTime()) / (1000 * 60 * 60);
+      const mesmoDia = ultimaSyncDate.toDateString() === agora.toDateString();
 
-      if (diffHoras < 4) {
-        console.log("🕒 Usando cache de fase (última sync há menos de 4h)");
+      if (diffHoras < 0.5 && mesmoDia) {
+        console.log("🕒 Usando cache de fase (última sync há menos de 30 min)");
         const faseCache = await AsyncStorage.getItem(CACHE_FASE_KEY());
         const mensagemCache = await AsyncStorage.getItem(CACHE_MENSAGEM_KEY());
 

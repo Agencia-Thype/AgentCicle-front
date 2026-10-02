@@ -9,6 +9,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { onAuthStateChanged, signOut, type User } from "firebase/auth";
 import { auth } from "../services/firebase";
 import { daConta, limparCachesSemConta } from "../services/chaveDaConta";
+import { limparCacheFase } from "../services/perfilService";
 import {
   garantirPerfilSincronizado,
   jaSincronizadaNesteAparelho,
@@ -80,6 +81,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
         "fase_lunar_cache",
         "home_pontuacao_cache",
       ].map(daConta);
+      await limparCacheFase();
       await signOut(auth);
       await AsyncStorage.multiRemove([...chavesDaConta, "primeiro_acesso"]);
     } catch (error) {
