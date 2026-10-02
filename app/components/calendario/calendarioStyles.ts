@@ -63,18 +63,35 @@ export const calendarioStyles = StyleSheet.create({
     borderColor: palette.purple,
     borderWidth: 1.5,
   },
+  // Mesmas cores da tela de Ciclo (screens/Calendario/calendarioStyles.ts).
   diaMenstruacao: {
     borderWidth: 2,
-    borderColor: "#E08D8D",
+    borderColor: palette.error,
     borderStyle: "dotted",
+    backgroundColor: "rgba(214, 69, 63, 0.15)",
   },
   diaFolicular: {
-    backgroundColor: palette.sageLight,
+    backgroundColor: "rgba(143, 191, 110, 0.3)",
+    borderColor: palette.sageLight,
+    borderWidth: 1,
+  },
+  // Folicular antes da janela fértil: verde mais claro que o da janela fértil.
+  diaFolicularClara: {
+    backgroundColor: "rgba(143, 191, 110, 0.12)",
+    borderColor: "rgba(143, 191, 110, 0.5)",
+    borderWidth: 1,
   },
   diaOvulatoria: {
-    backgroundColor: palette.gold,
+    backgroundColor: "rgba(201, 146, 46, 0.25)",
+    borderColor: palette.gold,
+    borderWidth: 1,
   },
   diaLutea: {
-    backgroundColor: palette.purpleLight,
+    backgroundColor: "rgba(43, 27, 68, 0.3)",
+    borderColor: palette.textSecondary,
+    borderWidth: 1,
+  },
+  legenda: {
+    marginTop: 12,
   },
 });

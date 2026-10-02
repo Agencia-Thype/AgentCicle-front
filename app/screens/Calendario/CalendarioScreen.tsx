@@ -15,6 +15,7 @@ import {
   posicaoNoCiclo,
 } from "../../utils/cicloUtils";
 import { api } from "../../services/api";
+import { limparCacheFase } from "../../services/perfilService";
 import { dataLocalISO } from "../Rotina/rotinaFormato";
 import { CHAVES, lerUltimo, salvarDoDia } from "../../services/cacheDoDia";
 import ResumoDiaModal from "app/components/resumoDiaModal";
@@ -124,6 +125,7 @@ export default function CalendarioScreen() {
     // é o verde "Fértil" da legenda.
     if (ehDiaFertil(data, dataUltimaMenstruacao, duracaoCiclo, duracaoMenstruacao)) return calendarioStyles.diaFolicular;
     if (fase === "lutea") return calendarioStyles.diaLutea;
+    if (fase === "folicular") return calendarioStyles.diaFolicularClara;
     return {};
   };
 
@@ -134,6 +136,7 @@ export default function CalendarioScreen() {
       const response = await api.post("/registrar-menstruacao", {
         data_inicio: dataInicio,
       });
+      await limparCacheFase();
       const faseAtual = response.data?.fase_atual?.fase;
 
       setDataUltimaMenstruacao(dataLocalDeISO(dataInicio));

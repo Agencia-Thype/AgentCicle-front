@@ -9,6 +9,7 @@ import { MaterialIcons } from "@expo/vector-icons";
 import * as Animatable from "react-native-animatable";
 import { calendarioStyles as styles } from "./calendarioStyles";
 import { api, ehPerfilIncompleto } from "../../services/api";
+import { limparCacheFase } from "../../services/perfilService";
 import { dataLocalISO } from "../../screens/Rotina/rotinaFormato";
 import Toast from "react-native-toast-message";
 import {
@@ -20,6 +21,7 @@ import {
   FaseCiclo,
 } from "../../utils/cicloUtils";
 import { palette } from "../../theme/colors";
+import CalendarioLegenda from "./CalendarioLegenda";
 
 const meses = [
   "Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho",
@@ -101,7 +103,8 @@ export default function CalendarioModal({ visible, onClose, onSelectDate }: Prop
       const response = await api.post("/registrar-menstruacao", {
         data_inicio: dataLocalISO(data),
       });
-  
+      await limparCacheFase();
+
       const fase = response.data.fase_atual?.fase;
       const mensagem = response.data.fase_atual?.mensagem;
   
@@ -189,6 +192,8 @@ export default function CalendarioModal({ visible, onClose, onSelectDate }: Prop
                 estiloExtra = styles.diaFolicular;
               } else if (fase === "lutea") {
                 estiloExtra = styles.diaLutea;
+              } else if (fase === "folicular") {
+                estiloExtra = styles.diaFolicularClara;
               } else if (isHoje) {
                 estiloExtra = styles.diaHoje;
               }
@@ -205,6 +210,8 @@ export default function CalendarioModal({ visible, onClose, onSelectDate }: Prop
               );
             })}
           </View>
+
+          <CalendarioLegenda style={styles.legenda} />
         </Animatable.View>
       </View>
     </Modal>

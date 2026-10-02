@@ -3,6 +3,7 @@ import { ScrollView, StatusBar, Text, TouchableOpacity, useWindowDimensions, Vie
 import { SafeAreaView } from "react-native-safe-area-context";
 import { MaterialCommunityIcons, MaterialIcons } from "@expo/vector-icons";
 import AppBackground from "../../components/AppBackground";
+import CalendarioLegenda from "../../components/calendario/CalendarioLegenda";
 import { palette } from "../../theme/colors";
 import { cycleStyles as styles } from "./cycleStyles";
 
@@ -62,7 +63,7 @@ export default function CalendarVisual(props: Props) {
                 <View key={day} style={[styles.dayCell, compact && styles.dayCellCompact, dense && styles.dayCellDense]}><TouchableOpacity style={[styles.dayCircle, compact && styles.dayCircleCompact, dense && styles.dayCircleDense, props.getDayStyle(new Date(props.year, props.monthIndex, day)), new Date(props.year, props.monthIndex, day).toDateString() === props.today.toDateString() && styles.today]} onPress={() => props.onSelectDay(day)}><Text style={styles.dayText}>{day}</Text></TouchableOpacity></View>
               ))}
             </View>
-            <View style={styles.legend}><Legend color="#8B477D" label="Menstruação" /><Legend color="#C6DAAE" label="Fértil" /><Legend color="#F2DEAD" border="#8E6720" label="Ovulação" /><Legend color="transparent" border="#E56D65" dotted label="Previsão" /></View>
+            <CalendarioLegenda style={styles.legend} />
           </View>
 
           <TouchableOpacity style={[styles.symptomsCard, compact && styles.symptomsCardCompact, dense && styles.symptomsCardDense]} onPress={() => navigate("Sintomas")} activeOpacity={0.86}>
@@ -82,5 +83,4 @@ export default function CalendarVisual(props: Props) {
   );
 }
 
-function Legend({ color, border, label, dotted }: { color: string; border?: string; label: string; dotted?: boolean }) { return <View style={styles.legendItem}><View style={[styles.legendDot, { backgroundColor: color, borderColor: border || color }, dotted && styles.dotted]} /><Text style={styles.legendText}>{label}</Text></View>; }
 function Nav({ icon, label, active, onPress }: { icon: any; label: string; active?: boolean; onPress?: () => void }) { return <TouchableOpacity style={styles.navItem} onPress={onPress}><MaterialCommunityIcons name={icon} size={25} color={active ? palette.purpleDark : "#756D89"} /><Text style={[styles.navText, active && styles.navActive]}>{label}</Text>{active && <View style={styles.navDot} />}</TouchableOpacity>; }
